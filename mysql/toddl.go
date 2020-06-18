@@ -132,7 +132,7 @@ func toSpannerType(conv *internal.Conv, id string, mods []int64) (ddl.ScalarType
 		}
 		return ddl.String{Len: ddl.MaxLength{}}, nil
 	case "text", "tinytext", "mediumtext", "longtext":
-		maxExpectedMods(0)
+		maxExpectedMods(1)
 		return ddl.String{Len: ddl.MaxLength{}}, nil
 	case "set", "enum":
 		maxExpectedMods(0)
@@ -144,7 +144,7 @@ func toSpannerType(conv *internal.Conv, id string, mods []int64) (ddl.ScalarType
 		maxExpectedMods(1)
 		return ddl.Bytes{Len: ddl.MaxLength{}}, nil
 	case "tinyblob", "mediumblob", "blob", "longblob":
-		maxExpectedMods(0)
+		maxExpectedMods(1)
 		return ddl.Bytes{Len: ddl.MaxLength{}}, nil
 	case "date":
 		maxExpectedMods(1)

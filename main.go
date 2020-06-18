@@ -269,7 +269,7 @@ func schemaFromSQL(driver string) (*internal.Conv, error) {
 		return nil, err
 	}
 	conv := internal.MakeConv()
-	err = postgres.ProcessInfoSchema(conv, sourceDB)
+	err = ProcessInfoSchema(driver, conv, sourceDB)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +291,7 @@ func dataFromSQL(driver string, config spanner.BatchWriterConfig, client *sp.Cli
 		return nil, err
 	}
 
-	postgres.SetRowStats(conv, sourceDB)
+	SetRowStats(driver, conv, sourceDB)
 	totalRows := conv.Rows()
 	p := internal.NewProgress(totalRows, "Writing data to Spanner", internal.Verbose())
 	rows := int64(0)
@@ -310,7 +310,7 @@ func dataFromSQL(driver string, config spanner.BatchWriterConfig, client *sp.Cli
 		func(table string, cols []string, vals []interface{}) {
 			writer.AddRow(table, cols, vals)
 		})
-	postgres.ProcessSqlData(conv, sourceDB)
+	ProcessSqlData(driver, conv, sourceDB)
 	writer.Flush()
 	return writer, nil
 }
@@ -762,5 +762,38 @@ func ProcessDump(driver string, conv *internal.Conv, r *internal.Reader) error {
 		return postgres.ProcessPgDump(conv, r)
 	default:
 		return fmt.Errorf("schema conversion for driver %s not supported", driver)
+	}
+}
+
+func ProcessInfoSchema(driver string, conv *internal.Conv, db *sql.DB) error {
+	switch driver {
+	case MYSQL:
+		return mysql.ProcessInfoSchema(conv, db)
+	case POSTGRES:
+		return postgres.ProcessInfoSchema(conv, db)
+	default:
+		return fmt.Errorf("schema conversion for driver %s not supported", driver)
+	}
+}
+
+func SetRowStats(driver string, conv *internal.Conv, db *sql.DB) {
+	switch driver {
+	case MYSQL:
+		mysql.SetRowStats(conv, db)
+	case POSTGRES:
+		postgres.SetRowStats(conv, db)
+	default:
+		fmt.Errorf("Could get number of rows for %s", driver)
+	}
+}
+
+func ProcessSqlData(driver string, conv *internal.Conv, db *sql.DB) {
+	switch driver {
+	case MYSQL:
+		mysql.ProcessSqlData(conv, db)
+	case POSTGRES:
+		postgres.ProcessSqlData(conv, db)
+	default:
+		fmt.Errorf("Data conversion for driver %s is not supported", driver)
 	}
 }
