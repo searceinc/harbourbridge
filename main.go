@@ -53,6 +53,7 @@ import (
 	"github.com/cloudspannerecosystem/harbourbridge/postgres"
 	"github.com/cloudspannerecosystem/harbourbridge/spanner"
 	"github.com/cloudspannerecosystem/harbourbridge/spanner/ddl"
+	//"github.com/cloudspannerecosystem/harbourbridge/web"
 )
 
 const (
@@ -83,6 +84,7 @@ var (
 	schemaOnly       bool
 	dataOnly         bool
 	sessionJSON      string
+	w                bool
 )
 
 func init() {
@@ -95,6 +97,7 @@ func init() {
 	flag.BoolVar(&schemaOnly, "schema-only", false, "schema-only: in this mode we do schema conversion, but skip data conversion")
 	flag.BoolVar(&dataOnly, "data-only", false, "data-only: in this mode we skip schema conversion and just do data conversion (use the session flag to specify the session file for schema and data mapping)")
 	flag.StringVar(&sessionJSON, "session", "", "session: specifies the file we restore session state from (used in schema-only to provide schema and data mapping)")
+	flag.BoolVar(&w, "web", false, "web: run the web interface")
 }
 
 func usage() {
@@ -110,6 +113,12 @@ Sample usage:
 func main() {
 	flag.Usage = usage
 	flag.Parse()
+	fmt.Println("--------------")
+	fmt.Println(Version)
+	if w {
+		WebApp()
+		return
+	}
 	internal.VerboseInit(verbose)
 	lf, err := setupLogFile()
 	if err != nil {
@@ -118,7 +127,7 @@ func main() {
 	}
 	defer close(lf)
 
-	ioHelper := &ioStreams{in: os.Stdin, out: os.Stdout}
+	ioHelper := &IOStreams{in: os.Stdin, out: os.Stdout}
 	fmt.Println("Using driver (source DB):", driverName)
 	var project, instance string
 	if !schemaOnly {
@@ -231,7 +240,7 @@ func toSpanner(driver, projectID, instanceID, dbName string, ioHelper *ioStreams
 	return nil
 }
 
-func schemaConv(driver string, ioHelper *ioStreams) (*internal.Conv, error) {
+func schemaConv(driver string, ioHelper *IOStreams) (*internal.Conv, error) {
 	switch driver {
 	case POSTGRES, MYSQL:
 		return schemaFromSQL(driver)
@@ -244,7 +253,7 @@ func schemaConv(driver string, ioHelper *ioStreams) (*internal.Conv, error) {
 	}
 }
 
-func dataConv(driver string, ioHelper *ioStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
+func dataConv(driver string, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
 	config := spanner.BatchWriterConfig{
 		BytesLimit: 100 * 1000 * 1000,
 		WriteLimit: 40,
@@ -381,7 +390,7 @@ type ioStreams struct {
 	bytesRead           int64
 }
 
-func schemaFromDump(driver string, ioHelper *ioStreams) (*internal.Conv, error) {
+func schemaFromDump(driver string, ioHelper *IOStreams) (*internal.Conv, error) {
 	f, n, err := getSeekable(ioHelper.in)
 	if err != nil {
 		printSeekError(driver, err, ioHelper.out)

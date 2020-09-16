@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"database/sql"
@@ -28,6 +28,11 @@ type DriverConfig struct {
 	Database string `json:"Database"`
 	User     string `json:"User"`
 	Password string `json:"Password"`
+}
+
+type DumpConfig struct {
+	Driver   string `json:"Driver"`
+	FilePath string `json:"Path"`
 }
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +95,33 @@ func convertSchemaSQL(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(conv)
 }
 
+// func convertSchemaDump(w http.ResponseWriter, r *http.Request) {
+// 	reqBody, err := ioutil.ReadAll(r.Body)
+// 	if err != nil {
+// 		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), 500)
+// 		return
+// 	}
+// 	var dc DumpConfig
+// 	err = json.Unmarshal(reqBody, &dc)
+// 	if err != nil {
+// 		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), 400)
+// 		return
+// 	}
+// 	f, err := os.Open(dc.FilePath)
+// 	if err != nil {
+// 		http.Error(w, fmt.Sprintf("failed to open the test data file: %v", err), 404)
+// 		return
+// 	}
+// 	conv, err := main.schemaConv(dc.Driver, &main.IOStreams{in: f, out: os.Stdout})
+// 	if err != nil {
+// 		http.Error(w, fmt.Sprintf("Schema Conversion Error : %v", err), 404)
+// 		return
+// 	}
+// 	app.conv = conv
+// 	w.WriteHeader(http.StatusOK)
+// 	json.NewEncoder(w).Encode(conv)
+// }
+
 func writeSchemaFile(conv *internal.Conv, now time.Time, name string, out *os.File) {
 	f, err := os.Create(name)
 	if err != nil {
@@ -126,16 +158,17 @@ type App struct {
 
 var app App
 
-func main() {
+func WebApp() {
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeLink)
 	router.HandleFunc("/databaseConnection", databaseConnection).Methods("POST")
 	router.HandleFunc("/convertSchema", convertSchemaSQL).Methods("GET")
+	//router.HandleFunc("/convertSchemaDump", convertSchemaDump).Methods("GET")
 	// router.HandleFunc("/events", getAllEvents).Methods("GET")
 	// router.HandleFunc("/events/{id}", getOneEvent).Methods("GET")
 	// router.HandleFunc("/events/{id}", updateEvent).Methods("PUT")
 	// router.HandleFunc("/events/{id}", deleteEvent).Methods("DELETE")
 
-	log.Fatal(http.ListenAndServe(":9000", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
