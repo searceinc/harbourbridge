@@ -49,6 +49,7 @@ import (
 	"github.com/cloudspannerecosystem/harbourbridge/postgres"
 	"github.com/cloudspannerecosystem/harbourbridge/spanner"
 	"github.com/cloudspannerecosystem/harbourbridge/spanner/ddl"
+	//"github.com/cloudspannerecosystem/harbourbridge/web"
 )
 
 const (
@@ -71,6 +72,7 @@ var (
 	filePrefix       = ""
 	driverName       = PGDUMP
 	verbose          bool
+	w                bool
 )
 
 func init() {
@@ -79,6 +81,7 @@ func init() {
 	flag.StringVar(&filePrefix, "prefix", "", "prefix: file prefix for generated files")
 	flag.StringVar(&driverName, "driver", "pg_dump", "driver name: flag for accessing source DB or dump files (accepted values are \"pg_dump\", \"postgres\", \"mysqldump\", and \"mysql\")")
 	flag.BoolVar(&verbose, "v", false, "verbose: print additional output")
+	flag.BoolVar(&w, "web", false, "web: run the web interface")
 }
 
 func usage() {
@@ -94,6 +97,12 @@ Sample usage:
 func main() {
 	flag.Usage = usage
 	flag.Parse()
+	fmt.Println("--------------")
+	fmt.Println(Version)
+	if w {
+		WebApp()
+		return
+	}
 	internal.VerboseInit(verbose)
 	lf, err := setupLogFile()
 	if err != nil {
@@ -102,7 +111,7 @@ func main() {
 	}
 	defer close(lf)
 
-	ioHelper := &ioStreams{in: os.Stdin, out: os.Stdout}
+	ioHelper := &IOStreams{in: os.Stdin, out: os.Stdout}
 	fmt.Println("Using driver (source DB):", driverName)
 	project, err := getProject()
 	if err != nil {
@@ -150,7 +159,7 @@ func main() {
 //   2. Create database
 //   3. Run data conversion
 //   4. Generate report
-func toSpanner(driver, projectID, instanceID, dbName string, ioHelper *ioStreams, outputFilePrefix string, now time.Time) error {
+func toSpanner(driver, projectID, instanceID, dbName string, ioHelper *IOStreams, outputFilePrefix string, now time.Time) error {
 	conv, err := schemaConv(driver, ioHelper)
 	if err != nil {
 		return err
@@ -186,7 +195,7 @@ func toSpanner(driver, projectID, instanceID, dbName string, ioHelper *ioStreams
 	return nil
 }
 
-func schemaConv(driver string, ioHelper *ioStreams) (*internal.Conv, error) {
+func schemaConv(driver string, ioHelper *IOStreams) (*internal.Conv, error) {
 	switch driver {
 	case POSTGRES, MYSQL:
 		return schemaFromSQL(driver)
@@ -197,7 +206,7 @@ func schemaConv(driver string, ioHelper *ioStreams) (*internal.Conv, error) {
 	}
 }
 
-func dataConv(driver string, ioHelper *ioStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
+func dataConv(driver string, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
 	config := spanner.BatchWriterConfig{
 		BytesLimit: 100 * 1000 * 1000,
 		WriteLimit: 40,
@@ -318,12 +327,12 @@ func dataFromSQL(driver string, config spanner.BatchWriterConfig, client *sp.Cli
 	return writer, nil
 }
 
-type ioStreams struct {
+type IOStreams struct {
 	in, seekableIn, out *os.File
 	bytesRead           int64
 }
 
-func schemaFromDump(driver string, ioHelper *ioStreams) (*internal.Conv, error) {
+func schemaFromDump(driver string, ioHelper *IOStreams) (*internal.Conv, error) {
 	f, n, err := getSeekable(ioHelper.in)
 	if err != nil {
 		printSeekError(driver, err, ioHelper.out)
@@ -345,7 +354,7 @@ func schemaFromDump(driver string, ioHelper *ioStreams) (*internal.Conv, error) 
 	return conv, nil
 }
 
-func dataFromDump(driver string, config spanner.BatchWriterConfig, ioHelper *ioStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
+func dataFromDump(driver string, config spanner.BatchWriterConfig, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
 	_, err := ioHelper.seekableIn.Seek(0, 0)
 	if err != nil {
 		fmt.Printf("\nCan't seek to start of file (preparation for second pass): %v\n", err)
