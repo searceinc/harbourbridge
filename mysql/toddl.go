@@ -97,10 +97,14 @@ func toSpannerType(conv *internal.Conv, id string, mods []int64) (ddl.Type, []in
 			conv.Unexpected(fmt.Sprintf("Found %d mods while processing type id=%s", len(mods), id))
 		}
 	}
+	fmt.Println(id)
 	switch id {
 	case "bool", "boolean":
-		maxExpectedMods(0)
-		return ddl.Type{Name: ddl.Bool}, nil
+		x := toSpanner["bool"]
+		fmt.Println(x)
+		return x.T, x.Issue
+		// maxExpectedMods(0)
+		// return ddl.Type{Name: ddl.Bool}, nil
 	case "tinyint":
 		maxExpectedMods(1)
 		// tinyint(1) is a bool in MySQL
@@ -133,11 +137,14 @@ func toSpannerType(conv *internal.Conv, id string, mods []int64) (ddl.Type, []in
 		maxExpectedMods(1)
 		return ddl.Type{Name: ddl.Bytes, Len: ddl.MaxLength}, nil
 	case "varchar", "char":
-		maxExpectedMods(1)
-		if len(mods) > 0 {
-			return ddl.Type{Name: ddl.String, Len: mods[0]}, nil
-		}
-		return ddl.Type{Name: ddl.String, Len: ddl.MaxLength}, nil
+		x := toSpanner["varchar"]
+		fmt.Println(x)
+		return x.T, x.Issue
+		// maxExpectedMods(1)
+		// if len(mods) > 0 {
+		// 	return ddl.Type{Name: ddl.String, Len: mods[0]}, nil
+		// }
+		// return ddl.Type{Name: ddl.String, Len: ddl.MaxLength}, nil
 	case "text", "tinytext", "mediumtext", "longtext":
 		maxExpectedMods(1)
 		return ddl.Type{Name: ddl.String, Len: ddl.MaxLength}, nil
