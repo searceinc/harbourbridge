@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"time"
 
 	//"harbourbridge-web/models"
 	"github.com/cloudspannerecosystem/harbourbridge/internal"
@@ -138,6 +139,35 @@ func getDDL(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(ddl)
 }
 
+func getSession(w http.ResponseWriter, r *http.Request) {
+	now := time.Now()
+	dbName, err := getDatabaseName("mysql", now)
+	if err != nil {
+		fmt.Printf("\nCan't get database name: %v\n", err)
+		panic(fmt.Errorf("can't get database name"))
+	}
+	sessionFile := ".session.json"
+	out := os.Stdout
+	f, err := os.Create(dbName + sessionFile)
+	if err != nil {
+		fmt.Fprintf(out, "Can't create session file %s: %v\n", dbName+sessionFile, err)
+		return
+	}
+	// Session file will basically contain 'conv' struct in JSON format.
+	// It contains all the information for schema and data conversion state.
+	convJSON, err := json.MarshalIndent(app.conv, "", " ")
+	if err != nil {
+		fmt.Fprintf(out, "Can't encode session state to JSON: %v\n", err)
+		return
+	}
+	if _, err := f.Write(convJSON); err != nil {
+		fmt.Fprintf(out, "Can't write out session file: %v\n", err)
+		return
+	}
+	fmt.Fprintf(out, "Wrote session to file '%s'.\n", dbName+sessionFile)
+	//json.NewEncoder(w).Encode()
+}
+
 // func writeSchemaFile(conv *internal.Conv, now time.Time, name string, out *os.File) {
 // 	f, err := os.Create(name)
 // 	if err != nil {
@@ -182,6 +212,7 @@ func WebApp() {
 	router.HandleFunc("/convertSchema", convertSchemaSQL).Methods("GET")
 	router.HandleFunc("/convertSchemaDump", convertSchemaDump).Methods("POST")
 	router.HandleFunc("/getDDL", getDDL).Methods("GET")
+	router.HandleFunc("/getSession", getSession).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":9000", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
