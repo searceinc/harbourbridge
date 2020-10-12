@@ -27,7 +27,7 @@ import (
 // GenerateReport analyzes schema and data conversion stats and writes a
 // detailed report to w and returns a brief summary (as a string).
 func GenerateReport(driverName string, conv *Conv, w *bufio.Writer, badWrites map[string]int64) string {
-	reports := analyzeTables(conv, badWrites)
+	reports := AnalyzeTables(conv, badWrites)
 	summary := generateSummary(conv, reports, badWrites)
 	writeHeading(w, "Summary of Conversion")
 	w.WriteString(summary)
@@ -92,7 +92,7 @@ type tableReportBody struct {
 	lines   []string
 }
 
-func analyzeTables(conv *Conv, badWrites map[string]int64) (r []tableReport) {
+func AnalyzeTables(conv *Conv, badWrites map[string]int64) (r []tableReport) {
 	// Process tables in alphabetical order. This ensures that tables
 	// appear in alphabetical order in report.txt.
 	var tables []string
