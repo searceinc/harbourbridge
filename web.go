@@ -168,6 +168,18 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	//json.NewEncoder(w).Encode()
 }
 
+func getSummary(w http.ResponseWriter, r *http.Request) {
+	reports := internal.AnalyzeTables(app.conv, nil)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(reports)
+}
+
+func (reports []internal.tableReport) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"srcTable": reports.srcTable,
+	})
+}
+
 // func writeSchemaFile(conv *internal.Conv, now time.Time, name string, out *os.File) {
 // 	f, err := os.Create(name)
 // 	if err != nil {
@@ -213,6 +225,7 @@ func WebApp() {
 	router.HandleFunc("/convertSchemaDump", convertSchemaDump).Methods("POST")
 	router.HandleFunc("/getDDL", getDDL).Methods("GET")
 	router.HandleFunc("/getSession", getSession).Methods("GET")
+	router.HandleFunc("/getSummary", getSummary).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
