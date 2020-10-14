@@ -170,14 +170,26 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 
 func getSummary(w http.ResponseWriter, r *http.Request) {
 	reports := internal.AnalyzeTables(app.conv, nil)
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(reports)
-}
+	summary := make(map[string]string)
+	for _, t := range reports {
 
-func (reports []internal.tableReport) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{}{
-		"srcTable": reports.srcTable,
-	})
+		// h := fmt.Sprintf("Table %s", t.SrcTable)
+		// if t.SrcTable != t.SpTable {
+		// 	h = h + fmt.Sprintf(" (mapped to Spanner table %s)", t.SpTable)
+		// }
+		//w.WriteString(rateConversion(t.rows, t.badRows, t.cols, t.warnings, t.syntheticPKey != "", false))
+		//w.WriteString("\n")
+		var body string
+		for _, x := range t.Body {
+			body = body + x.Heading + "\n"
+			for i, l := range x.Lines {
+				body = body + fmt.Sprintf("%d) %s.\n", i+1, l) + "\n"
+			}
+		}
+		summary[t.SrcTable] = body
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(summary)
 }
 
 // func writeSchemaFile(conv *internal.Conv, now time.Time, name string, out *os.File) {

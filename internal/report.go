@@ -57,16 +57,16 @@ func GenerateReport(driverName string, conv *Conv, w *bufio.Writer, badWrites ma
 		writeStmtStats(driverName, conv, w)
 	}
 	for _, t := range reports {
-		h := fmt.Sprintf("Table %s", t.srcTable)
-		if t.srcTable != t.spTable {
-			h = h + fmt.Sprintf(" (mapped to Spanner table %s)", t.spTable)
+		h := fmt.Sprintf("Table %s", t.SrcTable)
+		if t.SrcTable != t.SpTable {
+			h = h + fmt.Sprintf(" (mapped to Spanner table %s)", t.SpTable)
 		}
 		writeHeading(w, h)
 		w.WriteString(rateConversion(t.rows, t.badRows, t.cols, t.warnings, t.syntheticPKey != "", false))
 		w.WriteString("\n")
-		for _, x := range t.body {
-			fmt.Fprintf(w, "%s\n", x.heading)
-			for i, l := range x.lines {
+		for _, x := range t.Body {
+			fmt.Fprintf(w, "%s\n", x.Heading)
+			for i, l := range x.Lines {
 				justifyLines(w, fmt.Sprintf("%d) %s.\n", i+1, l), 80, 3)
 			}
 			w.WriteString("\n")
@@ -77,19 +77,19 @@ func GenerateReport(driverName string, conv *Conv, w *bufio.Writer, badWrites ma
 }
 
 type tableReport struct {
-	srcTable      string
-	spTable       string
+	SrcTable      string
+	SpTable       string
 	rows          int64
 	badRows       int64
 	cols          int64
 	warnings      int64
 	syntheticPKey string // Empty string means no synthetic primary key was needed.
-	body          []tableReportBody
+	Body          []tableReportBody
 }
 
 type tableReportBody struct {
-	heading string
-	lines   []string
+	Heading string
+	Lines   []string
 }
 
 func AnalyzeTables(conv *Conv, badWrites map[string]int64) (r []tableReport) {
@@ -110,11 +110,11 @@ func buildTableReport(conv *Conv, srcTable string, badWrites map[string]int64) t
 	spTable, err := GetSpannerTable(conv, srcTable)
 	srcSchema, ok1 := conv.SrcSchema[srcTable]
 	spSchema, ok2 := conv.SpSchema[spTable]
-	tr := tableReport{srcTable: srcTable, spTable: spTable}
+	tr := tableReport{SrcTable: srcTable, SpTable: spTable}
 	if err != nil || !ok1 || !ok2 {
 		m := "bad source-DB-to-Spanner table mapping or Spanner schema"
 		conv.Unexpected("report: " + m)
-		tr.body = []tableReportBody{tableReportBody{heading: "Internal error: " + m}}
+		tr.Body = []tableReportBody{tableReportBody{Heading: "Internal error: " + m}}
 		return tr
 	}
 	issues, cols, warnings := analyzeCols(conv, srcTable, spTable)
@@ -122,9 +122,9 @@ func buildTableReport(conv *Conv, srcTable string, badWrites map[string]int64) t
 	tr.warnings = warnings
 	if pk, ok := conv.SyntheticPKeys[spTable]; ok {
 		tr.syntheticPKey = pk.Col
-		tr.body = buildTableReportBody(conv, srcTable, issues, spSchema, srcSchema, &pk.Col)
+		tr.Body = buildTableReportBody(conv, srcTable, issues, spSchema, srcSchema, &pk.Col)
 	} else {
-		tr.body = buildTableReportBody(conv, srcTable, issues, spSchema, srcSchema, nil)
+		tr.Body = buildTableReportBody(conv, srcTable, issues, spSchema, srcSchema, nil)
 	}
 	fillRowStats(conv, srcTable, badWrites, &tr)
 	return tr
@@ -209,7 +209,7 @@ func buildTableReportBody(conv *Conv, srcTable string, issues map[string][]Schem
 		if len(l) > 1 {
 			heading = heading + "s"
 		}
-		body = append(body, tableReportBody{heading: heading, lines: l})
+		body = append(body, tableReportBody{Heading: heading, Lines: l})
 	}
 	return body
 }
