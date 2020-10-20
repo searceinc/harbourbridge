@@ -159,10 +159,10 @@ func buildTableReportBody(conv *Conv, srcTable string, issues map[string][]Schem
 		issueBatcher := make(map[SchemaIssue]bool)
 		for _, srcCol := range cols {
 			for _, i := range issues[srcCol] {
-				if issueDB[i].severity != p.severity {
+				if IssueDB[i].severity != p.severity {
 					continue
 				}
-				if issueDB[i].batch {
+				if IssueDB[i].batch {
 					if issueBatcher[i] {
 						// Have already reported a previous instance of this
 						// (batched) issue, so skip this one.
@@ -187,20 +187,20 @@ func buildTableReportBody(conv *Conv, srcTable string, issues map[string][]Schem
 				spType = strings.ToLower(spType)
 				switch i {
 				case DefaultValue:
-					l = append(l, fmt.Sprintf("%s e.g. column '%s'", issueDB[i].brief, srcCol))
+					l = append(l, fmt.Sprintf("%s e.g. column '%s'", IssueDB[i].brief, srcCol))
 				case ForeignKey:
 					l = append(l, fmt.Sprintf("Column '%s' uses foreign keys which HarbourBridge does not support yet", srcCol))
 				case AutoIncrement:
-					l = append(l, fmt.Sprintf("Column '%s' is an autoincrement column. %s", srcCol, issueDB[i].brief))
+					l = append(l, fmt.Sprintf("Column '%s' is an autoincrement column. %s", srcCol, IssueDB[i].brief))
 				case Timestamp:
 					// Avoid the confusing "timestamp is mapped to timestamp" message.
-					l = append(l, fmt.Sprintf("Some columns have source DB type 'timestamp without timezone' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, issueDB[i].brief))
+					l = append(l, fmt.Sprintf("Some columns have source DB type 'timestamp without timezone' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, IssueDB[i].brief))
 				case Datetime:
-					l = append(l, fmt.Sprintf("Some columns have source DB type 'datetime' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, issueDB[i].brief))
+					l = append(l, fmt.Sprintf("Some columns have source DB type 'datetime' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, IssueDB[i].brief))
 				case Widened:
-					l = append(l, fmt.Sprintf("%s e.g. for column '%s', source DB type %s is mapped to Spanner type %s", issueDB[i].brief, srcCol, srcType, spType))
+					l = append(l, fmt.Sprintf("%s e.g. for column '%s', source DB type %s is mapped to Spanner type %s", IssueDB[i].brief, srcCol, srcType, spType))
 				default:
-					l = append(l, fmt.Sprintf("Column '%s': type %s is mapped to %s. %s", srcCol, srcType, spType, issueDB[i].brief))
+					l = append(l, fmt.Sprintf("Column '%s': type %s is mapped to %s. %s", srcCol, srcType, spType, IssueDB[i].brief))
 				}
 			}
 		}
@@ -241,7 +241,7 @@ func fillRowStats(conv *Conv, srcTable string, badWrites map[string]int64, tr *t
 // for assessing warnings, and we give only the first instance in the report.
 // TODO: add links in these descriptions to further documentation
 // e.g. for timestamp description.
-var issueDB = map[SchemaIssue]struct {
+var IssueDB = map[SchemaIssue]struct {
 	brief    string // Short description of issue.
 	severity severity
 	batch    bool // Whether multiple instances of this issue are combined.
@@ -285,9 +285,9 @@ func analyzeCols(conv *Conv, srcTable, spTable string) (map[string][]SchemaIssue
 		m[c] = l
 		for _, i := range l {
 			switch {
-			case issueDB[i].severity == warning && issueDB[i].batch:
+			case IssueDB[i].severity == warning && IssueDB[i].batch:
 				warningBatcher[i] = true
-			case issueDB[i].severity == warning && !issueDB[i].batch:
+			case IssueDB[i].severity == warning && !IssueDB[i].batch:
 				colWarning = true
 			}
 		}
