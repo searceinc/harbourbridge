@@ -37,6 +37,31 @@ type DumpConfig struct {
 	FilePath string `json:"Path"`
 }
 
+type typeIssue struct {
+	T     string
+	Issue internal.SchemaIssue
+}
+
+var editTypeMap = map[string][]typeIssue{
+	// "bool":    []{T: ddl.Bool, Issue: internal.SchemaIssue{-1}},
+	"varchar": []typeIssue{
+		typeIssue{T: ddl.String, Issue: internal.Widened},
+		typeIssue{T: ddl.Bytes, Issue: internal.Widened},
+		typeIssue{T: ddl.Float64, Issue: internal.Widened}},
+	"bool": []typeIssue{
+		typeIssue{T: ddl.Bool},
+		typeIssue{T: ddl.String, Issue: internal.Widened},
+		typeIssue{T: ddl.Int64, Issue: internal.Widened}},
+}
+
+// var editTypeMap = map[string]struct {
+// 	T []string
+// 	Issue    []internal.SchemaIssue
+// }{
+// 	"bool":    {T: []string{ddl.Bool}, Issue: []internal.SchemaIssue{-1}},
+// 	"varchar": {T: []string{ddl.String, ddl.Bytes}, Issue: []internal.SchemaIssue{1}},
+// }
+
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to Harbourbridge!")
 }
@@ -192,6 +217,64 @@ func getSummary(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(summary)
 }
 
+var issueDB = map[internal.SchemaIssue]struct {
+	brief    string // Short description of issue.
+	severity severity
+}{
+	internal.DefaultValue: {brief: "Some columns have default values which Spanner does not support", severity: warning},
+	// ForeignKey:            {brief: "Spanner does not support foreign keys", severity: warning},
+	// MultiDimensionalArray: {brief: "Spanner doesn't support multi-dimensional arrays", severity: warning},
+	// NoGoodType:            {brief: "No appropriate Spanner type", severity: warning},
+	// Numeric:               {brief: "Spanner does not support numeric. This type mapping could lose precision and is not recommended for production use", severity: warning},
+	// NumericThatFits:       {brief: "Spanner does not support numeric, but this type mapping preserves the numeric's specified precision", severity: note},
+	// Decimal:               {brief: "Spanner does not support decimal. This type mapping could lose precision and is not recommended for production use", severity: warning},
+	// DecimalThatFits:       {brief: "Spanner does not support decimal, but this type mapping preserves the decimal's specified precision", severity: note},
+	// Serial:                {brief: "Spanner does not support autoincrementing types", severity: warning},
+	// AutoIncrement:         {brief: "Spanner does not support auto_increment attribute", severity: warning},
+	// Timestamp:             {brief: "Spanner timestamp is closer to PostgreSQL timestamptz", severity: note, batch: true},
+	// Datetime:              {brief: "Spanner timestamp is closer to MySQL timestamp", severity: note, batch: true},
+	// Time:                  {brief: "Spanner does not support time/year types", severity: note, batch: true},
+	internal.Widened: {brief: "Some columns will consume more storage in Spanner", severity: note},
+}
+
+type severity int
+
+const (
+	warning severity = iota
+	note
+)
+
+func getTypeMap(w http.ResponseWriter, r *http.Request) {
+	//fmt.Println(IssueDB[1].brief)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(editTypeMap)
+}
+
+type setT map[string]string
+
+func setTypeMap(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), 500)
+		return
+	}
+	var t setT
+	err = json.Unmarshal(reqBody, &t)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), 400)
+		return
+	}
+	i := 1
+	for k, v := range t {
+		//fmt.Printf("%d: key (`%T`)`%v`, value (`%T`)`%#v`\n", i, k, k, v, v)
+		//fmt.Println(mysql.ToSpannerType[k].T.Name)
+		mysql.ToSpannerType[k].T.Name = v
+		i++
+	}
+	w.WriteHeader(http.StatusOK)
+	//json.NewEncoder(w).Encode(editTypeMap)
+}
+
 // func writeSchemaFile(conv *internal.Conv, now time.Time, name string, out *os.File) {
 // 	f, err := os.Create(name)
 // 	if err != nil {
@@ -238,6 +321,8 @@ func WebApp() {
 	router.HandleFunc("/getDDL", getDDL).Methods("GET")
 	router.HandleFunc("/getSession", getSession).Methods("GET")
 	router.HandleFunc("/getSummary", getSummary).Methods("GET")
+	router.HandleFunc("/getTypeMap", getTypeMap).Methods("GET")
+	router.HandleFunc("/setTypeMap", setTypeMap).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
