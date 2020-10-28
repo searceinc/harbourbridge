@@ -314,6 +314,9 @@ var app App
 func WebApp() {
 
 	router := mux.NewRouter().StrictSlash(true)
+	staticFileDirectory := http.Dir("./frontend/")
+	staticFileHandler := http.StripPrefix("/frontend/", http.FileServer(staticFileDirectory))
+	router.PathPrefix("/frontend/").Handler(staticFileHandler).Methods("GET")
 	router.HandleFunc("/", homeLink)
 	router.HandleFunc("/databaseConnection", databaseConnection).Methods("POST")
 	router.HandleFunc("/convertSchema", convertSchemaSQL).Methods("GET")
