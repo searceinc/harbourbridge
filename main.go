@@ -186,7 +186,7 @@ func main() {
 //   2. Create database
 //   3. Run data conversion
 //   4. Generate report
-func toSpanner(driver, projectID, instanceID, dbName string, ioHelper *ioStreams, outputFilePrefix string, now time.Time) error {
+func toSpanner(driver, projectID, instanceID, dbName string, ioHelper *IOStreams, outputFilePrefix string, now time.Time) error {
 	var conv *internal.Conv
 	var err error
 	if !dataOnly {
@@ -385,7 +385,7 @@ func schemaFromDynamoDB(sampleSize int64) (*internal.Conv, error) {
 	return conv, nil
 }
 
-type ioStreams struct {
+type IOStreams struct {
 	in, seekableIn, out *os.File
 	bytesRead           int64
 }
@@ -412,7 +412,7 @@ func schemaFromDump(driver string, ioHelper *IOStreams) (*internal.Conv, error) 
 	return conv, nil
 }
 
-func dataFromDump(driver string, config spanner.BatchWriterConfig, ioHelper *ioStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
+func dataFromDump(driver string, config spanner.BatchWriterConfig, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
 	// TODO: refactor of the way we handle getSeekable
 	// to avoid the code duplication here
 	if !dataOnly {
