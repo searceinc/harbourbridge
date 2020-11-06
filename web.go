@@ -12,6 +12,7 @@ import (
 	"time"
 
 	//"harbourbridge-web/models"
+	"github.com/cloudspannerecosystem/harbourbridge/conversion"
 	"github.com/cloudspannerecosystem/harbourbridge/internal"
 	"github.com/cloudspannerecosystem/harbourbridge/mysql"
 	"github.com/cloudspannerecosystem/harbourbridge/spanner/ddl"
@@ -139,7 +140,7 @@ func convertSchemaDump(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("failed to open the test data file: %v", err), 404)
 		return
 	}
-	conv, err := schemaConv(dc.Driver, &IOStreams{in: f, out: os.Stdout})
+	conv, err := conversion.SchemaConv(dc.Driver, &conversion.IOStreams{In: f, Out: os.Stdout})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Schema Conversion Error : %v", err), 404)
 		return
@@ -166,7 +167,7 @@ func getDDL(w http.ResponseWriter, r *http.Request) {
 
 func getSession(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
-	dbName, err := getDatabaseName("mysql", now)
+	dbName, err := conversion.GetDatabaseName("mysql", now)
 	if err != nil {
 		fmt.Printf("\nCan't get database name: %v\n", err)
 		panic(fmt.Errorf("can't get database name"))

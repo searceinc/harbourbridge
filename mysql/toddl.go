@@ -98,7 +98,10 @@ func toSpannerType(conv *internal.Conv, id string, mods []int64) (ddl.Type, []in
 		}
 	}
 	//fmt.Println(id)
-	spannerType := ToSpannerType[id]
+	spannerType, found := ToSpannerType[id]
+	if !found {
+		return ddl.Type{Name: ddl.String, Len: ddl.MaxLength}, []internal.SchemaIssue{internal.NoGoodType}
+	}
 	maxExpectedMods(spannerType.MaxMods)
 	//fmt.Println(spannerType)
 	return spannerType.T, spannerType.Issue

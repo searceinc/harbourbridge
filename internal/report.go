@@ -25,7 +25,7 @@ import (
 )
 
 // GenerateReport analyzes schema and data conversion stats and writes a
-// detailed report to w and returns a brief summary (as a string).
+// detailed report to w and returns a Brief summary (as a string).
 func GenerateReport(driverName string, conv *Conv, w *bufio.Writer, badWrites map[string]int64) string {
 	reports := AnalyzeTables(conv, badWrites)
 	summary := generateSummary(conv, reports, badWrites)
@@ -187,20 +187,20 @@ func buildTableReportBody(conv *Conv, srcTable string, issues map[string][]Schem
 				spType = strings.ToLower(spType)
 				switch i {
 				case DefaultValue:
-					l = append(l, fmt.Sprintf("%s e.g. column '%s'", IssueDB[i].brief, srcCol))
+					l = append(l, fmt.Sprintf("%s e.g. column '%s'", IssueDB[i].Brief, srcCol))
 				case ForeignKey:
 					l = append(l, fmt.Sprintf("Column '%s' uses foreign keys which HarbourBridge does not support yet", srcCol))
 				case AutoIncrement:
-					l = append(l, fmt.Sprintf("Column '%s' is an autoincrement column. %s", srcCol, IssueDB[i].brief))
+					l = append(l, fmt.Sprintf("Column '%s' is an autoincrement column. %s", srcCol, IssueDB[i].Brief))
 				case Timestamp:
 					// Avoid the confusing "timestamp is mapped to timestamp" message.
-					l = append(l, fmt.Sprintf("Some columns have source DB type 'timestamp without timezone' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, IssueDB[i].brief))
+					l = append(l, fmt.Sprintf("Some columns have source DB type 'timestamp without timezone' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, IssueDB[i].Brief))
 				case Datetime:
-					l = append(l, fmt.Sprintf("Some columns have source DB type 'datetime' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, IssueDB[i].brief))
+					l = append(l, fmt.Sprintf("Some columns have source DB type 'datetime' which is mapped to Spanner type timestamp e.g. column '%s'. %s", srcCol, IssueDB[i].Brief))
 				case Widened:
-					l = append(l, fmt.Sprintf("%s e.g. for column '%s', source DB type %s is mapped to Spanner type %s", IssueDB[i].brief, srcCol, srcType, spType))
+					l = append(l, fmt.Sprintf("%s e.g. for column '%s', source DB type %s is mapped to Spanner type %s", IssueDB[i].Brief, srcCol, srcType, spType))
 				default:
-					l = append(l, fmt.Sprintf("Column '%s': type %s is mapped to %s. %s", srcCol, srcType, spType, IssueDB[i].brief))
+					l = append(l, fmt.Sprintf("Column '%s': type %s is mapped to %s. %s", srcCol, srcType, spType, IssueDB[i].Brief))
 				}
 			}
 		}
@@ -242,24 +242,24 @@ func fillRowStats(conv *Conv, srcTable string, badWrites map[string]int64, tr *t
 // TODO: add links in these descriptions to further documentation
 // e.g. for timestamp description.
 var IssueDB = map[SchemaIssue]struct {
-	brief    string // Short description of issue.
+	Brief    string // Short description of issue.
 	severity severity
 	batch    bool // Whether multiple instances of this issue are combined.
 }{
-	DefaultValue:          {brief: "Some columns have default values which Spanner does not support", severity: warning, batch: true},
-	ForeignKey:            {brief: "Spanner does not support foreign keys", severity: warning},
-	MultiDimensionalArray: {brief: "Spanner doesn't support multi-dimensional arrays", severity: warning},
-	NoGoodType:            {brief: "No appropriate Spanner type", severity: warning},
-	Numeric:               {brief: "Spanner does not support numeric. This type mapping could lose precision and is not recommended for production use", severity: warning},
-	NumericThatFits:       {brief: "Spanner does not support numeric, but this type mapping preserves the numeric's specified precision", severity: note},
-	Decimal:               {brief: "Spanner does not support decimal. This type mapping could lose precision and is not recommended for production use", severity: warning},
-	DecimalThatFits:       {brief: "Spanner does not support decimal, but this type mapping preserves the decimal's specified precision", severity: note},
-	Serial:                {brief: "Spanner does not support autoincrementing types", severity: warning},
-	AutoIncrement:         {brief: "Spanner does not support auto_increment attribute", severity: warning},
-	Timestamp:             {brief: "Spanner timestamp is closer to PostgreSQL timestamptz", severity: note, batch: true},
-	Datetime:              {brief: "Spanner timestamp is closer to MySQL timestamp", severity: note, batch: true},
-	Time:                  {brief: "Spanner does not support time/year types", severity: note, batch: true},
-	Widened:               {brief: "Some columns will consume more storage in Spanner", severity: note, batch: true},
+	DefaultValue:          {Brief: "Some columns have default values which Spanner does not support", severity: warning, batch: true},
+	ForeignKey:            {Brief: "Spanner does not support foreign keys", severity: warning},
+	MultiDimensionalArray: {Brief: "Spanner doesn't support multi-dimensional arrays", severity: warning},
+	NoGoodType:            {Brief: "No appropriate Spanner type", severity: warning},
+	Numeric:               {Brief: "Spanner does not support numeric. This type mapping could lose precision and is not recommended for production use", severity: warning},
+	NumericThatFits:       {Brief: "Spanner does not support numeric, but this type mapping preserves the numeric's specified precision", severity: note},
+	Decimal:               {Brief: "Spanner does not support decimal. This type mapping could lose precision and is not recommended for production use", severity: warning},
+	DecimalThatFits:       {Brief: "Spanner does not support decimal, but this type mapping preserves the decimal's specified precision", severity: note},
+	Serial:                {Brief: "Spanner does not support autoincrementing types", severity: warning},
+	AutoIncrement:         {Brief: "Spanner does not support auto_increment attribute", severity: warning},
+	Timestamp:             {Brief: "Spanner timestamp is closer to PostgreSQL timestamptz", severity: note, batch: true},
+	Datetime:              {Brief: "Spanner timestamp is closer to MySQL timestamp", severity: note, batch: true},
+	Time:                  {Brief: "Spanner does not support time/year types", severity: note, batch: true},
+	Widened:               {Brief: "Some columns will consume more storage in Spanner", severity: note, batch: true},
 }
 
 type severity int
