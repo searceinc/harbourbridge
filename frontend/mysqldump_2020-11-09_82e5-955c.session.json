@@ -1,0 +1,347 @@
+{
+ "SpSchema": {
+  "category": {
+   "Name": "category",
+   "ColNames": [
+    "category_id",
+    "name",
+    "last_update"
+   ],
+   "ColDefs": {
+    "category_id": {
+     "Name": "category_id",
+     "T": {
+      "Name": "INT64",
+      "Len": 0,
+      "IsArray": false
+     },
+     "NotNull": true,
+     "Comment": "From: category_id tinyint(4)",
+     "Disable": false
+    },
+    "last_update": {
+     "Name": "last_update",
+     "T": {
+      "Name": "TIMESTAMP",
+      "Len": 0,
+      "IsArray": false
+     },
+     "NotNull": true,
+     "Comment": "From: last_update timestamp",
+     "Disable": false
+    },
+    "name": {
+     "Name": "name",
+     "T": {
+      "Name": "STRING",
+      "Len": 9223372036854775807,
+      "IsArray": false
+     },
+     "NotNull": true,
+     "Comment": "From: name varchar(25)",
+     "Disable": false
+    }
+   },
+   "Pks": [
+    {
+     "Col": "category_id",
+     "Desc": false
+    }
+   ],
+   "Comment": "Spanner schema for source table category"
+  },
+  "country": {
+   "Name": "country",
+   "ColNames": [
+    "country_id",
+    "country",
+    "last_update"
+   ],
+   "ColDefs": {
+    "country": {
+     "Name": "country",
+     "T": {
+      "Name": "STRING",
+      "Len": 9223372036854775807,
+      "IsArray": false
+     },
+     "NotNull": true,
+     "Comment": "From: country varchar(50)",
+     "Disable": false
+    },
+    "country_id": {
+     "Name": "country_id",
+     "T": {
+      "Name": "INT64",
+      "Len": 0,
+      "IsArray": false
+     },
+     "NotNull": true,
+     "Comment": "From: country_id smallint(6)",
+     "Disable": false
+    },
+    "last_update": {
+     "Name": "last_update",
+     "T": {
+      "Name": "TIMESTAMP",
+      "Len": 0,
+      "IsArray": false
+     },
+     "NotNull": true,
+     "Comment": "From: last_update timestamp",
+     "Disable": false
+    }
+   },
+   "Pks": [
+    {
+     "Col": "country_id",
+     "Desc": false
+    }
+   ],
+   "Comment": "Spanner schema for source table country"
+  }
+ },
+ "SyntheticPKeys": {},
+ "SrcSchema": {
+  "category": {
+   "Name": "category",
+   "ColNames": [
+    "category_id",
+    "name",
+    "last_update"
+   ],
+   "ColDefs": {
+    "category_id": {
+     "Name": "category_id",
+     "Type": {
+      "Name": "tinyint",
+      "Mods": [
+       4
+      ],
+      "ArrayBounds": null
+     },
+     "NotNull": true,
+     "Unique": true,
+     "Ignored": {
+      "Check": false,
+      "Identity": false,
+      "Default": false,
+      "Exclusion": false,
+      "ForeignKey": false,
+      "AutoIncrement": true
+     }
+    },
+    "last_update": {
+     "Name": "last_update",
+     "Type": {
+      "Name": "timestamp",
+      "Mods": null,
+      "ArrayBounds": null
+     },
+     "NotNull": true,
+     "Unique": false,
+     "Ignored": {
+      "Check": false,
+      "Identity": false,
+      "Default": true,
+      "Exclusion": false,
+      "ForeignKey": false,
+      "AutoIncrement": false
+     }
+    },
+    "name": {
+     "Name": "name",
+     "Type": {
+      "Name": "varchar",
+      "Mods": [
+       25
+      ],
+      "ArrayBounds": null
+     },
+     "NotNull": true,
+     "Unique": false,
+     "Ignored": {
+      "Check": false,
+      "Identity": false,
+      "Default": false,
+      "Exclusion": false,
+      "ForeignKey": false,
+      "AutoIncrement": false
+     }
+    }
+   },
+   "PrimaryKeys": [
+    {
+     "Column": "category_id",
+     "Desc": false
+    }
+   ],
+   "Indexes": null
+  },
+  "country": {
+   "Name": "country",
+   "ColNames": [
+    "country_id",
+    "country",
+    "last_update"
+   ],
+   "ColDefs": {
+    "country": {
+     "Name": "country",
+     "Type": {
+      "Name": "varchar",
+      "Mods": [
+       50
+      ],
+      "ArrayBounds": null
+     },
+     "NotNull": true,
+     "Unique": false,
+     "Ignored": {
+      "Check": false,
+      "Identity": false,
+      "Default": false,
+      "Exclusion": false,
+      "ForeignKey": false,
+      "AutoIncrement": false
+     }
+    },
+    "country_id": {
+     "Name": "country_id",
+     "Type": {
+      "Name": "smallint",
+      "Mods": [
+       6
+      ],
+      "ArrayBounds": null
+     },
+     "NotNull": true,
+     "Unique": true,
+     "Ignored": {
+      "Check": false,
+      "Identity": false,
+      "Default": false,
+      "Exclusion": false,
+      "ForeignKey": false,
+      "AutoIncrement": true
+     }
+    },
+    "last_update": {
+     "Name": "last_update",
+     "Type": {
+      "Name": "timestamp",
+      "Mods": null,
+      "ArrayBounds": null
+     },
+     "NotNull": true,
+     "Unique": false,
+     "Ignored": {
+      "Check": false,
+      "Identity": false,
+      "Default": true,
+      "Exclusion": false,
+      "ForeignKey": false,
+      "AutoIncrement": false
+     }
+    }
+   },
+   "PrimaryKeys": [
+    {
+     "Column": "country_id",
+     "Desc": false
+    }
+   ],
+   "Indexes": null
+  }
+ },
+ "Issues": {
+  "category": {
+   "category_id": [
+    13,
+    10
+   ],
+   "last_update": [
+    0
+   ]
+  },
+  "country": {
+   "country_id": [
+    13,
+    10
+   ],
+   "last_update": [
+    0
+   ]
+  }
+ },
+ "ToSpanner": {
+  "category": {
+   "Name": "category",
+   "Cols": {
+    "category_id": "category_id",
+    "last_update": "last_update",
+    "name": "name"
+   }
+  },
+  "country": {
+   "Name": "country",
+   "Cols": {
+    "country": "country",
+    "country_id": "country_id",
+    "last_update": "last_update"
+   }
+  }
+ },
+ "ToSource": {
+  "category": {
+   "Name": "category",
+   "Cols": {
+    "category_id": "category_id",
+    "last_update": "last_update",
+    "name": "name"
+   }
+  },
+  "country": {
+   "Name": "country",
+   "Cols": {
+    "country": "country",
+    "country_id": "country_id",
+    "last_update": "last_update"
+   }
+  }
+ },
+ "Location": {},
+ "Stats": {
+  "Rows": {
+   "category": 16,
+   "country": 10
+  },
+  "GoodRows": {},
+  "BadRows": {},
+  "Statement": {
+   "CommitStmt": {
+    "Schema": 0,
+    "Data": 0,
+    "Skip": 2,
+    "Error": 0
+   },
+   "CreateTableStmt": {
+    "Schema": 2,
+    "Data": 0,
+    "Skip": 0,
+    "Error": 0
+   },
+   "InsertStmt": {
+    "Schema": 0,
+    "Data": 2,
+    "Skip": 0,
+    "Error": 0
+   }
+  },
+  "Unexpected": {
+   "Found 1 mods while processing type id=varchar": 2
+  },
+  "Reparsed": 0
+ },
+ "TimezoneOffset": "+00:00"
+}
