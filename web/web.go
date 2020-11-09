@@ -22,14 +22,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// var editTypeMap = map[string]struct {
-// 	T []string
-// 	Issue    []internal.SchemaIssue
-// }{
-// 	"bool":    {T: []string{ddl.Bool}, Issue: []internal.SchemaIssue{-1}},
-// 	"varchar": {T: []string{ddl.String, ddl.Bytes}, Issue: []internal.SchemaIssue{1}},
-// }
-
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to Harbourbridge!")
 }
@@ -71,6 +63,7 @@ func databaseConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	app.sourceDB = sourceDB
 	app.dbName = config.Database
+	app.driver = config.Driver
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -113,6 +106,7 @@ func convertSchemaDump(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app.conv = conv
+	app.driver = dc.Driver
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(conv)
 }
@@ -134,7 +128,7 @@ func getDDL(w http.ResponseWriter, r *http.Request) {
 
 func getSession(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
-	dbName, err := conversion.GetDatabaseName("mysql", now)
+	dbName, err := conversion.GetDatabaseName(app.driver, now)
 	if err != nil {
 		fmt.Printf("\nCan't get database name: %v\n", err)
 		panic(fmt.Errorf("can't get database name"))
@@ -157,8 +151,35 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(out, "Can't write out session file: %v\n", err)
 		return
 	}
-	fmt.Fprintf(out, "Wrote session to file '%s'.\n", dbName+sessionFile)
-	//json.NewEncoder(w).Encode()
+	session := Session{Driver: app.driver, FilePath: "./", FileName: dbName + sessionFile, CreatedAt: now}
+	//fmt.Fprintf(out, "Wrote session to file '%s'.\n", dbName+sessionFile)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(session)
+}
+
+func resumeSession(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), 500)
+		return
+	}
+	var s Session
+	err = json.Unmarshal(reqBody, &s)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), 400)
+		return
+	}
+	f, err := os.Open(s.FilePath + s.FileName)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to open the session file: %v", err), 404)
+		return
+	}
+	defer f.Close()
+
+	sessionJSON, _ := ioutil.ReadAll(f)
+	json.Unmarshal(sessionJSON, &app.conv)
+	app.driver = s.Driver
+	w.WriteHeader(http.StatusOK)
 }
 
 func getSummary(w http.ResponseWriter, r *http.Request) {
@@ -223,37 +244,10 @@ func setTypeMap(w http.ResponseWriter, r *http.Request) {
 	//json.NewEncoder(w).Encode(editTypeMap)
 }
 
-// func writeSchemaFile(conv *internal.Conv, now time.Time, name string, out *os.File) {
-// 	f, err := os.Create(name)
-// 	if err != nil {
-// 		fmt.Fprintf(out, "Can't create schema file %s: %v\n", name, err)
-// 		return
-// 	}
-// 	// The schema file we write out includes comments, and doesn't add backticks
-// 	// around table and column names. This file is intended for explanatory
-// 	// and documentation purposes, and is not strictly legal Cloud Spanner DDL
-// 	// (Cloud Spanner doesn't currently support comments). Change 'Comments'
-// 	// to false and 'ProtectIds' to true to write out a schema file that is
-// 	// legal Cloud Spanner DDL.
-// 	ddl := conv.GetDDL(ddl.Config{Comments: true, ProtectIds: false})
-// 	if len(ddl) == 0 {
-// 		ddl = []string{"\n-- Schema is empty -- no tables found\n"}
-// 	}
-// 	l := []string{
-// 		fmt.Sprintf("-- Schema generated %s\n", now.Format("2006-01-02 15:04:05")),
-// 		strings.Join(ddl, ";\n\n"),
-// 		"\n",
-// 	}
-// 	if _, err := f.WriteString(strings.Join(l, "")); err != nil {
-// 		fmt.Fprintf(out, "Can't write out schema file: %v\n", err)
-// 		return
-// 	}
-// 	fmt.Fprintf(out, "Wrote schema to file '%s'.\n", name)
-// }
-
 type App struct {
 	sourceDB *sql.DB
 	dbName   string
+	driver   string
 	conv     *internal.Conv
 }
 
@@ -263,12 +257,16 @@ func WebApp() {
 
 	fmt.Println("-------------------")
 	router := mux.NewRouter().StrictSlash(true)
+	staticFileDirectory := http.Dir("./frontend/")
+	staticFileHandler := http.StripPrefix("/frontend/", http.FileServer(staticFileDirectory))
+	router.PathPrefix("/frontend/").Handler(staticFileHandler).Methods("GET")
 	router.HandleFunc("/", homeLink)
 	router.HandleFunc("/databaseConnection", databaseConnection).Methods("POST")
 	router.HandleFunc("/convertSchema", convertSchemaSQL).Methods("GET")
 	router.HandleFunc("/convertSchemaDump", convertSchemaDump).Methods("POST")
 	router.HandleFunc("/getDDL", getDDL).Methods("GET")
 	router.HandleFunc("/getSession", getSession).Methods("GET")
+	router.HandleFunc("/resumeSession", resumeSession).Methods("POST")
 	router.HandleFunc("/getSummary", getSummary).Methods("GET")
 	router.HandleFunc("/getTypeMap", getTypeMap).Methods("GET")
 	router.HandleFunc("/setTypeMap", setTypeMap).Methods("POST")

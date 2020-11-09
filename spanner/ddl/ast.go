@@ -88,6 +88,7 @@ type ColumnDef struct {
 	T       Type
 	NotNull bool
 	Comment string
+	Disable bool
 }
 
 // Config controls how AST nodes are printed (aka unparsed).

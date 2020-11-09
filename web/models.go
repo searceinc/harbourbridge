@@ -1,6 +1,8 @@
 package web
 
 import (
+	"time"
+
 	"github.com/cloudspannerecosystem/harbourbridge/internal"
 	"github.com/cloudspannerecosystem/harbourbridge/spanner/ddl"
 )
@@ -19,6 +21,18 @@ type DumpConfig struct {
 	FilePath string `json:"Path"`
 }
 
+type Session struct {
+	Driver    string    `json:"driver"`
+	FilePath  string    `json:"path"`
+	FileName  string    `json:"fileName"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type Summary struct {
+	Heading string
+	Lines   []string
+	Rate    string
+}
 type typeIssue struct {
 	T     string
 	Issue internal.SchemaIssue
