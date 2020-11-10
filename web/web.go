@@ -144,8 +144,9 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		panic(fmt.Errorf("can't get database name"))
 	}
 	sessionFile := ".session.json"
+	filePath := "frontend/"
 	out := os.Stdout
-	f, err := os.Create(dbName + sessionFile)
+	f, err := os.Create(filePath + dbName + sessionFile)
 	if err != nil {
 		fmt.Fprintf(out, "Can't create session file %s: %v\n", dbName+sessionFile, err)
 		return
@@ -161,7 +162,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(out, "Can't write out session file: %v\n", err)
 		return
 	}
-	session := Session{Driver: app.driver, FilePath: "./", FileName: dbName + sessionFile, CreatedAt: now}
+	session := Session{Driver: app.driver, FilePath: filePath, FileName: dbName + sessionFile, CreatedAt: now}
 	//fmt.Fprintf(out, "Wrote session to file '%s'.\n", dbName+sessionFile)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(session)
