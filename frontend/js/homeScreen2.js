@@ -518,7 +518,7 @@ function saveButtonClicked(event) {
         schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].Name = newColumnName;
         // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].Name = newColumnName;
 
-        table_pks = schemaConversionObj_original.SpSchema[src_table_name[num]].Pks;
+        table_pks = schemaConversionObj.SpSchema[src_table_name[num]].Pks;
         for (var x = 0; x < table_pks.length; x++) {
           if (table_pks[x].Col == originalColumnName) {
             table_pks[x].Col = newColumnName;
@@ -529,7 +529,7 @@ function saveButtonClicked(event) {
 
         toSpannerColumns = Object.keys(schemaConversionObj.ToSpanner[src_table_name[num]].Cols);
         for (var x = 0; x < toSpannerColumns.length; x++) {
-          if (schemaConversionObj_original.ToSpanner[src_table_name[num]].Cols[toSpannerColumns[x]] == originalColumnName) {
+          if (schemaConversionObj.ToSpanner[src_table_name[num]].Cols[toSpannerColumns[x]] == originalColumnName) {
             // schemaConversionObj_original.ToSpanner[src_table_name[num]].Cols[toSpannerColumns[x]] = newColumnName;
             schemaConversionObj.ToSpanner[src_table_name[num]].Cols[toSpannerColumns[x]] = newColumnName;
           }
@@ -539,7 +539,7 @@ function saveButtonClicked(event) {
         for (var x = 0; x < toSourceKeys.length; x++) {
           if (toSourceKeys[x] == originalColumnName) {
             newToSourceKey = newColumnName;
-            newToSourceValue = schemaConversionObj_original.ToSource[src_table_name[num]].Cols[toSourceKeys[x]];
+            newToSourceValue = schemaConversionObj.ToSource[src_table_name[num]].Cols[toSourceKeys[x]];
             delete schemaConversionObj.ToSource[src_table_name[num]].Cols[toSourceKeys[x]];
             // delete schemaConversionObj_original.ToSource[src_table_name[num]].Cols[toSourceKeys[x]];
             break;
