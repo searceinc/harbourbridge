@@ -6,7 +6,29 @@
 function initTasks() {
   $(document).ready(function () {
 
-    // $('.tooltip').show();
+    // fetch(apiUrl + '/getSession', {
+    //   method: 'GET',
+    //   headers: {
+    //     'Accept': 'application/json',
+    //     'Content-Type': 'application/json'
+    //   }
+    // })
+    // .then(function (res) {
+    //   res.json().then(function (sessionInfoResp) {
+    //     debugger
+    //     console.log(sessionInfoResp);
+    //       sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+    //       if (sessionStorageArr == null) {
+    //         sessionStorageArr = [];
+    //         sessionStorageArr.push(sessionInfoResp);
+    //       }
+    //       else {
+    //         sessionStorageArr.push(sessionInfoResp);
+    //       }
+    //       sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
+    //       console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
+    //   })
+    // });
 
     $('.reportCollapse').on('show.bs.collapse', function() {
       $(this).closest('.card').find('.rotate-icon').toggleClass('down');

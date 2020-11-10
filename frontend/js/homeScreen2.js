@@ -891,7 +891,8 @@ function createTableFromJson(obj) {
     var col = []
     for (var m = 0; m < 6; m++) {
       if (m % 2 == 0) {
-        col.push('MySQL');
+        // col.push('MySQL');
+        col.push(sourceTableFlag);
       }
       else
         col.push('Spanner');
@@ -1139,7 +1140,9 @@ function createTableFromJson(obj) {
     div3.appendChild(div4)
     div1.appendChild(div3)
 
-    // createSummaryForEachTable(i, summaryDataResp);
+    if (summaryDataResp != undefined) {
+      createSummaryForEachTable(i, summaryDataResp);
+    }
 
     li.appendChild(div1);
   }
@@ -1586,11 +1589,36 @@ function showSchemaAssessment() {
 function storeDumpFileValues(dbType, filePath) {
   if (dbType == 'mysql') {
     localStorage.setItem('globalDbType', dbType + 'dump');
+    sourceTableFlag = 'MySQL';
   }
   else if (dbType == 'postgres') {
     localStorage.setItem('globalDbType', 'pg_dump');
+    sourceTableFlag = 'Postgres';
   }
   localStorage.setItem('globalDumpFilePath', filePath);
+  fetch(apiUrl + '/getSession', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(function (res) {
+    res.json().then(function (sessionInfoResp) {
+      debugger
+      console.log(sessionInfoResp);
+        sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+        if (sessionStorageArr == null) {
+          sessionStorageArr = [];
+          sessionStorageArr.push(sessionInfoResp);
+        }
+        else {
+          sessionStorageArr.push(sessionInfoResp);
+        }
+        sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
+        console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
+    })
+  })
 }
 
 /**
@@ -1626,34 +1654,34 @@ function onLoadDatabase(dbType, dumpFilePath) {
         "Path": dumpFilePath
       })
     });
-    let ddlData = fetch(apiUrl + '/getDDL');
-    let summaryData = fetch(apiUrl + '/getSummary');
-    let sessionInfo = fetch(apiUrl + '/getSession');
+    ddlData = fetch(apiUrl + '/getDDL');
+    summaryData = fetch(apiUrl + '/getSummary');
+    // sessionInfo = fetch(apiUrl + '/getSession');
 
-    Promise.all([reportData, ddlData, summaryData, sessionInfo])
+    Promise.all([reportData, ddlData, summaryData])
       .then(values => Promise.all(values.map(value => value.json())))
       .then(finalVals => {
         hideSpinner();
-        let reportDataResp = finalVals[0];
-        let ddlDataResp = finalVals[1];
+        reportDataResp = finalVals[0];
+        ddlDataResp = finalVals[1];
         summaryDataResp = finalVals[2];
-        sessionInfoResp = finalVals[3];
+        // sessionInfoResp = finalVals[3];
         jQuery('#loadDatabaseDumpModal').modal('hide');
 
         const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
         // Render the component in the "app" placeholder
         document.getElementById('app').innerHTML = component.render();
-        console.log(sessionInfoResp);
-        sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-        if (sessionStorageArr == null) {
-          sessionStorageArr = [];
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        else {
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-        console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
+        // console.log(sessionInfoResp);
+        // sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+        // if (sessionStorageArr == null) {
+        //   sessionStorageArr = [];
+        //   sessionStorageArr.push(sessionInfoResp);
+        // }
+        // else {
+        //   sessionStorageArr.push(sessionInfoResp);
+        // }
+        // sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
+        // console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
         createTableFromJson(reportDataResp);
         createDdlFromJson(ddlDataResp);
         createSummaryFromJson(summaryDataResp);
@@ -1733,24 +1761,33 @@ function onImport() {
   }
 
   else {
-    let ddlData = fetch(apiUrl + '/getDDL');
-    let summaryData = fetch(apiUrl + '/getSummary');
 
-    Promise.all([ddlData, summaryData])
-      .then(values => Promise.all(values.map(value => value.json())))
-      .then(finalVals => {
-        // hideSpinner();
-        let ddlDataResp = finalVals[0];
-        summaryDataResp = finalVals[1];
+    jQuery('#importSchemaModal').modal('hide');
+    const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
+    // Render the component in the "app" placeholder
+    document.getElementById('app').innerHTML = component.render();
+    createTableFromJson(JSON.parse(localStorage.getItem('importSchema')));
+    createDdlFromJson(ddl)
+    createSummaryFromJson(summary);
 
-        jQuery('#importSchemaModal').modal('hide');
-        const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
-        // Render the component in the "app" placeholder
-        document.getElementById('app').innerHTML = component.render();
-        createTableFromJson(JSON.parse(localStorage.getItem('importSchema')));
-        createDdlFromJson(ddlDataResp)
-        createSummaryFromJson(summaryDataResp);
-      });
+    // let ddlData = fetch(apiUrl + '/getDDL');
+    // let summaryData = fetch(apiUrl + '/getSummary');
+
+    // Promise.all([ddlData, summaryData])
+    //   .then(values => Promise.all(values.map(value => value.json())))
+    //   .then(finalVals => {
+    //     // hideSpinner();
+    //     let ddlDataResp = finalVals[0];
+    //     summaryDataResp = finalVals[1];
+
+    //     jQuery('#importSchemaModal').modal('hide');
+    //     const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
+    //     // Render the component in the "app" placeholder
+    //     document.getElementById('app').innerHTML = component.render();
+    //     createTableFromJson(JSON.parse(localStorage.getItem('importSchema')));
+    //     createDdlFromJson(ddlDataResp)
+    //     createSummaryFromJson(summaryDataResp);
+    //   });
   }
 }
 

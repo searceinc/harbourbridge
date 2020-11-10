@@ -2,7 +2,7 @@
 const RED = '#F44336'
 var importSchemaObj = {};
 var schemaConversionObj_original = {};
-var sourceTableFlag = '';
+var sourceTableFlag = 'MySQL';
 var reportAccCount = 0;
 var summaryAccCount = 0;
 var ddlAccCount = 0;
@@ -72,6 +72,19 @@ function panelBorderClass(index) {
       borderClass = 'panel-heading table-panel';
   }
   return borderClass;
+}
+
+var summary = {
+  "category": "Schema Conversion: OK (some columns did not map cleanly). \n\n Warning \n1) Some columns have defaultvalues which Spanner does not support e.g. column \n 'Address Line 2'\
+    \n\n Note \n 1) Some columns will consume more storagein Spanner e.g. for column 'Address Id', \n source DB type int(11) is mapped to Spanner type int64.",
+
+    "country": "Schema Conversion: OK (some columns did not map cleanly). \n\n Warning \n1) Some columns have defaultvalues which Spanner does not support e.g. column \n 'Address Line 2'\
+    \n\n Note \n 1) Some columns will consume more storagein Spanner e.g. for column 'Address Id', \n source DB type int(11) is mapped to Spanner type int64."
+};  
+
+var ddl = {
+    "category": "--\n-- Spanner schema for source table category\n--\nCREATE TABLE category (\n    category_id INT64 NOT NULL,     -- From: category_id tinyint(4)\n    name STRING(25) NOT NULL,       -- From: name varchar(25)\n    last_update TIMESTAMP NOT NULL  -- From: last_update timestamp\n) PRIMARY KEY (category_id)",
+  "country": "--\n-- Spanner schema for source table country\n--\nCREATE TABLE country (\n    country_id INT64 NOT NULL,      -- From: country_id smallint(6)\n    country STRING(50) NOT NULL,    -- From: country varchar(50)\n    last_update TIMESTAMP NOT NULL  -- From: last_update timestamp\n) PRIMARY KEY (country_id)"
 }
 
 var dataType = {
