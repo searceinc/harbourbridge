@@ -1523,7 +1523,62 @@ function hideSpinner() {
  *
  * @return {null}
  */
-function showSchemaAssessment() {
+// function showSchemaAssessment() {
+//   if (!isLive) {
+//     jQuery('#connectModalSuccess').modal("hide");
+//     jQuery('#connectToDbModal').modal("hide");
+//     jQuery('#globalDataTypeModal').modal("hide");
+
+//     const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
+//     // Render the component in the "app" placeholder
+//     document.getElementById('app').innerHTML = component.render();
+//     // router.loadRoute('schemaReport')
+//     createTableFromJson(schemaConversionObj_original)
+//     createDdlFromJson(ddl)
+//     createSummaryFromJson(summary);
+//   }
+
+//   else {
+//     showSpinner();
+//     let reportData = fetch(apiUrl + '/convertSchema');
+//     let ddlData = fetch(apiUrl + '/getDDL');
+//     let summaryData = fetch(apiUrl + '/getSummary');
+//     let sessionInfo = fetch(apiUrl + '/getSession');
+
+//     Promise.all([reportData, ddlData, summaryData, sessionInfo])
+//       .then(values => Promise.all(values.map(value => value.json())))
+//       .then(finalVals => {
+//         hideSpinner();
+//         let reportDataResp = finalVals[0];
+//         let ddlDataResp = finalVals[1];
+//         summaryDataResp = finalVals[2];
+//         let sessionInfoResp = finalVals[3];
+//         jQuery('#connectModalSuccess').modal("hide");
+//         jQuery('#connectToDbModal').modal("hide");
+//         jQuery('#globalDataTypeModal').modal("hide");
+
+//         const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
+//         // Render the component in the "app" placeholder
+//         document.getElementById('app').innerHTML = component.render();
+
+//         sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+//         if (sessionStorageArr == null) {
+//           sessionStorageArr = [];
+//           sessionStorageArr.push(sessionInfoResp);
+//         }
+//         else {
+//           sessionStorageArr.push(sessionInfoResp);
+//         }
+//         sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
+//         // router.loadRoute('schemaReport')
+//         createTableFromJson(reportDataResp);
+//         // createTableFromJson(schemaConversionObj_original);
+//         createDdlFromJson(ddlDataResp)
+//         createSummaryFromJson(summaryDataResp);
+//       });
+//   }
+// }
+async function showSchemaAssessment() {
   if (!isLive) {
     jQuery('#connectModalSuccess').modal("hide");
     jQuery('#connectToDbModal').modal("hide");
@@ -1540,42 +1595,38 @@ function showSchemaAssessment() {
 
   else {
     showSpinner();
-    let reportData = fetch(apiUrl + '/convertSchema');
-    let ddlData = fetch(apiUrl + '/getDDL');
-    let summaryData = fetch(apiUrl + '/getSummary');
-    let sessionInfo = fetch(apiUrl + '/getSession');
+    reportData = await fetch(apiUrl + '/convertSchema');
+    reportDataResp = await reportData.json();
+    
+    ddlData = await fetch(apiUrl + '/getDDL');
+    ddlDataResp = await ddlData.json();
 
-    Promise.all([reportData, ddlData, summaryData, sessionInfo])
-      .then(values => Promise.all(values.map(value => value.json())))
-      .then(finalVals => {
-        hideSpinner();
-        let reportDataResp = finalVals[0];
-        let ddlDataResp = finalVals[1];
-        summaryDataResp = finalVals[2];
-        let sessionInfoResp = finalVals[3];
-        jQuery('#connectModalSuccess').modal("hide");
-        jQuery('#connectToDbModal').modal("hide");
-        jQuery('#globalDataTypeModal').modal("hide");
+    summaryData = await fetch(apiUrl + '/getSummary');
+    summaryDataResp = await summaryData.json();
 
-        const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
-        // Render the component in the "app" placeholder
-        document.getElementById('app').innerHTML = component.render();
+    sessionInfo = await fetch(apiUrl + '/getSession');
+    sessionInfoResp = await sessionInfo.json();
 
-        sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-        if (sessionStorageArr == null) {
-          sessionStorageArr = [];
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        else {
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-        // router.loadRoute('schemaReport')
-        createTableFromJson(reportDataResp);
-        // createTableFromJson(schemaConversionObj_original);
-        createDdlFromJson(ddlDataResp)
-        createSummaryFromJson(summaryDataResp);
-      });
+    jQuery('#connectModalSuccess').modal("hide");
+    jQuery('#connectToDbModal').modal("hide");
+    jQuery('#globalDataTypeModal').modal("hide");
+
+    const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
+    // Render the component in the "app" placeholder
+    document.getElementById('app').innerHTML = component.render();
+
+    sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+    if (sessionStorageArr == null) {
+      sessionStorageArr = [];
+      sessionStorageArr.push(sessionInfoResp);
+    }
+    else {
+      sessionStorageArr.push(sessionInfoResp);
+    }
+    sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
+    createTableFromJson(reportDataResp);
+    createDdlFromJson(ddlDataResp)
+    createSummaryFromJson(summaryDataResp);
   }
 }
 
@@ -1605,7 +1656,6 @@ function storeDumpFileValues(dbType, filePath) {
   })
   .then(function (res) {
     res.json().then(function (sessionInfoResp) {
-      debugger
       console.log(sessionInfoResp);
         sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
         if (sessionStorageArr == null) {
@@ -1628,7 +1678,55 @@ function storeDumpFileValues(dbType, filePath) {
  * @param {string} dumpFilePath path entered for the dump file
  * @return {null}
  */
-function onLoadDatabase(dbType, dumpFilePath) {
+// function onLoadDatabase(dbType, dumpFilePath) {
+//   if (!isLive) {
+//     showSpinner();
+//     jQuery('#loadDatabaseDumpModal').modal('hide');
+//     const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
+//     // Render the component in the "app" placeholder
+//     document.getElementById('app').innerHTML = component.render();
+//     // router.loadRoute('schemaReport')
+//     createTableFromJson(schemaConversionObj_original)
+//     createDdlFromJson(ddl)
+//     createSummaryFromJson(summary);
+//   }
+
+//   else {
+//     showSpinner();
+//     let reportData = fetch(apiUrl + '/convertSchemaDump', {
+//       method: 'POST',
+//       headers: {
+//         'Accept': 'application/json',
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify({
+//         "Driver": dbType,
+//         "Path": dumpFilePath
+//       })
+//     });
+//     ddlData = fetch(apiUrl + '/getDDL');
+//     summaryData = fetch(apiUrl + '/getSummary');
+//     // sessionInfo = fetch(apiUrl + '/getSession');
+
+//     Promise.all([reportData, ddlData, summaryData])
+//       .then(values => Promise.all(values.map(value => value.json())))
+//       .then(finalVals => {
+//         hideSpinner();
+//         reportDataResp = finalVals[0];
+//         ddlDataResp = finalVals[1];
+//         summaryDataResp = finalVals[2];
+//         jQuery('#loadDatabaseDumpModal').modal('hide');
+
+//         const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
+//         // Render the component in the "app" placeholder
+//         document.getElementById('app').innerHTML = component.render();
+//         createTableFromJson(reportDataResp);
+//         createDdlFromJson(ddlDataResp);
+//         createSummaryFromJson(summaryDataResp);
+//       })
+//   }
+// }
+async function onLoadDatabase(dbType, dumpFilePath) {
   if (!isLive) {
     showSpinner();
     jQuery('#loadDatabaseDumpModal').modal('hide');
@@ -1643,7 +1741,7 @@ function onLoadDatabase(dbType, dumpFilePath) {
 
   else {
     showSpinner();
-    let reportData = fetch(apiUrl + '/convertSchemaDump', {
+    reportData = await fetch(apiUrl + '/convertSchemaDump', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -1654,40 +1752,25 @@ function onLoadDatabase(dbType, dumpFilePath) {
         "Path": dumpFilePath
       })
     });
-    ddlData = fetch(apiUrl + '/getDDL');
-    summaryData = fetch(apiUrl + '/getSummary');
-    // sessionInfo = fetch(apiUrl + '/getSession');
+    reportDataResp = await reportData.json();
+    
+    ddlData = await fetch(apiUrl + '/getDDL');
+    ddlDataResp = await ddlData.json();
+    
+    summaryData = await fetch(apiUrl + '/getSummary');
+    summaryDataResp = await summaryData.json();
+    console.log(summaryData);
+    jQuery('#loadDatabaseDumpModal').modal('hide');
 
-    Promise.all([reportData, ddlData, summaryData])
-      .then(values => Promise.all(values.map(value => value.json())))
-      .then(finalVals => {
-        hideSpinner();
-        reportDataResp = finalVals[0];
-        ddlDataResp = finalVals[1];
-        summaryDataResp = finalVals[2];
-        // sessionInfoResp = finalVals[3];
-        jQuery('#loadDatabaseDumpModal').modal('hide');
-
-        const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
-        // Render the component in the "app" placeholder
-        document.getElementById('app').innerHTML = component.render();
-        // console.log(sessionInfoResp);
-        // sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-        // if (sessionStorageArr == null) {
-        //   sessionStorageArr = [];
-        //   sessionStorageArr.push(sessionInfoResp);
-        // }
-        // else {
-        //   sessionStorageArr.push(sessionInfoResp);
-        // }
-        // sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-        // console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
-        createTableFromJson(reportDataResp);
-        createDdlFromJson(ddlDataResp);
-        createSummaryFromJson(summaryDataResp);
-      })
+    const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
+    // Render the component in the "app" placeholder
+    document.getElementById('app').innerHTML = component.render();
+    createTableFromJson(reportDataResp);
+    createDdlFromJson(ddlDataResp);
+    createSummaryFromJson(summaryDataResp);
   }
 }
+
 
 /**
  * Function to call database connection api.
@@ -1843,7 +1926,7 @@ function resumeSession(driver, path, fileName) {
     })
   });
 
-  filePath = path + fileName;
+  filePath = './' + fileName;
   readTextFile(filePath, function (text) {
     var data = JSON.parse(text);
 
@@ -2232,7 +2315,7 @@ function homeScreenHtml() {
    </div>
  </div>
  
- <div class="modal" id="connectModalSuccess" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+ <div class="modal" id="connectModalSuccess" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
    <div class="modal-dialog modal-dialog-centered" role="document">
 
      <!-- Modal content-->
@@ -2258,7 +2341,7 @@ function homeScreenHtml() {
    </div>
  </div>
 
- <div class="modal" id="connectModalFailure" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+ <div class="modal" id="connectModalFailure" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
    <div class="modal-dialog modal-dialog-centered" role="document">
 
      <!-- Modal content-->
