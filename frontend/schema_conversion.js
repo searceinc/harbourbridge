@@ -114,9 +114,9 @@ function searchTable() {
   ul = document.getElementById(tableListArea);
   ul.style.display = '';
   li = ul.getElementsByTagName('area');
-  tableListLength = Object.keys(schemaConversionObj_original.SpSchema).length;
-  for (i=0; i<Object.keys(schemaConversionObj_original.SpSchema).length; i++) {
-    tableVal = Object.keys(schemaConversionObj_original.SpSchema)[i];
+  tableListLength = Object.keys(schemaConversionObj.SpSchema).length;
+  for (i=0; i<Object.keys(schemaConversionObj.SpSchema).length; i++) {
+    tableVal = Object.keys(schemaConversionObj.SpSchema)[i];
     if (tableVal.toUpperCase().indexOf(filter) > -1) {
       li[i].style.display = '';
       flag = true;
@@ -306,7 +306,7 @@ function renderSchemaReportHtml()
           <!-- Modal content-->
           <div class="modal-content">
             <div class="modal-header content-center">
-              <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Review Data Type Mapping</h5>
+              <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Global Data Type Mapping</h5>
               <i class="large material-icons close" data-dismiss="modal">cancel</i>
             </div>
             <div class="modal-body" style='margin: auto; margin-top: 20px;'>
