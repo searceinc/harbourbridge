@@ -55,7 +55,7 @@ func SchemaConv(driver string, ioHelper *IOStreams) (*internal.Conv, error) {
 	}
 }
 
-func DataConv(driver string, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
+func DataConv(driver string, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv, dataOnly bool) (*spanner.BatchWriter, error) {
 	config := spanner.BatchWriterConfig{
 		BytesLimit: 100 * 1000 * 1000,
 		WriteLimit: 40,
@@ -66,7 +66,7 @@ func DataConv(driver string, ioHelper *IOStreams, client *sp.Client, conv *inter
 	case POSTGRES, MYSQL:
 		return dataFromSQL(driver, config, client, conv)
 	case PGDUMP, MYSQLDUMP:
-		return dataFromDump(driver, config, ioHelper, client, conv)
+		return dataFromDump(driver, config, ioHelper, client, conv, dataOnly)
 	default:
 		return nil, fmt.Errorf("data conversion for driver %s not supported", driver)
 	}
@@ -203,11 +203,25 @@ func schemaFromDump(driver string, ioHelper *IOStreams) (*internal.Conv, error) 
 	return conv, nil
 }
 
-func dataFromDump(driver string, config spanner.BatchWriterConfig, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv) (*spanner.BatchWriter, error) {
-	_, err := ioHelper.SeekableIn.Seek(0, 0)
-	if err != nil {
-		fmt.Printf("\nCan't seek to start of file (preparation for second pass): %v\n", err)
-		return nil, fmt.Errorf("can't seek to start of file")
+func dataFromDump(driver string, config spanner.BatchWriterConfig, ioHelper *IOStreams, client *sp.Client, conv *internal.Conv, dataOnly bool) (*spanner.BatchWriter, error) {
+	// TODO: refactor of the way we handle getSeekable
+	// to avoid the code duplication here
+	if !dataOnly {
+		_, err := ioHelper.SeekableIn.Seek(0, 0)
+		if err != nil {
+			fmt.Printf("\nCan't seek to start of file (preparation for second pass): %v\n", err)
+			return nil, fmt.Errorf("can't seek to start of file")
+		}
+	} else {
+		// Note: input file is kept seekable to plan for future
+		// changes in showing progress for data migration.
+		f, n, err := getSeekable(ioHelper.In)
+		if err != nil {
+			printSeekError(driver, err, ioHelper.Out)
+			return nil, fmt.Errorf("can't get seekable input file")
+		}
+		ioHelper.SeekableIn = f
+		ioHelper.BytesRead = n
 	}
 	totalRows := conv.Rows()
 

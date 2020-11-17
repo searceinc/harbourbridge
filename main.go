@@ -207,7 +207,7 @@ func toSpanner(driver, projectID, instanceID, dbName string, ioHelper *conversio
 		return fmt.Errorf("can't create Spanner client")
 	}
 
-	bw, err := conversion.DataConv(driver, ioHelper, client, conv)
+	bw, err := conversion.DataConv(driver, ioHelper, client, conv, dataOnly)
 	if err != nil {
 		fmt.Printf("\nCan't finish data conversion for db %s: %v\n", db, err)
 		return fmt.Errorf("can't finish data conversion")

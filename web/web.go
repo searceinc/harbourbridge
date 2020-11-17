@@ -69,7 +69,7 @@ func databaseConnection(w http.ResponseWriter, r *http.Request) {
 }
 
 func convertSchemaSQL(w http.ResponseWriter, r *http.Request) {
-	if app.sourceDB == nil || app.dbName == "" {
+	if app.sourceDB == nil || app.dbName == "" || app.driver == "" {
 		http.Error(w, fmt.Sprintf("Database is not configured or Database connection is lost. Please set configuration and connect to database."), 404)
 		return
 	}
