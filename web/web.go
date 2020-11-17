@@ -225,9 +225,37 @@ const (
 )
 
 func getTypeMap(w http.ResponseWriter, r *http.Request) {
-	//fmt.Println(IssueDB[1].brief)
+
+	if app.conv == nil || app.driver == "" {
+		http.Error(w, fmt.Sprintf("Schema is not converted or Driver is not configured properly. Please retry converting the database to spanner."), 404)
+		return
+	}
+
+	var editTypeMap map[string][]typeIssue
+	switch app.driver {
+	case "mysql", "mysqldump":
+		editTypeMap = mysqlTypeMap
+	case "postgres", "pg_dump":
+		editTypeMap = postgresTypeMap
+	default:
+		http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), 400)
+		return
+	}
+
+	// return a list of type-mapping for only the data-types
+	// that are used in source schema.
+	typeMap := make(map[string][]typeIssue)
+	for _, srcTable := range app.conv.SrcSchema {
+		for _, colDef := range srcTable.ColDefs {
+			if _, ok := typeMap[colDef.Type.Name]; ok {
+				continue
+			}
+			typeMap[colDef.Type.Name] = editTypeMap[colDef.Type.Name]
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(editTypeMap)
+	json.NewEncoder(w).Encode(typeMap)
 }
 
 type setT map[string]string
