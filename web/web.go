@@ -23,6 +23,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// TODO(searce):
+// 1) Test cases for APIs
+// 2) API for saving/updating table-level changes.
+// 3) API for showing logs
+// 4) Split all routing to an route.go file
+// 5) API for downloading the schema file, ddl file and summary report file.
+// 6) Update schema conv after setting global datatypes and return conv. (setTypeMap)
+// 7) Add rateConversion() in schema conversion, ddl and report APIs.
+// 8) Add an overview in summary report API
+
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to Harbourbridge!")
 }
@@ -279,6 +289,11 @@ func setTypeMap(w http.ResponseWriter, r *http.Request) {
 		mysql.ToSpannerType[k].T.Name = v
 		i++
 	}
+	// for _, spTable := range conv.SpSchema {
+	// 	for _, colDef := range spTable.ColDefs {
+	// 		colDef.T.Name = mysql.ToSpannerType[k].T.Name
+	// 	}
+	// }
 	w.WriteHeader(http.StatusOK)
 	//json.NewEncoder(w).Encode(editTypeMap)
 }

@@ -39,6 +39,8 @@ type typeIssue struct {
 	Brief string
 }
 
+// TODO(searce): Decide on the issue message that needs to be shown
+// in frontend.
 var mysqlTypeMap = map[string][]typeIssue{
 	"bool": []typeIssue{
 		typeIssue{T: ddl.Bool},
@@ -132,4 +134,5 @@ var mysqlTypeMap = map[string][]typeIssue{
 		typeIssue{T: ddl.String}},
 }
 
+// TODO(searce): Fill up this datatype mapping
 var postgresTypeMap = map[string][]typeIssue{}
