@@ -49,7 +49,7 @@ const router = () => {
     onImport()
   }
   else if (path == '/schema-report-resume-session') {
-    resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'));
+    resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'), localStorage.getItem('sourceDb'));
   }
   else {
     document.getElementById('app').innerHTML = component.render();

@@ -375,6 +375,12 @@ nav.navbar.navbar-static-top {
     color: #ffffff;
 }
 
+.success-bg {
+    font-weight: 600;
+    background-color: #fff;
+    color: #4285F4;
+}
+
 .error-modal-bg{
     background-color: #80808078;
     color: red;
@@ -412,6 +418,12 @@ nav.navbar.navbar-static-top {
     padding-bottom: 6px;
     padding-left: 24px;
     border-bottom: 0;
+}
+
+.success-modal-header {
+    background-color: #fff !important;
+    border-top: 2px solid #4285F4 !important;
+    border-bottom: 2px solid #4285F4 !important;
 }
 
 .modal-header{
@@ -504,9 +516,25 @@ h4 {
     font-size: 20px;
     margin: auto 0px;
     padding: 0px;
-    color: white;
+    color: #fff;
     opacity: inherit;
     
+}
+
+.connectionSuccess{
+    margin: auto 0px;
+    margin-right: 6px;
+    padding: 0px;
+    color: #0F9D58 !important;
+    opacity: inherit;
+}
+
+.connectionFailure {
+    margin: auto 0px;
+    margin-right: 6px;
+    padding: 0px;
+    color: #DB4437 !important;
+    opacity: inherit;
 }
 
 .close-icon{

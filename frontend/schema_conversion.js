@@ -5,30 +5,7 @@
  */
 function initTasks() {
   $(document).ready(function () {
-
-    // fetch(apiUrl + '/getSession', {
-    //   method: 'GET',
-    //   headers: {
-    //     'Accept': 'application/json',
-    //     'Content-Type': 'application/json'
-    //   }
-    // })
-    // .then(function (res) {
-    //   res.json().then(function (sessionInfoResp) {
-    //     debugger
-    //     console.log(sessionInfoResp);
-    //       sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-    //       if (sessionStorageArr == null) {
-    //         sessionStorageArr = [];
-    //         sessionStorageArr.push(sessionInfoResp);
-    //       }
-    //       else {
-    //         sessionStorageArr.push(sessionInfoResp);
-    //       }
-    //       sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-    //       console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
-    //   })
-    // });
+    // $('span').tooltip({placement: 'bottom',trigger: 'manual'}).tooltip('show');
 
     $('.reportCollapse').on('show.bs.collapse', function() {
       $(this).closest('.card').find('.rotate-icon').toggleClass('down');
@@ -264,8 +241,8 @@ function renderSchemaReportHtml()
                   aria-label="Search" onkeyup='searchTable()'>
               </form>
 
-              <span class="info-icon statusTooltip" data-toggle='tooltip' data-placement='bottom' title='tooltip on bottom'><i class="large material-icons">info</i></span>
-              <span class="legend-icon statusTooltip" data-toggle='tooltip' data-placement='bottom' title='tooltip on bottom'>
+              <span class="info-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'><i class="large material-icons">info</i></span>
+              <span class="legend-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'>
                 Status Legend
               </span>
             </div>

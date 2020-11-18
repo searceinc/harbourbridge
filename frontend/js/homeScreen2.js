@@ -174,10 +174,33 @@ function editButtonClicked(event) {
   document.getElementById('editSpannerIcon' + num).innerHTML = `<i style="font-weight: 600; font-size: 18px;" class="large material-icons" style="font-size: 18px;">done</i>`
   event.html("Save Changes");
   tdCnt = 0;
+  tableCheckboxGroup = '.chckClass_' + num;
   $(tableid).each(function (index) {
+    if (index == 0) {
+      var temp = $(this).find('.src-tab-cell');
+      temp.prepend(`<span class="bmd-form-group is-filled">
+                      <div class="checkbox">
+                        <label>
+                          <input type="checkbox" id='chckAll_${num}' value="">
+                          <span class="checkbox-decorator"><span class="check"></span><div class="ripple-container"></div></span>
+                        </label>
+                      </div>
+                    </span>`)
+    }
+    $('#chckAll_'+num).prop('checked', true);
+    $('#chckAll_'+num).click(function() {
+      num = parseInt($(this).attr('id').match(/\d+/), 10);
+      console.log(num);
+      if ($(this).is(':checked')) {
+        $('.chckClass_' + num).prop('checked', true);
+      }
+      else {
+        $('.chckClass_' + num).prop('checked', false);
+      }
+    });
+
     if (index > 0) {
-      var temp = $(this).find('.src-tab-cell')
-      tableCheckboxGroup = '.chckClass_' + num;
+      var temp = $(this).find('.src-tab-cell');
       temp.prepend(`<span class="bmd-form-group is-filled">
                       <div class="checkbox">
                         <label>
@@ -489,6 +512,7 @@ function saveButtonClicked(event) {
   initialColNameArray[num] = [];
   currentPks = schemaConversionObj.SpSchema[src_table_name[num]].Pks;
   $(tableid).each(function (index) {
+    if (index > 0) {
     if ($(this).find("input[type=checkbox]").is(":checked")) {
       num2 = parseInt($(this).find("input[type=checkbox]").attr('id').match(/\d+/), 10)
       list = document.getElementsByClassName('spannerTabCell' + num + num2);
@@ -680,7 +704,7 @@ function saveButtonClicked(event) {
       }
 
     }
-
+    }
   })
   var col_names_array = schemaConversionObj.SpSchema[src_table_name[num]].ColNames
   // for (var x = 0; x < array.length; x++) {
@@ -705,9 +729,9 @@ function saveButtonClicked(event) {
 
   document.getElementById('download-schema').setAttribute('data-obj', JSON.stringify(schemaConversionObj))
   $(tableid).each(function (index) {
-    if (index > 0) {
+    // if (index > 0) {
       $(this).find('.src-tab-cell .bmd-form-group').remove();
-    }
+    // }
   })
 }
 
@@ -758,7 +782,7 @@ function createTableFromJson(obj) {
   editButton = document.createElement('button');
   editButton.setAttribute('id', 'editButton');
   editButton.className = 'expand right-align';
-  editButton.innerHTML = 'Edit Data Type';
+  editButton.innerHTML = 'Edit Global Data Type';
   editButton.addEventListener('click', function () {
     editGlobalDataType();
     $('#globalDataTypeModal').modal();
@@ -803,7 +827,7 @@ function createTableFromJson(obj) {
     h5.className = 'mb-0';
 
     var a = document.createElement("a");
-    a.innerHTML = `${Object.keys(schemaConversionObj.SrcSchema)[i]} <i class="fas fa-angle-down rotate-icon"></i>`
+    a.innerHTML = `Table: ${Object.keys(schemaConversionObj.SrcSchema)[i]} <i class="fas fa-angle-down rotate-icon"></i>`
     a.setAttribute("data-toggle", "collapse");
     a.setAttribute("href", "#" + Object.keys(schemaConversionObj.SrcSchema)[i]);
 
@@ -908,7 +932,12 @@ function createTableFromJson(obj) {
     for (var j = 0; j < col.length; j++) {
       var th = document.createElement("th")
       if (j % 2 == 0) {
-        th.className = "acc-table-th-src"
+        if (j == 0) {
+          th.className = "acc-table-th-src src-tab-cell"
+        }
+        else {
+          th.className = "acc-table-th-src"
+        }
       }
       else {
         th.className = "acc-table-th-spn"
@@ -1561,15 +1590,15 @@ function hideSpinner() {
 //         // Render the component in the "app" placeholder
 //         document.getElementById('app').innerHTML = component.render();
 
-//         sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-//         if (sessionStorageArr == null) {
-//           sessionStorageArr = [];
-//           sessionStorageArr.push(sessionInfoResp);
-//         }
-//         else {
-//           sessionStorageArr.push(sessionInfoResp);
-//         }
-//         sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
+        // sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+        // if (sessionStorageArr == null) {
+        //   sessionStorageArr = [];
+        //   sessionStorageArr.push(sessionInfoResp);
+        // }
+        // else {
+        //   sessionStorageArr.push(sessionInfoResp);
+        // }
+        // sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
 //         // router.loadRoute('schemaReport')
 //         createTableFromJson(reportDataResp);
 //         // createTableFromJson(schemaConversionObj_original);
@@ -1603,31 +1632,46 @@ async function showSchemaAssessment() {
 
     summaryData = await fetch(apiUrl + '/getSummary');
     summaryDataResp = await summaryData.json();
-
-    sessionInfo = await fetch(apiUrl + '/getSession');
-    sessionInfoResp = await sessionInfo.json();
+    sourceTableFlag = localStorage.getItem('sourceDbName');
+    sessionRetrieval(sourceTableFlag);
 
     jQuery('#connectModalSuccess').modal("hide");
     jQuery('#connectToDbModal').modal("hide");
     jQuery('#globalDataTypeModal').modal("hide");
 
     const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
-    // Render the component in the "app" placeholder
     document.getElementById('app').innerHTML = component.render();
 
-    sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-    if (sessionStorageArr == null) {
-      sessionStorageArr = [];
-      sessionStorageArr.push(sessionInfoResp);
-    }
-    else {
-      sessionStorageArr.push(sessionInfoResp);
-    }
-    sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
     createTableFromJson(reportDataResp);
     createDdlFromJson(ddlDataResp)
     createSummaryFromJson(summaryDataResp);
   }
+}
+
+function sessionRetrieval(dbType) {
+  fetch(apiUrl + '/getSession', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(function (res) {
+    res.json().then(function (sessionInfoResp) {
+      console.log(sessionInfoResp);
+        sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+        sessionInfoResp.sourceDbType = dbType;
+        if (sessionStorageArr == null) {
+          sessionStorageArr = [];
+          sessionStorageArr.push(sessionInfoResp);
+        }
+        else {
+          sessionStorageArr.push(sessionInfoResp);
+        }
+        sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
+        console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
+    })
+  })
 }
 
 /**
@@ -1641,34 +1685,14 @@ function storeDumpFileValues(dbType, filePath) {
   if (dbType == 'mysql') {
     localStorage.setItem('globalDbType', dbType + 'dump');
     sourceTableFlag = 'MySQL';
+    localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   else if (dbType == 'postgres') {
     localStorage.setItem('globalDbType', 'pg_dump');
     sourceTableFlag = 'Postgres';
+    localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   localStorage.setItem('globalDumpFilePath', filePath);
-  fetch(apiUrl + '/getSession', {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(function (res) {
-    res.json().then(function (sessionInfoResp) {
-      console.log(sessionInfoResp);
-        sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-        if (sessionStorageArr == null) {
-          sessionStorageArr = [];
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        else {
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-        console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
-    })
-  })
 }
 
 /**
@@ -1731,9 +1755,7 @@ async function onLoadDatabase(dbType, dumpFilePath) {
     showSpinner();
     jQuery('#loadDatabaseDumpModal').modal('hide');
     const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
-    // Render the component in the "app" placeholder
     document.getElementById('app').innerHTML = component.render();
-    // router.loadRoute('schemaReport')
     createTableFromJson(schemaConversionObj_original)
     createDdlFromJson(ddl)
     createSummaryFromJson(summary);
@@ -1759,11 +1781,12 @@ async function onLoadDatabase(dbType, dumpFilePath) {
     
     summaryData = await fetch(apiUrl + '/getSummary');
     summaryDataResp = await summaryData.json();
-    console.log(summaryData);
+    sourceTableFlag = localStorage.getItem('sourceDbName');
+    sessionRetrieval(sourceTableFlag);
+
     jQuery('#loadDatabaseDumpModal').modal('hide');
 
     const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
-    // Render the component in the "app" placeholder
     document.getElementById('app').innerHTML = component.render();
     createTableFromJson(reportDataResp);
     createDdlFromJson(ddlDataResp);
@@ -1815,6 +1838,8 @@ function onconnect(dbType, dbHost, dbPort, dbUser, dbName, dbPassword) {
           // document.getElementById('connectButton').style.display = 'block'
           error = result
           if (error == "") {
+            sourceTableFlag = 'MySQL';
+            localStorage.setItem('sourceDbName', sourceTableFlag);
             jQuery('#connectToDbModal').modal('hide');
             jQuery('#connectModalSuccess').modal();
           }
@@ -1896,13 +1921,14 @@ function clearModal() {
  * @param {string} id session id
  * @return {null}
  */
-function storeResumeSessionId(driver, path, fileName) {
+function storeResumeSessionId(driver, path, fileName, sourceDb) {
   console.log(driver);
   console.log(path);
   console.log(fileName);
   localStorage.setItem('driver', driver);
   localStorage.setItem('path', path);
   localStorage.setItem('fileName', fileName);
+  localStorage.setItem('sourceDb', sourceDb);
 }
 
 /**
@@ -1911,7 +1937,7 @@ function storeResumeSessionId(driver, path, fileName) {
  * @param {string} id session id
  * @return {null}
  */
-function resumeSession(driver, path, fileName) {
+function resumeSession(driver, path, fileName, sourceDb) {
 
   fetch(apiUrl + '/resumeSession', {
     method: 'POST',
@@ -1940,6 +1966,7 @@ function resumeSession(driver, path, fileName) {
     }
 
     else {
+      sourceTableFlag = sourceDb;
       let ddlData = fetch(apiUrl + '/getDDL');
       let summaryData = fetch(apiUrl + '/getSummary');
 
@@ -1979,7 +2006,6 @@ function readTextFile(file, callback) {
 }
 
 function setSessionTableContent() {
-  console.log('inside table function');
   var sessionArray = JSON.parse(sessionStorage.getItem('sessionStorage'));
   if (sessionArray == null) {
     document.getElementById('session-table-content').innerHTML = `<tr>
@@ -2017,14 +2043,14 @@ function setSessionTableContent() {
       var td4 = document.createElement('td');
       td4.setAttribute('id', x);
       td4.className = 'col-4 session-table-td2 session-action';
-      td4.innerHTML = `<a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='storeResumeSessionId(driver, path, sessionName)'>Resume Session</a>`;
+      td4.innerHTML = `<a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;'>Resume Session</a>`;
 
       td4.addEventListener('click', function() {
         var index = $(this).attr('id');
         console.log(index);
         console.log(sessionArray);
         console.log(driver);
-        storeResumeSessionId(sessionArray[index].driver, sessionArray[index].path, sessionArray[index].fileName);
+        storeResumeSessionId(sessionArray[index].driver, sessionArray[index].path, sessionArray[index].fileName, sessionArray[index].sourceDbType);
       });
 
       sessionTableTr.appendChild(td1);
@@ -2056,6 +2082,15 @@ function setSessionTableContent() {
     //     <td class='col-2 session-table-td2 '>5:30 PM</td>
     //     <td class='col-4 session-table-td2 session-action'><a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='storeResumeSessionId("session3")'>Resume Session</a></td>
     //   </tr>`
+  }
+}
+
+function sourceSchema(val) {
+  if (val == 'mysql') {
+    sourceTableFlag = 'MySQL';
+  }
+  else if (val == 'postgres') {
+    sourceTableFlag = 'Postgres';
   }
 }
 
@@ -2123,7 +2158,7 @@ function homeScreenHtml() {
            <img src="Icons/Icons/Group 2047.svg" width="64" height="64" style="margin:auto"  alt="import schema image">
          </div>
          <div class="import-text pointer" data-toggle="modal" data-target="#importSchemaModal" data-backdrop="static" data-keyboard="false">
-            Import Schema Conversion
+            Import Schema File
          </div>
        </div>
      </div>
@@ -2133,7 +2168,7 @@ function homeScreenHtml() {
     <div id="spinner"></div>
    </div>
 
-   <h4 class="session-heading">Session history</h4>
+   <h4 class="session-heading">Conversion history</h4>
 
    <table class="table session-table" style="width: 95%;">
     <thead>
@@ -2265,7 +2300,7 @@ function homeScreenHtml() {
         </form>
        </div>
        <div class="modal-footer">
-         <a href='#/schema-report-load-db-dump'><input type='submit' disabled='disabled' value='Connect' id='loadConnectButton' class='connectButton'onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)' /></a>
+         <a href='#/schema-report-load-db-dump'><input type='submit' disabled='disabled' value='Confirm' id='loadConnectButton' class='connectButton'onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)' /></a>
          <button class="buttonload" id="loaderModalButton" style="display: none;">
           <i class="fa fa-circle-o-notch fa-spin"></i>converting
         </button>
@@ -2283,7 +2318,7 @@ function homeScreenHtml() {
 
      <div class="modal-content">
        <div class="modal-header content-center">
-         <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Import Schema Conversion</h5>
+         <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Import Schema File</h5>
          <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
        </div>
        <div class="modal-body">
@@ -2308,7 +2343,7 @@ function homeScreenHtml() {
 
        </div>
        <div class="modal-footer">
-         <a href='#/schema-report-import-db'><input type='submit' disabled='disabled' id='importButton' class='connectButton' value='Connect' /></a>
+         <a href='#/schema-report-import-db'><input type='submit' disabled='disabled' id='importButton' class='connectButton' value='Confirm' onclick='sourceSchema(document.getElementById("importDbType").value)'/></a>
        </div>
      </div>
 
@@ -2322,12 +2357,15 @@ function homeScreenHtml() {
 
      <div class="modal-content">
        <div class="modal-header content-center">
+         
          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Successful</h5>
          <i class="large material-icons close" data-dismiss="modal" onclick="clickCancelModal()">cancel</i>
+         
        </div>
-       <div class="modal-body" style='margin-bottom: 20px;'>
+       <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
 
-       <div>Please click on convert button to proceed with schema conversion</div>
+        <div><i class="large material-icons connectionSuccess">check_circle</i></div>
+        <div>Please click on convert button to proceed with schema conversion</div>
         
        </div>
        <div class="modal-footer">
@@ -2351,10 +2389,9 @@ function homeScreenHtml() {
          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Failure</h5>
          <i class="large material-icons close" data-dismiss="modal" onclick="clickCancelModal()">cancel</i>
        </div>
-       <div class="modal-body" style='margin-bottom: 20px;'>
-
+       <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
+          <div><i class="large material-icons connectionFailure">cancel</i></div>
           <div>Please check database configuration details and try again !!</div>
-        
        </div>
        <div class="modal-footer">
          <button onclick="clickCancelModal()" class="connectButton" type="button">Ok</button>
