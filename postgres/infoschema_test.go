@@ -62,7 +62,14 @@ func TestProcessInfoSchema(t *testing.T) {
 			query: "SELECT (.+) FROM INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE (.+)",
 			args:  []driver.Value{"public", "cart"},
 			cols:  []string{"table_schema", "table_name"},
-		}, {
+		},
+		{
+			query: "SELECT (.+) JOIN pg_catalog.pg_index (.+)",
+			args:  []driver.Value{"public", "cart"},
+			cols:  []string{"index_name", "column_name", "column_position"},
+			rows:  [][]driver.Value{{"index1", "userid", 1}, {"index2", "userid", 1}, {"index2", "productid", 2}},
+		},
+		{
 			query: "SELECT (.+) FROM information_schema.COLUMNS (.+)",
 			args:  []driver.Value{"public", "test"},
 			cols:  []string{"column_name", "data_type", "data_type", "is_nullable", "column_default", "character_maximum_length", "numeric_precision", "numeric_scale"},
@@ -98,6 +105,11 @@ func TestProcessInfoSchema(t *testing.T) {
 			args:  []driver.Value{"public", "test"},
 			cols:  []string{"table_schema", "table_name"},
 		},
+		{
+			query: "SELECT (.+) JOIN pg_catalog.pg_index (.+)",
+			args:  []driver.Value{"public", "test"},
+			cols:  []string{"index_name", "column_name", "column_position"},
+		},
 	}
 	db := mkMockDB(t, ms)
 	conv := internal.MakeConv()
@@ -112,7 +124,9 @@ func TestProcessInfoSchema(t *testing.T) {
 				"userid":    ddl.ColumnDef{Name: "userid", T: ddl.Type{Name: ddl.String, Len: ddl.MaxLength}, NotNull: true},
 				"quantity":  ddl.ColumnDef{Name: "quantity", T: ddl.Type{Name: ddl.Int64}},
 			},
-			Pks: []ddl.IndexKey{ddl.IndexKey{Col: "productid"}, ddl.IndexKey{Col: "userid"}}},
+			Pks: []ddl.IndexKey{ddl.IndexKey{Col: "productid"}, ddl.IndexKey{Col: "userid"}},
+			Indexes: []ddl.CreateIndex{ddl.CreateIndex{Name: "index1", Keys: []ddl.IndexKey{ddl.IndexKey{Col: "userid", Desc: false}}},
+				ddl.CreateIndex{Name: "index2", Keys: []ddl.IndexKey{ddl.IndexKey{Col: "userid", Desc: false}, ddl.IndexKey{Col: "productid", Desc: false}}}}},
 		"test": ddl.CreateTable{
 			Name:     "test",
 			ColNames: []string{"id", "aint", "atext", "b", "bs", "by", "c", "c8", "d", "f8", "f4", "i8", "i4", "i2", "num", "s", "ts", "tz", "txt", "vc", "vc6"},
@@ -313,6 +327,11 @@ func TestConvertSqlRow_MultiCol(t *testing.T) {
 			query: "SELECT (.+) FROM INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE (.+)",
 			args:  []driver.Value{"public", "test"},
 			cols:  []string{"table_schema", "table_name"},
+		},
+		{
+			query: "SELECT (.+) JOIN pg_catalog.pg_index (.+)",
+			args:  []driver.Value{"public", "test"},
+			cols:  []string{"index_name", "column_name", "column_position"},
 		},
 		// Note: go-sqlmock mocks specify an ordered sequence
 		// of queries and results.  This (repeated) entry is
