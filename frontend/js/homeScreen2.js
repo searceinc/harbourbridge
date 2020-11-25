@@ -3,11 +3,9 @@
  *
  * @return {null}
  */
-function initHomeScreenTasks() {
+const initHomeScreenTasks = () => {
   $(document).ready(function () {
-
     setSessionTableContent();
-
     $('#loadDbForm > div').keyup(function () {
       var empty = false;
       $('#loadDbForm > input').each(function () {
@@ -87,7 +85,7 @@ $(document).on('change', '#upload', function (event) {
  *
  * @return {null}
  */
-function createEditDataTypeTable() {
+const createEditDataTypeTable = (dataType) => {
   dataTypeLength = Object.keys(dataType).length;
   var dataTypeTable = document.createElement('table');
   dataTypeTable.className = 'data-type-table';
@@ -108,26 +106,33 @@ function createEditDataTypeTable() {
     tr.setAttribute('id', 'dataTypeRow' + (i + 1));
     for (var j = 0; j < 2; j++) {
       var td = document.createElement('td');
-      if (j == 0) {
+      if (j == 0 && dataType[Object.keys(dataType)[i]] != null) {
         td.className = 'src-td';
         td.innerHTML = Object.keys(dataType)[i];
       }
       else {
-        var len = dataType[Object.keys(dataType)[i]].length;
-        var dataTypeArr = [];
-        for (var k = 0; k < len; k++) {
-          dataTypeArr.push(dataType[Object.keys(dataType)[i]][k].T);
+        if (dataType[Object.keys(dataType)[i]] != null) {
+          var len = dataType[Object.keys(dataType)[i]].length;
+          var dataTypeArr = [];
+          for (var k = 0; k < len; k++) {
+            dataTypeArr.push(dataType[Object.keys(dataType)[i]][k].T);
+          }
+  
+          var selectHTML = "";
+          var selectId = 'dataTypeSel' + (i + 1) + j;
+          selectHTML = `<select class='form-control tableSelect' id=${selectId} style='border: 0px !important; font-family: FontAwesome;'>`;
+          for (var k = 0; k < len; k++) {
+            if (dataType[Object.keys(dataType)[i]][k].Brief == "")
+            {
+              selectHTML += `<option value=''> ${dataType[Object.keys(dataType)[i]][k].T} </option>`;
+            }
+            else {
+              selectHTML += `<option value=''> &#xf071; &nbsp; ${dataType[Object.keys(dataType)[i]][k].T} </option>`;
+            }
+          }
+          selectHTML += `</select>`;
+          td.innerHTML = selectHTML;
         }
-
-        var selectHTML = "";
-        var selectId = 'dataTypeSel' + (i + 1) + j;
-        selectHTML = "<select class='form-control tableSelect' id=" + selectId + " style='border: 0px !important;'>";
-        for (var k = 0; k < dataTypeArr.length; k++) {
-          selectHTML += "<option value='" + dataTypeArr[k] + "'>" + dataTypeArr[k] + "</option>";
-        }
-        selectHTML += "</select>";
-        td.innerHTML = selectHTML;
-
       }
       tr.appendChild(td);
     }
@@ -145,57 +150,54 @@ function createEditDataTypeTable() {
  * @return {null}
  */
 function editGlobalDataType() {
-  // showSpinner();
-  if (!isLive) {
-    createEditDataTypeTable();
-  }
-
-  else {
-    // showSpinner();
-    fetch(apiUrl + '/getTypeMap', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
+  
+  showSpinner();
+  fetch(apiUrl + '/getTypeMap', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(function (res) {
+    res.json().then(function (result) {
+      hideSpinner();
+      createEditDataTypeTable(result);
     })
-      .then(function (res) {
-        res.json().then(function (result) {
-          // hideSpinner();
-          createEditDataTypeTable();
-        })
-      })
-  }
+  });
 }
 
-function editButtonClicked(event) {
-  num = parseInt(event.attr('id').match(/\d+/), 10);
-  tableid = '#src-sp-table' + num + ' tr';
-  document.getElementById('editSpannerIcon' + num).innerHTML = `<i style="font-weight: 600; font-size: 18px;" class="large material-icons" style="font-size: 18px;">done</i>`
+const editSpannerHandler = (event) => {
+  if (event.html() == 'Edit Spanner Schema') {
+    $(event[0]).removeAttr('data-toggle');
+  }
+
+  tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
+  uncheckCount[tableNumber] = 0;
+  tableId = '#src-sp-table' + tableNumber + ' tr';
   event.html("Save Changes");
-  tdCnt = 0;
-  tableCheckboxGroup = '.chckClass_' + num;
-  $(tableid).each(function (index) {
+  tableColumnNumber = 0;
+  tableCheckboxGroup = '.chckClass_' + tableNumber;
+  $(tableId).each(function (index) {
     if (index == 0) {
       var temp = $(this).find('.src-tab-cell');
       temp.prepend(`<span class="bmd-form-group is-filled">
                       <div class="checkbox">
                         <label>
-                          <input type="checkbox" id='chckAll_${num}' value="">
+                          <input type="checkbox" id='chckAll_${tableNumber}' value="">
                           <span class="checkbox-decorator"><span class="check"></span><div class="ripple-container"></div></span>
                         </label>
                       </div>
                     </span>`)
     }
-    $('#chckAll_'+num).prop('checked', true);
-    $('#chckAll_'+num).click(function() {
-      num = parseInt($(this).attr('id').match(/\d+/), 10);
-      console.log(num);
+    $('#chckAll_'+tableNumber).prop('checked', true);
+    $('#chckAll_'+tableNumber).click(function() {
+      tableNumber = parseInt($(this).attr('id').match(/\d+/), 10);
       if ($(this).is(':checked')) {
-        $('.chckClass_' + num).prop('checked', true);
+        $('.chckClass_' + tableNumber).prop('checked', true);
       }
       else {
-        $('.chckClass_' + num).prop('checked', false);
+        $('.chckClass_' + tableNumber).prop('checked', false);
       }
     });
 
@@ -204,64 +206,59 @@ function editButtonClicked(event) {
       temp.prepend(`<span class="bmd-form-group is-filled">
                       <div class="checkbox">
                         <label>
-                          <input type="checkbox" id="chckBox_${tdCnt}" value="" class="chckClass_${num}">
+                          <input type="checkbox" id="chckBox_${tableColumnNumber}" value="" class="chckClass_${tableNumber}">
                           <span class="checkbox-decorator"><span class="check"></span><div class="ripple-container"></div></span>
                         </label>
                       </div>
                     </span>`)
       $(tableCheckboxGroup).prop('checked', true);
-      list = document.getElementsByClassName('spannerTabCell' + num + tdCnt);
-      var columnNameVal = document.getElementById('columnNameText' + num + tdCnt + tdCnt).innerHTML;
-      initialColNameArray[num].push(columnNameVal);
+      list = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
+      var columnNameVal = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML;
+      initialColNameArray[tableNumber].push(columnNameVal);
       currSeqId = '';
-      for (var x = 0; x < pkArray[num].length; x++) {
-        if (pkArray[num][x].Col == columnNameVal.trim()) {
-          currSeqId = pkArray[num][x].seqId;
+      for (var x = 0; x < pkArray[tableNumber].length; x++) {
+        if (pkArray[tableNumber][x].Col == columnNameVal.trim()) {
+          currSeqId = pkArray[tableNumber][x].seqId;
         }
       }
-      if (notPrimary[num][tdCnt] == true) {
-        list[0].innerHTML = `<span class="column left keyNotActive keyMargin keyClick" id='keyIcon${num}${tdCnt}${tdCnt}'>
-                              <!-- <i class="fas fa-key" aria-hidden="true" style="font-size: 18px;"></i> -->
-                              <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>
-                            </span>
-                            <span class="column right form-group">
-                              <input id='columnNameText${num}${tdCnt}${tdCnt}' type="text" value=${columnNameVal} class="form-control spanner-input">
-                            </span>`
+      if (notPrimary[tableNumber][tableColumnNumber] == true) {
+        list[0].innerHTML = `<span class="column left keyNotActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
+                                <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>
+                              </span>
+                              <span class="column right form-group">
+                                <input id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' type="text" value=${columnNameVal} class="form-control spanner-input">
+                              </span>`
       }
       else {
-        list[0].innerHTML = `<span class="column left keyActive keyMargin keyClick" id='keyIcon${num}${tdCnt}${tdCnt}'>
-                              <!-- <i class="fas fa-key" aria-hidden="true" style="font-size: 18px;"></i> -->
-                            <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
+        list[0].innerHTML = `<span class="column left keyActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
+                              <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
                             </span>
                             <span class="column right form-group">
-                              <input id='columnNameText${num}${tdCnt}${tdCnt}' type="text" value=${columnNameVal} class="form-control spanner-input">
+                              <input id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' type="text" value=${columnNameVal} class="form-control spanner-input">
                             </span>`
       }
-      $('#keyIcon' + num + tdCnt + tdCnt).click(function () {
+      $('#keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).click(function () {
         $(this).toggleClass('keyActive keyNotActive');
         keyId = $(this).attr('id');
         var columnName;
-        console.log(keyColumnMap[num]);
-        for (var z = 0; z < keyColumnMap[num].length; z++) {
-          if (keyId == keyColumnMap[num][z].keyIconId) {
-            columnName = keyColumnMap[num][z].columnName;
+        for (var z = 0; z < keyColumnMap[tableNumber].length; z++) {
+          if (keyId == keyColumnMap[tableNumber][z].keyIconId) {
+            columnName = keyColumnMap[tableNumber][z].columnName;
           }
         }
         
         if (document.getElementById(keyId).classList.contains('keyActive')) {
-          // notPrimary[num][tdCnt] = false;
-          // pkArray[num] = schemaConversionObj.SpSchema[src_table_name[num]].Pks;
           maxSeqId = 0;
-          for (var z = 0; z < pkArray[num].length; z++) {
-            if (pkArray[num][z].seqId > maxSeqId) {
-              maxSeqId = pkArray[num][z].seqId;
+          for (var z = 0; z < pkArray[tableNumber].length; z++) {
+            if (pkArray[tableNumber][z].seqId > maxSeqId) {
+              maxSeqId = pkArray[tableNumber][z].seqId;
             }
           }
           maxSeqId = maxSeqId + 1;
-          pkSeqId[num] = maxSeqId;
+          pkSeqId[tableNumber] = maxSeqId;
           pkFoundFlag = false;
-          for (var z = 0; z < pkArray[num].length; z++) {
-            if (columnName != pkArray[num][z].Col) {
+          for (var z = 0; z < pkArray[tableNumber].length; z++) {
+            if (columnName != pkArray[tableNumber][z].Col) {
               pkFoundFlag = false;
             }
             else {
@@ -270,74 +267,74 @@ function editButtonClicked(event) {
             }
           }
           if (pkFoundFlag == false) {
-            pkArray[num].push({ 'Col': columnName, 'seqId': pkSeqId[num] });
-            // pkSeqId[num]++;
+            pkArray[tableNumber].push({ 'Col': columnName, 'seqId': pkSeqId[tableNumber] });
           }
-          console.log(pkArray[num]);
-          schemaConversionObj.SpSchema[src_table_name[num]].Pks = pkArray[num];
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].Pks = pkArray[num];
-          document.getElementById(keyId).innerHTML = `<sub>${pkSeqId[num]}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks = pkArray[tableNumber];
+          document.getElementById(keyId).innerHTML = `<sub>${pkSeqId[tableNumber]}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
         }
         else {
-          // notPrimary[num][tdCnt] = true;
-          // document.getElementById(keyId).innerHTML = `<img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>`;
-          for (var z = 0; z < pkArray[num].length; z++) {
-            if (columnName == pkArray[num][z].Col) {
-              pkArray[num].splice(z, 1);
+          for (var z = 0; z < pkArray[tableNumber].length; z++) {
+            if (columnName == pkArray[tableNumber][z].Col) {
+              pkArray[tableNumber].splice(z, 1);
               break;
             }
           }
-          for (var x = z; x < pkArray[num].length; x++) {
-            pkArray[num][x].seqId = pkArray[num][x].seqId - 1;
+          for (var x = z; x < pkArray[tableNumber].length; x++) {
+            pkArray[tableNumber][x].seqId = pkArray[tableNumber][x].seqId - 1;
           }
-          schemaConversionObj.SpSchema[src_table_name[num]].Pks = pkArray[num];
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].Pks = pkArray[num];
-          console.log(pkArray[num]);
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks = pkArray[tableNumber];
 
-          tdCnt = 0;
-          $(tableid).each(function (index) {
+          tableColumnNumber = 0;
+          $(tableId).each(function (index) {
             if (index > 0) {
-              notPrimary[num][tdCnt] = true;
-              // var columnNameVal = document.getElementById('columnNameText' + num + tdCnt + tdCnt).value;
+              notPrimary[tableNumber][tableColumnNumber] = true;
               currSeqId = '';
-              for (var x = 0; x < pkArray[num].length; x++) {
-                // for (var y = 0; y < initialColNameArray.length; y++) {
-                //   debugger
-                console.log(initialColNameArray[num]);
-                  if (pkArray[num][x].Col == initialColNameArray[num][tdCnt].trim()) {
-                    currSeqId = pkArray[num][x].seqId;
-                    notPrimary[num][tdCnt] = false;
-                  }
-                // }
+              for (var x = 0; x < pkArray[tableNumber].length; x++) {
+                if (pkArray[tableNumber][x].Col == initialColNameArray[tableNumber][tableColumnNumber].trim()) {
+                  currSeqId = pkArray[tableNumber][x].seqId;
+                  notPrimary[tableNumber][tableColumnNumber] = false;
+                }
               }
-              if (notPrimary[num][tdCnt] == true) {
-                document.getElementById('keyIcon' + num + tdCnt + tdCnt).innerHTML = `<img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>`;
+              if (notPrimary[tableNumber][tableColumnNumber] == true) {
+                document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML = `<img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>`;
               }
-              if (notPrimary[num][tdCnt] == false) {
-                document.getElementById('keyIcon' + num + tdCnt + tdCnt).innerHTML = `<sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
+              if (notPrimary[tableNumber][tableColumnNumber] == false) {
+                document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML = `<sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
               }
-              tdCnt++
+              tableColumnNumber++
             }
           });
         }
       });
-      // list[0].innerHTML = `<div class="form-group">
-      //                       <input id='columnName${num}${tdCnt}${tdCnt}' type="text" value=${val_flag} class="form-control spanner-input">
-      //                      </div>`
+      
       var val_flag = list[1].innerHTML;
-      list[1].innerHTML = `<div class="form-group">
-                            <select class="form-control spanner-input tableSelect" id='dataType${num}${tdCnt}${tdCnt}'>
-                                <option value=${val_flag}>${val_flag}</option>
-                                <option value='INT'>INT</option>
-                                <option value='FLOAT'>FLOAT</option>
-                            </select>
-                          </div>`
+      dataTypeArray = null;
+      globalDataTypesLength = Object.keys(globalDataTypes).length;
+      for (var a=0; a<globalDataTypesLength; a++) {
+        if (val_flag.toLowerCase() == (Object.keys(globalDataTypes)[a]).toLowerCase()) {
+          dataTypeArray = globalDataTypes[Object.keys(globalDataTypes)[a]];
+        }
+      }
+
+      dataType.innerHTML = `<div class="form-group">
+                           <select class="form-control spanner-input tableSelect" id='dataType${tableNumber}${tableColumnNumber}${tableColumnNumber}'>`
+
+      if (dataTypeArray != null) {
+        for (var a=0; a<dataTypeArray.length; a++) {
+          dataType.innerHTML += `<option value=${dataTypeArray[a].T}>${dataTypeArray[a].T}</option>`
+        }
+      }
+      else {
+        dataType.innerHTML += `<option value=${val_flag}>${val_flag}</option>`
+      }
+      dataType.innerHTML += `</select> </div>`;
+      list[1].innerHTML = dataType.innerHTML;
 
       // not null flag
-      if (notNullFoundFlag[num][tdCnt] == true) {
+      if (notNullFoundFlag[tableNumber][tableColumnNumber] == true) {
         notNullFound = "<option class='active' selected>Not Null</option>";
       }
-      else if (notNullFoundFlag[num][tdCnt] == false) {
+      else if (notNullFoundFlag[tableNumber][tableColumnNumber] == false) {
         notNullFound = "<option>Not Null</option>";
       }
       else {
@@ -345,32 +342,32 @@ function editButtonClicked(event) {
       }
 
       // unique flag
-      if (uniqueFoundFlag[num][tdCnt] == true) {
+      if (uniqueFoundFlag[tableNumber][tableColumnNumber] == true) {
         uniqueFound = "<option class='active' selected>Unique</option>";
       }
-      else if (uniqueFoundFlag[num][tdCnt] == false) {
+      else if (uniqueFoundFlag[tableNumber][tableColumnNumber] == false) {
         uniqueFound = "<option>Unique</option>";
       }
       else {
         uniqueFound = '';
       }
 
-      constraintId = 'spConstraint' + num + tdCnt;
+      constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
       constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
         + notNullFound
         + uniqueFound
         + "</select>";
       list[2].innerHTML = constraintHtml;
-      list[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + num + tdCnt);
+      list[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + tableNumber + tableColumnNumber);
 
-      mySelect = new vanillaSelectBox("#spConstraint" + num + tdCnt, {
+      mySelect = new vanillaSelectBox("#spConstraint" + tableNumber + tableColumnNumber, {
         placeHolder: "Select Constraints",
         maxWidth: 500,
         maxHeight: 300
       });
       selectedConstraints[0] = undefined;
       selectedConstraints[1] = undefined;
-      $('#spConstraint' + num + tdCnt).on('change', function () {
+      $('#spConstraint' + tableNumber + tableColumnNumber).on('change', function () {
         constraintId = $(this).attr('id');
         idNum = parseInt($(this).attr('id').match(/\d+/g), 10);
         var select1 = document.getElementById(constraintId);
@@ -381,358 +378,210 @@ function editButtonClicked(event) {
         selectedConstraints[idNum] = selected1;
       });
 
-      tdCnt++
+      tableColumnNumber++
     }
   })
-  // schemaConversionObj.SpSchema[src_table_name[num]] = JSON.parse(JSON.stringify(schemaConversionObj_original.SpSchema[src_table_name[num]]))
-  check_class = '.chckClass_' + num;
+  check_class = '.chckClass_' + tableNumber;
   $(check_class).click(function () {
-  //   num = parseInt($(this).closest("table").attr('id').match(/\d+/), 10)
-  //   num2 = parseInt($(this).attr('id').match(/\d+/), 10)
-  //   list = document.getElementsByClassName('spannerTabCell' + num + num2)
-
-  //   if ($(this).is(":checked")) {
-  //     var columnNameVal = document.getElementById('columnNameText' + num + num2 + num2).innerHTML;
-  //     // initialColNameArray[num].push(columnNameVal);
-  //     currSeqId = '';
-  //     for (var x = 0; x < pkArray[num].length; x++) {
-  //       if (pkArray[num][x].Col == columnNameVal.trim()) {
-  //         currSeqId = pkArray[num][x].seqId;
-  //       }
-  //     }
-
-  //     if (notPrimary[num][num2] == true) {
-  //       list[0].innerHTML = `<span class="column left keyNotActive keyMargin keyClick" id='keyIcon${num}${num2}${num2}'>
-  //                           <!-- <i class="fas fa-key" aria-hidden="true" style="font-size: 18px;"></i> -->
-  //                           <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>
-  //                         </span>
-  //                         <span class="column right form-group">
-  //                           <input id='columnNameText${num}${num2}${num2}' type="text" value=${columnNameVal} class="form-control spanner-input">
-  //                         </span>`
-  //     }
-  //     else {
-  //       list[0].innerHTML = `<span class="column left keyActive keyMargin keyClick" id='keyIcon${num}${num2}${num2}'>
-  //                           <!-- <i class="fas fa-key" aria-hidden="true" style="font-size: 18px;"></i> -->
-  //                           <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
-  //                         </span>
-  //                         <span class="column right form-group">
-  //                           <input id='columnNameText${num}${num2}${num2}' type="text" value=${document.getElementById('columnNameText' + num + num2 + num2).innerHTML} class="form-control spanner-input">
-  //                         </span>`
-  //     }
-  //     $('#keyIcon' + num + num2 + num2).click(function () {
-  //       $(this).toggleClass('keyActive keyNotActive');
-  //       keyId = $(this).attr('id');
-  //       if (document.getElementById(keyId).classList.contains('keyActive')) {
-  //         document.getElementById(keyId).innerHTML = `<img src='./Icons/Icons/ic_vpn_key_24px.svg'>`
-  //       }
-  //       else {
-  //         document.getElementById(keyId).innerHTML = `<img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>`;
-  //       }
-  //     })
-  //     list[1].innerHTML = `<div class="form-group">
-  //                           <select class="form-control spanner-input tableSelect" id='dataType${num}${num2}${num2}'>
-  //                               <option value=${document.getElementById('dataType' + num + num2).innerHTML}>${document.getElementById('dataType' + num + num2).innerHTML}</option>
-  //                               <option value='INT'>INT</option>
-  //                               <option value='FLOAT'>FLOAT</option>
-  //                           </select>
-  //                         </div>`;
-
-  //     constraintIndex = String(num) + String(num2);
-  //     constraintIndex = parseInt(constraintIndex);
-
-  //     // not null flag
-  //     if (notNullFoundFlag[num][num2] == true) {
-  //       notNullFound = "<option class='active' selected>Not Null</option>";
-  //     }
-  //     else if (notNullFoundFlag[num][num2] == false) {
-  //       notNullFound = "<option>Not Null</option>";
-  //     }
-  //     else {
-  //       notNullFound = '';
-  //     }
-
-  //     // unique flag
-  //     if (uniqueFoundFlag[num][num2] == true) {
-  //       uniqueFound = "<option class='active' selected>Unique</option>";
-  //     }
-  //     else if (uniqueFoundFlag[num][num2] == false) {
-  //       uniqueFound = "<option>Unique</option>";
-  //     }
-  //     else {
-  //       uniqueFound = '';
-  //     }
-
-  //     constraintId = 'spConstraint' + num + num2;
-  //     constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
-  //       + notNullFound
-  //       + uniqueFound
-  //       + "</select>";
-  //     list[2].innerHTML = constraintHtml;
-  //     list[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + num + num2);
-  //     mySelect = new vanillaSelectBox("#spConstraint" + num + num2, {
-  //       placeHolder: "Select Constraints",
-  //       maxWidth: 500,
-  //       maxHeight: 300
-  //     });
-
-  //     $('#spConstraint' + num + num2).on('change', function () {
-  //       constraintId = $(this).attr('id');
-  //       idNum = parseInt($(this).attr('id').match(/\d+/g), 10);
-  //       var select1 = document.getElementById(constraintId);
-  //       var selected1 = [];
-  //       for (var c = 0; c < select1.length; c++) {
-  //         if (select1.options[c].selected) selected1.push(select1.options[c].value);
-  //       }
-  //       selectedConstraints[idNum] = selected1;
-  //     });
-  //   }
-  //   else {
-  //     list[0].innerHTML = primaryTabCell[num][num2];
-  //     // list[0].innerHTML = document.getElementById('columnName'+num+num2+num2).value;
-  //     list[1].innerHTML = document.getElementById('dataType' + num + num2 + num2).value;
-  //     // list[2].innerHTML = document.getElementById('constraint'+num+num2+num2).value;
-  //     list[2].innerHTML = constraintTabCell[num][num2];
-  //     mySelect = new vanillaSelectBox("#spConstraint" + num + num2, {
-  //       placeHolder: spPlaceholder[num][num2] + " constraints selected",
-  //       maxWidth: 500,
-  //       maxHeight: 300
-  //     });
-  //   }
-    
+    tableNumber = parseInt($(this).closest("table").attr('id').match(/\d+/), 10);
+    tableColumnNumber = parseInt($(this).attr('id').match(/\d+/), 10);
+    if ($(this).is(":checked")) {
+      uncheckCount[tableNumber] = uncheckCount[tableNumber] - 1;
+      if (uncheckCount[tableNumber] == 0) {
+        $('#chckAll_'+tableNumber).prop('checked', true);
+      }
+    }
+    else {
+      uncheckCount[tableNumber] = uncheckCount[tableNumber] + 1;
+      $('#chckAll_'+tableNumber).prop('checked', false);
+    }
   })
 }
 
-function saveButtonClicked(event) {
-  var array = [];
-  num = parseInt(event.attr('id').match(/\d+/), 10)
-  tableid = '#src-sp-table' + num + ' tr'
-  document.getElementById('editSpannerIcon' + num).innerHTML = `<i class="large material-icons" style="font-size: 18px;">edit</i>`
+const saveSpannerChanges = (event) => {
+  let saveEvent = event;
+  if (event.html() == 'Save Changes') {
+    showSnackbar('changes saved successfully !!', '#0f9d58')
+    // saveEvent[0].setAttribute('data-toggle', 'snackbar');
+    // saveEvent[0].setAttribute('data-content', 'Changes saved successfully !!');
+    // saveEvent[0].setAttribute('data-timeout', 3000);
+  }
+
+  tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
+  tableId = '#src-sp-table' + tableNumber + ' tr';
   event.html("Edit Spanner Schema");
   notPkArray = [];
-  initialColNameArray[num] = [];
-  currentPks = schemaConversionObj.SpSchema[src_table_name[num]].Pks;
-  $(tableid).each(function (index) {
+  initialColNameArray[tableNumber] = [];
+  currentPks = schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks;
+  $(tableId).each(function (index) {
     if (index > 0) {
-    if ($(this).find("input[type=checkbox]").is(":checked")) {
-      num2 = parseInt($(this).find("input[type=checkbox]").attr('id').match(/\d+/), 10)
-      list = document.getElementsByClassName('spannerTabCell' + num + num2);
+    // if ($(this).find("input[type=checkbox]").is(":checked")) {
+      tableColumnNumber = parseInt($(this).find("input[type=checkbox]").attr('id').match(/\d+/), 10)
+      list = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
 
-      // schemaConversionObj.SpSchema[src_table_name].ColNames[num2] = document.getElementById('columnNameText'+num+num2+num2).value;
-      newColumnName = document.getElementById('columnNameText' + num + num2 + num2).value;
-      originalColumnName = schemaConversionObj.SpSchema[src_table_name[num]].ColNames[num2];
-      schemaConversionObj.SpSchema[src_table_name[num]].ColNames[num2] = newColumnName;
-      // schemaConversionObj_original.SpSchema[src_table_name[num]].ColNames[num2] = newColumnName;
-      keyColumnMap[num][num2].columnName = newColumnName;
-      initialColNameArray[num].push(newColumnName);
+      newColumnName = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value;
+      originalColumnName = schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColNames[tableColumnNumber];
+      schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColNames[tableColumnNumber] = newColumnName;
+
+      keyColumnMap[tableNumber][tableColumnNumber].columnName = newColumnName;
+      initialColNameArray[tableNumber].push(newColumnName);
 
       if (newColumnName != originalColumnName) {
-        colDefsKeys = Object.keys(schemaConversionObj.SpSchema[src_table_name[num]].ColDefs);
+        colDefsKeys = Object.keys(schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs);
         for (var x = 0; x < colDefsKeys.length; x++) {
           if (colDefsKeys[x] == originalColumnName) {
             newColDefKey = newColumnName;
-            newColDefValue = schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[originalColumnName];
-            delete schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[originalColumnName];
-            // delete schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[originalColumnName];
+            newColDefValue = schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[originalColumnName];
+            delete schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[originalColumnName];
             break;
           }
         }
-        schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColDefKey] = newColDefValue;
-        // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColDefKey] = newColDefValue;
-
-        schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].Name = newColumnName;
-        // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].Name = newColumnName;
-
-        table_pks = schemaConversionObj.SpSchema[src_table_name[num]].Pks;
+        schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColDefKey] = newColDefValue;
+        schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].Name = newColumnName;
+        table_pks = schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks;
         for (var x = 0; x < table_pks.length; x++) {
           if (table_pks[x].Col == originalColumnName) {
             table_pks[x].Col = newColumnName;
           }
         }
-        schemaConversionObj.SpSchema[src_table_name[num]].Pks = table_pks;
-        // schemaConversionObj_original.SpSchema[src_table_name[num]].Pks = table_pks;
-
-        toSpannerColumns = Object.keys(schemaConversionObj.ToSpanner[src_table_name[num]].Cols);
+        schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks = table_pks;
+        
+        toSpannerColumns = Object.keys(schemaConversionObj.ToSpanner[src_table_name[tableNumber]].Cols);
         for (var x = 0; x < toSpannerColumns.length; x++) {
-          if (schemaConversionObj.ToSpanner[src_table_name[num]].Cols[toSpannerColumns[x]] == originalColumnName) {
-            // schemaConversionObj_original.ToSpanner[src_table_name[num]].Cols[toSpannerColumns[x]] = newColumnName;
-            schemaConversionObj.ToSpanner[src_table_name[num]].Cols[toSpannerColumns[x]] = newColumnName;
+          if (schemaConversionObj.ToSpanner[src_table_name[tableNumber]].Cols[toSpannerColumns[x]] == originalColumnName) {
+            schemaConversionObj.ToSpanner[src_table_name[tableNumber]].Cols[toSpannerColumns[x]] = newColumnName;
           }
         }
 
-        toSourceKeys = Object.keys(schemaConversionObj.ToSource[src_table_name[num]].Cols);
+        toSourceKeys = Object.keys(schemaConversionObj.ToSource[src_table_name[tableNumber]].Cols);
         for (var x = 0; x < toSourceKeys.length; x++) {
           if (toSourceKeys[x] == originalColumnName) {
             newToSourceKey = newColumnName;
-            newToSourceValue = schemaConversionObj.ToSource[src_table_name[num]].Cols[toSourceKeys[x]];
-            delete schemaConversionObj.ToSource[src_table_name[num]].Cols[toSourceKeys[x]];
-            // delete schemaConversionObj_original.ToSource[src_table_name[num]].Cols[toSourceKeys[x]];
+            newToSourceValue = schemaConversionObj.ToSource[src_table_name[tableNumber]].Cols[toSourceKeys[x]];
+            delete schemaConversionObj.ToSource[src_table_name[tableNumber]].Cols[toSourceKeys[x]];
             break;
           }
         }
-        schemaConversionObj.ToSource[src_table_name[num]].Cols[newToSourceKey] = newToSourceValue;
-        // schemaConversionObj_original.ToSource[src_table_name[num]].Cols[newToSourceKey] = newToSourceValue;
+        schemaConversionObj.ToSource[src_table_name[tableNumber]].Cols[newToSourceKey] = newToSourceValue;
       }
 
-      schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].T.Name = document.getElementById('dataType' + num + num2 + num2).value;
-      // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].T.Name = document.getElementById('dataType' + num + num2 + num2).value;
-
-      // list[0].innerHTML = document.getElementById('columnName'+num+num2+num2).value;
-      if (document.getElementById('keyIcon' + num + num2 + num2).classList.contains('keyActive')) {
+      schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].T.Name = document.getElementById('dataType' + tableNumber + tableColumnNumber + tableColumnNumber).value;
+      
+      if (document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).classList.contains('keyActive')) {
         for (var z = 0; z < currentPks.length; z++) {
           if (currentPks[z].Col == newColumnName) {
             currSeqId = currentPks[z].seqId;
           }
         }
         list[0].innerHTML = `<span class="column left keyActive">
-                              <!-- <i class="fas fa-key" aria-hidden="true" style="font-size: 18px;"></i> -->
                               <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
                             </span>
-                            <span class="column right" id='columnNameText${num}${num2}${num2}'>
-                              ${document.getElementById('columnNameText' + num + num2 + num2).value}
+                            <span class="column right" id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
+                              ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}
                             </span>`;
-        notPrimary[num][num2] = false;
+        notPrimary[tableNumber][tableColumnNumber] = false;
       }
       else {
         list[0].innerHTML = `<span class="column left">
-                              <!-- <i class="fas fa-key" aria-hidden="true" style="font-size: 18px; visibility: hidden;"></i> -->
                               <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden;'>
                             </span>
-                            <span class="column right" id='columnNameText${num}${num2}${num2}'>
-                              ${document.getElementById('columnNameText' + num + num2 + num2).value}
+                            <span class="column right" id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
+                              ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}
                             </span>`;
-        notPrimary[num][num2] = true;
+        notPrimary[tableNumber][tableColumnNumber] = true;
       }
 
-      list[1].innerHTML = document.getElementById('dataType' + num + num2 + num2).value;
-      // list[2].innerHTML = document.getElementById('constraint'+num+num2+num2).value;
-
-
-      constraintIndex = String(num) + String(num2);
+      list[1].innerHTML = schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].T.Name;
+      
+      constraintIndex = String(tableNumber) + String(tableColumnNumber);
       constraintIndex = parseInt(constraintIndex);
       if (selectedConstraints[constraintIndex] == undefined) {
         // not null flag
-        if (notNullFoundFlag[num][num2] == true) {
+        if (notNullFoundFlag[tableNumber][tableColumnNumber] == true) {
           notNullFound = "<option disabled class='active' selected>Not Null</option>";
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = true;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = true;
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].NotNull = true;
         }
-        else if (notNullFoundFlag[num][num2] == false) {
+        else if (notNullFoundFlag[tableNumber][tableColumnNumber] == false) {
           notNullFound = "<option disabled>Not Null</option>";
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = false;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = false;
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].NotNull = false;
         }
 
         // unique flag
-        if (uniqueFoundFlag[num][num2] == true) {
+        if (uniqueFoundFlag[tableNumber][tableColumnNumber] == true) {
           uniqueFound = "<option disabled class='active' selected>Unique</option>";
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = true;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = true;
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].Unique = true;
         }
-        else if (uniqueFoundFlag[num][num2] == false) {
+        else if (uniqueFoundFlag[tableNumber][tableColumnNumber] == false) {
           uniqueFound = "<option disabled>Unique</option>";
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = false;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = false;
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].Unique = false;
         }
 
-        constraintId = 'spConstraint' + num + num2;
+        constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
         constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
           + notNullFound
           + uniqueFound
           + "</select>";
         list[2].innerHTML = constraintHtml;
-        list[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + num + num2);
+        list[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + tableNumber + tableColumnNumber);
       }
       else {
         notNullFound = "<option disabled>Not Null</option>";
         uniqueFound = "<option disabled>Unique</option>";
-        uniqueFoundFlag[num][num2] = false;
-        notNullFoundFlag[num][num2] = false;
+        uniqueFoundFlag[tableNumber][tableColumnNumber] = false;
+        notNullFoundFlag[tableNumber][tableColumnNumber] = false;
         for (var a = 0; a < selectedConstraints[constraintIndex].length; a++) {
           if (selectedConstraints[constraintIndex][a] == 'Not Null') {
             notNullFound = "<option disabled class='active' selected>Not Null</option>";
-            notNullFoundFlag[num][num2] = true;
+            notNullFoundFlag[tableNumber][tableColumnNumber] = true;
           }
           else if (selectedConstraints[constraintIndex][a] == 'Unique') {
             uniqueFound = "<option disabled class='active' selected>Unique</option>";
-            uniqueFoundFlag[num][num2] = true;
+            uniqueFoundFlag[tableNumber][tableColumnNumber] = true;
           }
         }
-        if (notNullFoundFlag[num][num2] == true) {
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = true;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = true;
+        if (notNullFoundFlag[tableNumber][tableColumnNumber] == true) {
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].NotNull = true;
         }
         else {
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = false;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].NotNull = false;
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].NotNull = false;
         }
-        if (uniqueFoundFlag[num][num2] == true) {
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = true;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = true;
+        if (uniqueFoundFlag[tableNumber][tableColumnNumber] == true) {
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].Unique = true;
         }
         else {
-          schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = false;
-          // schemaConversionObj_original.SpSchema[src_table_name[num]].ColDefs[newColumnName].Unique = false;
+          schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColDefs[newColumnName].Unique = false;
         }
-        spPlaceholder[num][num2] = selectedConstraints[constraintIndex].length;
-        constraintId = 'spConstraint' + num + num2;
+        spPlaceholder[tableNumber][tableColumnNumber] = selectedConstraints[constraintIndex].length;
+        constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
         constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
           + notNullFound
           + uniqueFound
           + "</select>";
         list[2].innerHTML = constraintHtml;
-        list[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + num + num2);
+        list[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + tableNumber + tableColumnNumber);
       }
 
-      mySelect = new vanillaSelectBox('#spConstraint' + num + num2, {
-        placeHolder: spPlaceholder[num][num2] + " constraints selected",
+      mySelect = new vanillaSelectBox('#spConstraint' + tableNumber + tableColumnNumber, {
+        placeHolder: spPlaceholder[tableNumber][tableColumnNumber] + " constraints selected",
         maxWidth: 500,
         maxHeight: 300
       });
     }
-    else {
-      if (index > 0) {
-        num2 = parseInt($(this).find("input[type=checkbox]").attr('id').match(/\d+/), 10);
-        list[0].innerHTML = primaryTabCell[num][num2];
-        // document.getElementById('columnNameText' + num + num2 + num2).innerHTML = primaryTabCell[num][num2];
-        document.getElementById('dataType' + num + num2).innerHTML = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[num]].ColDefs[Object.keys(schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[num]].ColDefs)[num2]].T.Name;
-        document.getElementById('spConstraint' + num + num2).innerHTML = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[num]].ColDefs[Object.keys(schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[num]].ColDefs)[num2]].NotNull;
-
-        var idx = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[num]].ColNames.indexOf(schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[num]].ColNames[num2])
-        if (idx > -1) {
-          array.push(schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[num]].ColNames[num2])
-        }
-      }
-
-    }
-    }
   })
-  var col_names_array = schemaConversionObj.SpSchema[src_table_name[num]].ColNames
-  // for (var x = 0; x < array.length; x++) {
-  //   for (var y = 0; y < col_names_array.length; y++) {
-  //     if (array[x] == col_names_array[y]) {
-  //       delete schemaConversionObj.SpSchema[src_table_name[num]].ColDefs[col_names_array[y]]
-  //       col_names_array.splice(y, 1)
-  //     }
-  //   }
-  // };
-  schemaConversionObj.SpSchema[src_table_name[num]].ColNames = col_names_array;
-
-  // var pkArray = schemaConversionObj.SpSchema[src_table_name[num]].Pks;
-  // for (var x = 0; x < notPkArray.length; x++) {
-  //   for (var y = 0; y < pkArray.length; y++) {
-  //     if (notPkArray[x].Col == pkArray[y].Col) {
-  //       pkArray.splice(y, 1)
-  //     }
-  //   }
-  // }
-  // schemaConversionObj.SpSchema[src_table_name[num]].Pks = pkArray;
-
+ 
   document.getElementById('download-schema').setAttribute('data-obj', JSON.stringify(schemaConversionObj))
-  $(tableid).each(function (index) {
-    // if (index > 0) {
-      $(this).find('.src-tab-cell .bmd-form-group').remove();
-    // }
+  $(tableId).each(function (index) {
+    $(this).find('.src-tab-cell .bmd-form-group').remove();
   })
+}
+
+const showSnackbar = (message, bgClass) => {
+  var x = document.getElementById("snackbar");
+  x.className = "show" + bgClass;
+  x.innerHTML = message;
+  setTimeout(function(){
+     x.className = x.className.replace("show", "");
+ }, 3000);
 }
 
 /**
@@ -740,11 +589,22 @@ function saveButtonClicked(event) {
  *
  * @return {null}
  */
-function createTableFromJson(obj) {
-  // schemaConversionObj_original = obj;
-  // schemaConversionObj = JSON.parse(JSON.stringify(schemaConversionObj_original))
+const createSourceAndSpannerTables = (obj) => {
   schemaConversionObj = obj;
-  document.getElementById('download-schema').setAttribute('data-obj', JSON.stringify(schemaConversionObj))
+  document.getElementById('download-schema').setAttribute('data-obj', JSON.stringify(schemaConversionObj));
+
+  fetch(apiUrl + '/getTypeMap', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(function (res) {
+    res.json().then(function (result) {
+      globalDataTypes = result;
+    })
+  });
 
   $("#download-schema").click(function () {
     $("<a />", {
@@ -856,27 +716,27 @@ function createTableFromJson(obj) {
     span4.innerHTML = `<i class="large material-icons" style="font-size: 18px;">circle</i>`
     h5.appendChild(span4)
 
-    var span1 = document.createElement("a")
-    span1.className = "edit-text right-align hide-content"
+    var span1 = document.createElement("button")
+    span1.className = "right-align hide-content edit-button"
     span1.innerHTML = "Edit Spanner Schema"
     span1.setAttribute('id', 'editSpanner' + i)
     span1.addEventListener('click', function () {
-      // num = parseInt($(this).attr('id').match(/\d+/),10)
-      // tableid = '#src-sp-table' + num + ' tr'
+      // tableNumber = parseInt($(this).attr('id').match(/\d+/),10)
+      // tableId = '#src-sp-table' + tableNumber + ' tr'
       if ($(this).html() === "Edit Spanner Schema") {
-        editButtonClicked($(this));
+        editSpannerHandler($(this));
       }
       else if ($(this).html() === "Save Changes") {
-        saveButtonClicked($(this));
+        saveSpannerChanges($(this));
       }
     })
     h5.appendChild(span1)
 
-    span2 = document.createElement("a")
-    span2.className = "edit-icon right-align hide-content"
-    span2.innerHTML = `<i class="large material-icons" style="font-size: 18px;">edit</i>`
-    span2.setAttribute('id', 'editSpannerIcon' + i)
-    h5.appendChild(span2)
+    // span2 = document.createElement("a")
+    // span2.className = "edit-icon right-align hide-content"
+    // span2.innerHTML = `<i class="large material-icons" style="font-size: 18px;">edit</i>`
+    // span2.setAttribute('id', 'editSpannerIcon' + i)
+    // h5.appendChild(span2)
 
     var div3 = document.createElement("div")
     div3.setAttribute("id", Object.keys(schemaConversionObj.SrcSchema)[i])
@@ -1003,11 +863,14 @@ function createTableFromJson(obj) {
               if (pksSp[x].Col == sp_table_cols[k]) {
                 pkFlag = true;
                 tabCell.innerHTML = `<span class="column left" id='keyIcon${i}${k}${k}'>
-                                    <sub>${pksSp[x].seqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
-                                  </span>
-                                  <span class="column right" id='columnNameText${i}${k}${k}'>
-                                    ${sp_table_cols[k]}
-                                  </span>`;
+                                      <sub>${pksSp[x].seqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg' class='primaryKey'>
+                                      <!-- <span class='hidePrimaryKey'>
+                                        <img src='./Icons/Icons/Group 2181.svg'>
+                                      </span> -->
+                                    </span>
+                                    <span class="column right" id='columnNameText${i}${k}${k}'>
+                                      ${sp_table_cols[k]}
+                                    </span>`;
                 notPrimary[i][k] = false;
                 initialPkSeqId[i][k] = pksSp[x].seqId;
                 break
@@ -1016,12 +879,11 @@ function createTableFromJson(obj) {
             if (pkFlag == false) {
               notPrimary[i][k] = true;
               tabCell.innerHTML = `<span class="column left" id='keyIcon${i}${k}${k}'>
-                                            <!-- <i class="fas fa-key" aria-hidden="true" style="color: gray; font-size: 18px; visibility: hidden;"></i> -->
-                                            <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden;'>
-                                          </span>
-                                          <span class="column right" id='columnNameText${i}${k}${k}'>
-                                            ${sp_table_cols[k]}
-                                          </span>`;
+                                    <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden;'>
+                                  </span>
+                                  <span class="column right" id='columnNameText${i}${k}${k}'>
+                                    ${sp_table_cols[k]}
+                                  </span>`;
               // primaryTabCell[i][k] = tabCell.innerHTML;
               // tabCell.innerHTML = sp_table_cols[k]
             }
@@ -1172,6 +1034,7 @@ function createTableFromJson(obj) {
     if (summaryDataResp != undefined) {
       createSummaryForEachTable(i, summaryDataResp);
     }
+    foreignKeyHandler(i);
 
     li.appendChild(div1);
   }
@@ -1200,6 +1063,152 @@ function createTableFromJson(obj) {
       }
     }
   }
+}
+
+function foreignKeyHandler(index) {
+  var foreignKeyDiv = document.createElement('div');
+  foreignKeyDiv.className = 'summaryCard';
+
+  var foreignKeyHeader = document.createElement("div")
+  foreignKeyHeader.className = 'foreignKeyHeader';
+  foreignKeyHeader.role = 'tab';
+
+  var foreignKeyHeading = document.createElement("h5")
+  foreignKeyHeading.className = 'mb-0';
+
+  var foreignKeyLink = document.createElement("a")
+  foreignKeyLink.innerHTML = `Foreign Keys`;
+  foreignKeyLink.className = 'summaryFont';
+  foreignKeyLink.setAttribute("data-toggle", "collapse");
+  foreignKeyLink.setAttribute("href", "#foreignKey" + index);
+  
+  foreignKeyHeading.appendChild(foreignKeyLink);
+  foreignKeyHeader.appendChild(foreignKeyHeading);
+  foreignKeyDiv.appendChild(foreignKeyHeader);
+
+  var foreignKeyCollapse = document.createElement("div")
+  foreignKeyCollapse.setAttribute("id", 'foreignKey' + index);
+  foreignKeyCollapse.className = "collapse summaryCollapse";
+
+  var foreignKeyCard = document.createElement("div");
+  foreignKeyCard.className = "mdc-card mdc-card-content summaryBorder";
+  foreignKeyCard.setAttribute('border', '0px');
+
+  var lines = '';
+  for (var p in foreignKeys) {
+    for (var k in foreignKeys[p]) {
+      lines += '<tr><td>' + k + '</td><td>: ' + foreignKeys[p][k] + '</td></tr> <br />'
+    }
+    lines += '<br />'
+  }
+
+  var foreignKeyContent = document.createElement('div');
+  foreignKeyContent.className = 'mdc-card summary-content';
+  foreignKeyContent.innerHTML = lines;
+  foreignKeyCard.appendChild(foreignKeyContent);
+
+  foreignKeyCollapse.appendChild(foreignKeyCard);
+  foreignKeyDiv.appendChild(foreignKeyCollapse);
+
+  div5.appendChild(foreignKeyDiv);
+
+  // let div1 = document.createElement('div');
+
+  // let list = document.createElement('ul');
+  // list.className = 'nav';
+  // list.role = 'tablist';
+
+  // var li1 = document.createElement('li');
+  // li1.className = 'nav-item';
+
+  // var li2 = document.createElement('li');
+  // li2.className = 'nav-item';
+
+  // let anchor1 = document.createElement('a');
+  // anchor1.className = 'nav-link active';
+  // anchor1.id = 'tableSummary';
+  // anchor1.setAttribute('data-toggle', 'tab');
+  // anchor1.setAttribute('aria-selected', false);
+  // anchor1.setAttribute('href', '#table-summary' + index);
+  // anchor1.setAttribute('aria-controls', 'table-summary');
+  // anchor1.innerHTML = 'View Summary';
+
+  // let summaryDiv = document.createElement("div")
+  // summaryDiv.setAttribute("id", 'table-summary' + index);
+  // summaryDiv.className = "tab-pane fade";
+
+  // let summaryCollapseCard = document.createElement("div");
+  // summaryCollapseCard.className = "mdc-card mdc-card-content summaryBorder";
+  // summaryCollapseCard.setAttribute('border', '0px');
+
+  // let summaryContent = document.createElement('div');
+  // summaryContent.className = 'mdc-card summary-content';
+  // summaryContent.innerHTML = summary[Object.keys(summary)[index]].split('\n').join('<br />');
+  // summaryCollapseCard.appendChild(summaryContent);
+  // summaryDiv.appendChild(summaryCollapseCard);
+
+  // let anchor2 = document.createElement('a');
+  // anchor2.className = 'nav-link';
+  // anchor2.id = 'tableForeignKeys';
+  // anchor2.setAttribute('data-toggle', 'tab');
+  // anchor2.setAttribute('aria-selected', false);
+  // anchor2.setAttribute('href', '#table-foreign-keys');
+  // anchor2.setAttribute('aria-controls', 'table-foreign-keys');
+  // anchor2.innerHTML = 'Foreign Keys';
+
+  // li1.appendChild(anchor1);
+  // list.appendChild(li1);
+
+  // li2.appendChild(anchor2);
+  // list.appendChild(li2);
+
+  // div1.appendChild(list);
+  // div5.appendChild(div1);
+  // div5.appendChild(summaryDiv);
+
+  // `<div class="report-tabs">
+  //   <ul class="nav nav-tabs md-tabs" role="tablist">
+  //     <li class="nav-item">
+  //       <a class="nav-link active" id="reportTab" data-toggle="tab" href="#report" role="tab" aria-controls="report"
+  //         aria-selected="true" onclick='findTab(this.id)'>Conversion Report</a>
+  //     </li>
+  //     <li class="nav-item">
+  //       <a class="nav-link" id="ddlTab" data-toggle="tab" href="#ddl" role="tab" aria-controls="ddl"
+  //         aria-selected="false" onclick='findTab(this.id)'>DDL Statements</a>
+  //     </li>
+  //     <li class="nav-item">
+  //       <a class="nav-link" id="summaryTab" data-toggle="tab" href="#summary" role="tab" aria-controls="summary"
+  //         aria-selected="false" onclick='findTab(this.id)'>Summary Report</a>
+  //     </li>
+  //   </ul>
+  // </div>
+  
+  // <div class="tab-content"> 
+
+  //   <div id="report" class="tab-pane fade show active">
+
+
+  //       <div class="accordion md-accordion" id="accordion" role="tablist" aria-multiselectable="true">
+          
+  //       </div>
+
+  //       </div>
+
+  //       <div id="ddl" class="tab-pane fade">
+  //           <div class="panel-group" id="ddl-accordion">
+              
+  //           </div> 
+  //       </div>
+
+  //       <div id="summary" class="tab-pane fade">
+  //           <div class="panel-group" id="summary-accordion">
+              
+  //           </div> 
+  //       </div>
+
+  //   </div>
+  // `
+
 }
 
 function createSummaryForEachTable(index, summary) {
@@ -1267,7 +1276,6 @@ function validateInput(inputField) {
  */
 function homeScreen(params) {
   initHomeScreenTasks();
-  console.log(JSON.parse(sessionStorage.getItem('sessionStorage')));
   return homeScreenHtml()
 }
 
@@ -1552,62 +1560,7 @@ function hideSpinner() {
  *
  * @return {null}
  */
-// function showSchemaAssessment() {
-//   if (!isLive) {
-//     jQuery('#connectModalSuccess').modal("hide");
-//     jQuery('#connectToDbModal').modal("hide");
-//     jQuery('#globalDataTypeModal').modal("hide");
-
-//     const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
-//     // Render the component in the "app" placeholder
-//     document.getElementById('app').innerHTML = component.render();
-//     // router.loadRoute('schemaReport')
-//     createTableFromJson(schemaConversionObj_original)
-//     createDdlFromJson(ddl)
-//     createSummaryFromJson(summary);
-//   }
-
-//   else {
-//     showSpinner();
-//     let reportData = fetch(apiUrl + '/convertSchema');
-//     let ddlData = fetch(apiUrl + '/getDDL');
-//     let summaryData = fetch(apiUrl + '/getSummary');
-//     let sessionInfo = fetch(apiUrl + '/getSession');
-
-//     Promise.all([reportData, ddlData, summaryData, sessionInfo])
-//       .then(values => Promise.all(values.map(value => value.json())))
-//       .then(finalVals => {
-//         hideSpinner();
-//         let reportDataResp = finalVals[0];
-//         let ddlDataResp = finalVals[1];
-//         summaryDataResp = finalVals[2];
-//         let sessionInfoResp = finalVals[3];
-//         jQuery('#connectModalSuccess').modal("hide");
-//         jQuery('#connectToDbModal').modal("hide");
-//         jQuery('#globalDataTypeModal').modal("hide");
-
-//         const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
-//         // Render the component in the "app" placeholder
-//         document.getElementById('app').innerHTML = component.render();
-
-        // sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-        // if (sessionStorageArr == null) {
-        //   sessionStorageArr = [];
-        //   sessionStorageArr.push(sessionInfoResp);
-        // }
-        // else {
-        //   sessionStorageArr.push(sessionInfoResp);
-        // }
-        // sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-//         // router.loadRoute('schemaReport')
-//         createTableFromJson(reportDataResp);
-//         // createTableFromJson(schemaConversionObj_original);
-//         createDdlFromJson(ddlDataResp)
-//         createSummaryFromJson(summaryDataResp);
-//       });
-//   }
-// }
-async function showSchemaAssessment() {
+async function showSchemaAssessment(windowEvent) {
   if (!isLive) {
     jQuery('#connectModalSuccess').modal("hide");
     jQuery('#connectToDbModal').modal("hide");
@@ -1616,8 +1569,7 @@ async function showSchemaAssessment() {
     const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
     // Render the component in the "app" placeholder
     document.getElementById('app').innerHTML = component.render();
-    // router.loadRoute('schemaReport')
-    createTableFromJson(schemaConversionObj_original)
+    createSourceAndSpannerTables(schemaConversionObj_original)
     createDdlFromJson(ddl)
     createSummaryFromJson(summary);
   }
@@ -1633,7 +1585,9 @@ async function showSchemaAssessment() {
     summaryData = await fetch(apiUrl + '/getSummary');
     summaryDataResp = await summaryData.json();
     sourceTableFlag = localStorage.getItem('sourceDbName');
-    sessionRetrieval(sourceTableFlag);
+    if (windowEvent != 'load') {
+      sessionRetrieval(sourceTableFlag);
+    }
 
     jQuery('#connectModalSuccess').modal("hide");
     jQuery('#connectToDbModal').modal("hide");
@@ -1642,9 +1596,10 @@ async function showSchemaAssessment() {
     const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
     document.getElementById('app').innerHTML = component.render();
 
-    createTableFromJson(reportDataResp);
+    createSourceAndSpannerTables(reportDataResp);
     createDdlFromJson(ddlDataResp)
     createSummaryFromJson(summaryDataResp);
+    $('#src-sp-table0').DataTable();
   }
 }
 
@@ -1658,7 +1613,6 @@ function sessionRetrieval(dbType) {
   })
   .then(function (res) {
     res.json().then(function (sessionInfoResp) {
-      console.log(sessionInfoResp);
         sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
         sessionInfoResp.sourceDbType = dbType;
         if (sessionStorageArr == null) {
@@ -1669,7 +1623,6 @@ function sessionRetrieval(dbType) {
           sessionStorageArr.push(sessionInfoResp);
         }
         sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-        console.log(JSON.parse(sessionStorage.getItem('sessionStorage')))
     })
   })
 }
@@ -1693,6 +1646,7 @@ function storeDumpFileValues(dbType, filePath) {
     localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   localStorage.setItem('globalDumpFilePath', filePath);
+  onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'), 'load');
 }
 
 /**
@@ -1702,61 +1656,13 @@ function storeDumpFileValues(dbType, filePath) {
  * @param {string} dumpFilePath path entered for the dump file
  * @return {null}
  */
-// function onLoadDatabase(dbType, dumpFilePath) {
-//   if (!isLive) {
-//     showSpinner();
-//     jQuery('#loadDatabaseDumpModal').modal('hide');
-//     const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
-//     // Render the component in the "app" placeholder
-//     document.getElementById('app').innerHTML = component.render();
-//     // router.loadRoute('schemaReport')
-//     createTableFromJson(schemaConversionObj_original)
-//     createDdlFromJson(ddl)
-//     createSummaryFromJson(summary);
-//   }
-
-//   else {
-//     showSpinner();
-//     let reportData = fetch(apiUrl + '/convertSchemaDump', {
-//       method: 'POST',
-//       headers: {
-//         'Accept': 'application/json',
-//         'Content-Type': 'application/json'
-//       },
-//       body: JSON.stringify({
-//         "Driver": dbType,
-//         "Path": dumpFilePath
-//       })
-//     });
-//     ddlData = fetch(apiUrl + '/getDDL');
-//     summaryData = fetch(apiUrl + '/getSummary');
-//     // sessionInfo = fetch(apiUrl + '/getSession');
-
-//     Promise.all([reportData, ddlData, summaryData])
-//       .then(values => Promise.all(values.map(value => value.json())))
-//       .then(finalVals => {
-//         hideSpinner();
-//         reportDataResp = finalVals[0];
-//         ddlDataResp = finalVals[1];
-//         summaryDataResp = finalVals[2];
-//         jQuery('#loadDatabaseDumpModal').modal('hide');
-
-//         const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
-//         // Render the component in the "app" placeholder
-//         document.getElementById('app').innerHTML = component.render();
-//         createTableFromJson(reportDataResp);
-//         createDdlFromJson(ddlDataResp);
-//         createSummaryFromJson(summaryDataResp);
-//       })
-//   }
-// }
-async function onLoadDatabase(dbType, dumpFilePath) {
+async function onLoadDatabase(dbType, dumpFilePath, windowEvent) {
   if (!isLive) {
     showSpinner();
     jQuery('#loadDatabaseDumpModal').modal('hide');
     const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
     document.getElementById('app').innerHTML = component.render();
-    createTableFromJson(schemaConversionObj_original)
+    createSourceAndSpannerTables(schemaConversionObj_original)
     createDdlFromJson(ddl)
     createSummaryFromJson(summary);
   }
@@ -1774,7 +1680,18 @@ async function onLoadDatabase(dbType, dumpFilePath) {
         "Path": dumpFilePath
       })
     });
-    reportDataResp = await reportData.json();
+    requestCode = await reportData.status;
+    reportDataResp = await reportData.text();
+
+    if (requestCode != 200) {
+      hideSpinner();
+      showSnackbar(reportDataResp, ' redBg');
+      return;
+    }
+    else{
+      window.location.href = '#/schema-report-load-db-dump';
+      reportDataResp = JSON.parse(reportDataResp);
+    }
     
     ddlData = await fetch(apiUrl + '/getDDL');
     ddlDataResp = await ddlData.json();
@@ -1782,18 +1699,21 @@ async function onLoadDatabase(dbType, dumpFilePath) {
     summaryData = await fetch(apiUrl + '/getSummary');
     summaryDataResp = await summaryData.json();
     sourceTableFlag = localStorage.getItem('sourceDbName');
-    sessionRetrieval(sourceTableFlag);
 
     jQuery('#loadDatabaseDumpModal').modal('hide');
 
     const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
     document.getElementById('app').innerHTML = component.render();
-    createTableFromJson(reportDataResp);
+    createSourceAndSpannerTables(reportDataResp);
     createDdlFromJson(ddlDataResp);
     createSummaryFromJson(summaryDataResp);
+
+    if (windowEvent != 'load') {
+      sessionRetrieval(sourceTableFlag);
+      showSnackbar('schema converted successfully', ' greenBg');
+    }
   }
 }
-
 
 /**
  * Function to call database connection api.
@@ -1863,7 +1783,7 @@ function onImport() {
     const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
     // Render the component in the "app" placeholder
     document.getElementById('app').innerHTML = component.render();
-    createTableFromJson(JSON.parse(localStorage.getItem('importSchema')));
+    createSourceAndSpannerTables(JSON.parse(localStorage.getItem('importSchema')));
     createDdlFromJson(ddl)
     createSummaryFromJson(summary);
   }
@@ -1874,7 +1794,7 @@ function onImport() {
     const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
     // Render the component in the "app" placeholder
     document.getElementById('app').innerHTML = component.render();
-    createTableFromJson(JSON.parse(localStorage.getItem('importSchema')));
+    createSourceAndSpannerTables(JSON.parse(localStorage.getItem('importSchema')));
     createDdlFromJson(ddl)
     createSummaryFromJson(summary);
 
@@ -1892,7 +1812,7 @@ function onImport() {
     //     const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
     //     // Render the component in the "app" placeholder
     //     document.getElementById('app').innerHTML = component.render();
-    //     createTableFromJson(JSON.parse(localStorage.getItem('importSchema')));
+    //     createSourceAndSpannerTables(JSON.parse(localStorage.getItem('importSchema')));
     //     createDdlFromJson(ddlDataResp)
     //     createSummaryFromJson(summaryDataResp);
     //   });
@@ -1922,9 +1842,6 @@ function clearModal() {
  * @return {null}
  */
 function storeResumeSessionId(driver, path, fileName, sourceDb) {
-  console.log(driver);
-  console.log(path);
-  console.log(fileName);
   localStorage.setItem('driver', driver);
   localStorage.setItem('path', path);
   localStorage.setItem('fileName', fileName);
@@ -1960,7 +1877,7 @@ function resumeSession(driver, path, fileName, sourceDb) {
       jQuery('#importSchemaModal').modal('hide');
       const { component = ErrorComponent } = findComponentByPath('/schema-report-resume-session', routes) || {};
       document.getElementById('app').innerHTML = component.render();
-      createTableFromJson(data);
+      createSourceAndSpannerTables(data);
       createDdlFromJson(ddl)
       createSummaryFromJson(summary);
     }
@@ -1979,7 +1896,7 @@ function resumeSession(driver, path, fileName, sourceDb) {
           jQuery('#importSchemaModal').modal('hide');
           const { component = ErrorComponent } = findComponentByPath('/schema-report-resume-session', routes) || {};
           document.getElementById('app').innerHTML = component.render();
-          createTableFromJson(data);
+          createSourceAndSpannerTables(data);
           createDdlFromJson(ddlDataResp)
           createSummaryFromJson(summaryDataResp);
         });
@@ -2016,7 +1933,6 @@ function setSessionTableContent() {
     </tr>`
   }
   else {
-    console.log(sessionArray);
     var sessionTableContent = document.getElementById('session-table-content');
     for (var x = 0; x < sessionArray.length; x++) {
       var session = sessionArray[x];
@@ -2047,9 +1963,6 @@ function setSessionTableContent() {
 
       td4.addEventListener('click', function() {
         var index = $(this).attr('id');
-        console.log(index);
-        console.log(sessionArray);
-        console.log(driver);
         storeResumeSessionId(sessionArray[index].driver, sessionArray[index].path, sessionArray[index].fileName, sessionArray[index].sourceDbType);
       });
 
@@ -2059,29 +1972,7 @@ function setSessionTableContent() {
       sessionTableTr.appendChild(td4);
 
       sessionTableContent.appendChild(sessionTableTr);
-      console.log(sessionTime);
-      console.log(sessionDate);
-      console.log(sessionName);
-      console.log(session);
     }
-    // document.getElementById('session-table-content').innerHTML = `<tr class="d-flex">
-    //     <td class='col-2 session-table-td2'>Session 1</td>
-    //     <td class='col-4 session-table-td2'>Tuesday, 18 August 2020</td>
-    //     <td class='col-2 session-table-td2'>5:30 PM</td>
-    //     <td class='col-4 session-table-td2 session-action'><a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='storeResumeSessionId("session1")'>Resume Session</a></td>
-    //   </tr>
-    //   <tr class="d-flex">
-    //     <td class='col-2 session-table-td2'>Session 2</td>
-    //     <td class='col-4 session-table-td2 '>Tuesday, 18 August 2020</td>
-    //     <td class='col-2 session-table-td2 '>5:30 PM</td>
-    //     <td class='col-4 session-table-td2 session-action'><a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='storeResumeSessionId("session2")'>Resume Session</a></td>
-    //   </tr>
-    //   <tr class="d-flex">
-    //     <td class='col-2 session-table-td2 ' >Session 3</td>
-    //     <td class='col-4 session-table-td2 '>Tuesday, 18 August 2020</td>
-    //     <td class='col-2 session-table-td2 '>5:30 PM</td>
-    //     <td class='col-4 session-table-td2 session-action'><a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='storeResumeSessionId("session3")'>Resume Session</a></td>
-    //   </tr>`
   }
 }
 
@@ -2163,6 +2054,8 @@ function homeScreenHtml() {
        </div>
      </div>
    </div>
+
+   <div id="snackbar"></div>
 
    <div class='spinner-backdrop' id='toggle-spinner' style="display:none">
     <div id="spinner"></div>
@@ -2300,7 +2193,7 @@ function homeScreenHtml() {
         </form>
        </div>
        <div class="modal-footer">
-         <a href='#/schema-report-load-db-dump'><input type='submit' disabled='disabled' value='Confirm' id='loadConnectButton' class='connectButton'onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)' /></a>
+         <a><input type='submit' disabled='disabled' value='Confirm' id='loadConnectButton' class='connectButton'onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)' /></a>
          <button class="buttonload" id="loaderModalButton" style="display: none;">
           <i class="fa fa-circle-o-notch fa-spin"></i>converting
         </button>

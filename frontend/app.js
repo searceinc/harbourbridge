@@ -40,10 +40,10 @@ const router = () => {
   const { component = ErrorComponent } = findComponentByPath(path, routes) || {};
 
   if (path == '/schema-report-connect-to-db') {
-    showSchemaAssessment();
+    showSchemaAssessment(event.type);
   }
   else if (path == '/schema-report-load-db-dump') {
-    onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'))
+    onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'), event.type)
   }
   else if (path == '/schema-report-import-db') {
     onImport()

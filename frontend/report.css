@@ -19,8 +19,29 @@
     outline: none;
 }
 
-.download-button:focus, [type="submit"]:focus{
+.edit-button {
+    font-size: 16px;
+    font-weight: bold;
+    float: right;
+    border-radius: 20px;
+    padding: 5px 10px;
+    margin-right: 25px;
+    border: 1px solid #3A78C1 !important;
+    color: #5E5752;
+    background: #EDEDED;
+}
+
+.edit-button:hover {
+    background-color: #CBCBCB;
+}
+
+/* .download-button:focus, [type="submit"]:focus{
     outline: none;
+} */
+
+.download-button:hover {
+    background-color: #CBCBCB;
+    color: #4285f4;
 }
 
 .acc-card-content{
@@ -488,11 +509,19 @@
     overflow: auto;
     max-height: 202px;
 }
+
+.data-type-table > tbody {
+    display: block;
+    overflow: auto;
+    max-height: 310px;
+}
+
 thead, tbody tr {
     display:table;
     width:100%;
     table-layout:fixed;
 }
+
 /* thead {
     width: calc( 100% - 1em )
 } */
@@ -546,10 +575,15 @@ thead, tbody tr {
 .expand{
     margin-bottom: 20px;
     background-color: #4285f4;
-    border: 1px solid #4285f4;
+    border: 1px solid #4285f4 !important;
     color: #ffffff;
     border-radius: 15px;
     padding: 4px 10px 4px 10px;
+}
+
+.expand:hover {
+    background-color: #CBCBCB;
+    color: #4285f4;
 }
 
 .collapseButton{
@@ -762,11 +796,30 @@ span.sql-c {
     padding: 1rem;
     background-color: #FDFDFD;
     height: 0px;
+    /* border-radius: 10px !important; */
+}
+
+.foreignKeyHeader {
+    padding: 1rem;
+    background-color: #FDFDFD;
+    height: 0px;
     border-radius: 10px !important;
 }
 
 .summaryCardHeader a {
     /* padding-left: 20px !important; */
+}
+
+.snackbar-content {
+    display: block;
+    padding: 8px 1.5rem;
+    margin-top: 3px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #0f9d58;
+    border-radius: 24px;
+    z-index: 9999;
 }
 
 .summaryCardHeader a i{
@@ -827,3 +880,74 @@ span.sql-c {
 [data-title] {
     position: relative;
 }
+
+#snackbar {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    /* background-color: #0f9d58; */
+    color: #fff;
+    text-align: center;
+    border-radius: 30px;
+    padding: 8px 16px;
+    font-weight: bold;
+    position: fixed;
+    z-index: 1;
+    right: 0;
+    bottom: 15px;
+}
+
+.greenBg {
+    background-color: #0f9d58;
+}
+
+.redBg {
+    background-color: red;
+}
+
+.show {
+    visibility: visible !important;
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+.dataTypeSelector {
+    width: 200px;
+    background: #222;
+    color:  #eee;
+    line-height: 25px;
+    font-size: 14px;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.dataTypes {
+    display: none;
+    position: absolute;
+    margin: 0;
+    background: #dddddd;
+}
+
+.dataTypes > li {
+    width: 200px;
+    background: #eee;
+    line-height: 25px;
+    font-size: 14px;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.dataTypes > li:hover {
+    background: #aaa;
+}
+
+.hidePrimaryKey {
+    display: none;
+}
+
+.primaryKey:hover + .hidePrimaryKey {
+    display: block;
+    /* color: red; */
+  }
+
+

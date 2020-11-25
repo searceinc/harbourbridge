@@ -191,6 +191,8 @@ function renderSchemaReportHtml()
         
         </header>
 
+        <div id="snackbar"></div>
+
         <div class='spinner-backdrop' id='toggle-spinner' style="display:none">
           <div id="spinner"></div>
         </div>
@@ -205,20 +207,20 @@ function renderSchemaReportHtml()
                 </h4>
             </div>
             <div class="report-tabs">
-            <ul class="nav nav-tabs md-tabs" role="tablist">
-              <li class="nav-item">
-                <a class="nav-link active" id="reportTab" data-toggle="tab" href="#report" role="tab" aria-controls="report"
-                  aria-selected="true" onclick='findTab(this.id)'>Conversion Report</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" id="ddlTab" data-toggle="tab" href="#ddl" role="tab" aria-controls="ddl"
-                  aria-selected="false" onclick='findTab(this.id)'>DDL Statements</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" id="summaryTab" data-toggle="tab" href="#summary" role="tab" aria-controls="summary"
-                  aria-selected="false" onclick='findTab(this.id)'>Summary Report</a>
-              </li>
-            </ul>
+              <ul class="nav nav-tabs md-tabs" role="tablist">
+                <li class="nav-item">
+                  <a class="nav-link active" id="reportTab" data-toggle="tab" href="#report" role="tab" aria-controls="report"
+                    aria-selected="true" onclick='findTab(this.id)'>Conversion Report</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="ddlTab" data-toggle="tab" href="#ddl" role="tab" aria-controls="ddl"
+                    aria-selected="false" onclick='findTab(this.id)'>DDL Statements</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="summaryTab" data-toggle="tab" href="#summary" role="tab" aria-controls="summary"
+                    aria-selected="false" onclick='findTab(this.id)'>Summary Report</a>
+                </li>
+              </ul>
             </div>
 
             <div class="status-icons">
