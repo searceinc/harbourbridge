@@ -5,7 +5,6 @@
  */
 function initTasks() {
   $(document).ready(function () {
-    // $('span').tooltip({placement: 'bottom',trigger: 'manual'}).tooltip('show');
 
     $('.reportCollapse').on('show.bs.collapse', function() {
       $(this).closest('.card').find('.rotate-icon').toggleClass('down');
@@ -138,16 +137,17 @@ function setGlobalDataType() {
     for (var i=1; i<tableLen; i++) {
       var row = document.getElementById('dataTypeRow'+i);
       var cells = row.getElementsByTagName('td');
-      for (var j=0; j<cells.length; j++) {
-        if (j == 0) {
-          var key = cells[j].innerText;
-        }
-        else {
-          dataTypeJson[key] = document.getElementById('dataTypeSel'+i+j).value;
+      if (document.getElementById('dataTypeOption'+ i) != null) {
+        for (var j=0; j<cells.length; j++) {
+          if (j == 0) {
+            var key = cells[j].innerText;
+          }
+          else {
+            dataTypeJson[key] = document.getElementById('dataTypeOption'+ i).value;
+          }
         }
       }
     }
-
     fetch(apiUrl + '/setTypeMap', {
       method: 'POST',
       headers: {
@@ -186,7 +186,7 @@ function renderSchemaReportHtml()
           </nav>
         
           <nav class="navbar navbar-static-top">
-            <div class="header-topic"><a href="#" style="text-decoration: none; color: #5E5752;">Instructions</a></div>
+            <div class="header-topic"><a href="#/instructions" style="text-decoration: none; color: #5E5752;">Instructions</a></div>
           </nav>
         
         </header>
@@ -243,11 +243,31 @@ function renderSchemaReportHtml()
                   aria-label="Search" onkeyup='searchTable()'>
               </form>
 
-              <span class="info-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'><i class="large material-icons">info</i></span>
-              <span class="legend-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'>
-                Status Legend
-              </span>
-            </div>
+              <!-- <span class="info-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'><i class="large material-icons">info</i></span>
+                <span class="legend-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'>
+                  Status Legend
+                </span> -->
+
+              <section class="cus-tip">
+                <span  class="cus-a info-icon statusTooltip"><i class="large material-icons">info</i><span class="legend-icon statusTooltip" style='cursor: pointer;display: inline-block;vertical-align: super;'>Status&nbsp;&nbsp;Legend</span></span>
+                <div class="legend-hover">
+                    <div class="legend-status">
+                      <span class="excellent"></span>
+                      Excellent
+                    </div>
+                    <div class="legend-status"> 
+                      <span class="good"></span>
+                      Good
+                    </div>
+                    <div class="legend-status">
+                      <span class="poor"></span>
+                      Poor
+                    </div>
+                </div>
+              </section>
+
+
+              </div>
             
             <div class="tab-bg" id='tabBg'>
             <div class="tab-content"> 

@@ -79,13 +79,15 @@
     /* background: #045C0C;
     color: #ffffff; */
     color: #5E5752;
-    background: #CBCBCB;
+    /* background: url(../images/sort_both.png) no-repeat center right !important; */
+    background-color: #CBCBCB;
     border-radius: 0 0 10px 10px;
     padding: 10px;
 }
 
 .acc-table-th-spn {
     text-align: center;
+    /* background: url(../images/sort_both.png) no-repeat center right !important; */
     background: #3A78C1;
     color: #ffffff;
     border-radius: 0 0 10px 10px;
@@ -139,7 +141,14 @@
 }
 
 .warning {
-    color: #F4B400;
+    color: #F4B400 !important;
+    font-size: 18px !important;
+    margin: auto 0px;
+    padding: 0px;
+    color: #fff;
+    opacity: inherit;
+    margin-right: 10px;
+    margin-top: 10px;
 }
 
 .notes {
@@ -189,12 +198,16 @@
 
 .summary-main-content{
     background-color: #ffffff;
-    /* padding: 15px; */
-    /* height: 100%; */
-    /* margin-top: 50px; */
     padding-left: 40px;
     padding-right: 40px;
     padding-top: 60px;
+}
+
+.instructions-main-content {
+    background-color: #ffffff;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 100px;
 }
 
 .summary-card{
@@ -282,12 +295,16 @@
     color: #222222;
     font-size: 20px;
     padding-left: 8px;
+    cursor: pointer;
+    display: inline;
 }
 .info-icon{
     color: #7B7B7C;
     width: 32px;
     vertical-align: middle;
+    cursor: pointer;
 }
+
 .info-icon i {
     font-size: 30px;
 }
@@ -353,6 +370,11 @@
     border-top: 0px;
     /* padding-left: 10px;
     padding-right: 10px; */
+    margin-top: -5px;
+}
+
+.inst-mdc-card-content {
+    background: #fdfdfd;
     margin-top: -5px;
 }
 
@@ -457,7 +479,7 @@
 .tooltip {
     position: relative;
     display: inline-block;
-    border-bottom: 1px dotted black;
+    /* border-bottom: 1px dotted black; */
   }
   
   .tooltip .tooltiptext {
@@ -472,6 +494,7 @@
     /* Position the tooltip */
     position: absolute;
     z-index: 1;
+    /* opacity: 15; */
   }
   
   .tooltip:hover .tooltiptext {
@@ -788,9 +811,9 @@ span.sql-c {
 
 } */
 
-.tooltip-arrow, .statusTooltip + .tooltip > .tooltip-inner {
+/* .tooltip-arrow, .statusTooltip + .tooltip > .tooltip-inner {
     background-color: #f00;
-}
+} */
 
 .summaryCardHeader {
     padding: 1rem;
@@ -808,18 +831,6 @@ span.sql-c {
 
 .summaryCardHeader a {
     /* padding-left: 20px !important; */
-}
-
-.snackbar-content {
-    display: block;
-    padding: 8px 1.5rem;
-    margin-top: 3px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #fff;
-    background-color: #0f9d58;
-    border-radius: 24px;
-    z-index: 9999;
 }
 
 .summaryCardHeader a i{
@@ -895,14 +906,17 @@ span.sql-c {
     z-index: 1;
     right: 0;
     bottom: 15px;
+    /* opacity: 0.7; */
 }
 
 .greenBg {
     background-color: #0f9d58;
+    opacity: 0.8;
 }
 
 .redBg {
     background-color: red;
+    opacity: 0.7;
 }
 
 .show {
@@ -948,6 +962,11 @@ span.sql-c {
 .primaryKey:hover + .hidePrimaryKey {
     display: block;
     /* color: red; */
-  }
+}
+
+table.dataTable thead th, table.dataTable thead td {
+    border-bottom: none !important;
+}
+
 
 

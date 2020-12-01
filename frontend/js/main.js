@@ -139,157 +139,169 @@ var dataType = {
 
 var schemaConversionObj_original = {
   "SpSchema": {
-    "category": {
-      "Name": "category",
-      "ColNames": [
-        "category_id",
-        "name",
-        "last_update"
-      ],
+    "test": {
+      "Name": "test",
+      "ColNames": ["a", "b"],
       "ColDefs": {
-        "category_id": {
-          "Name": "category_id",
+        "a": {
+          "Name": "a",
           "T": {
             "Name": "INT64",
-            "Len": null,
+            "Len": 0,
             "IsArray": false
           },
           "NotNull": true,
-          "Comment": "From: category_id tinyint"
+          "Comment": "From: a smallint(6)"
         },
-        "last_update": {
-          "Name": "last_update",
-          "T": {
-            "Name": "TIMESTAMP",
-            "Len": null,
-            "IsArray": false
-          },
-          "NotNull": true,
-          "Comment": "From: last_update timestamp"
-        },
-        "name": {
-          "Name": "name",
+        "b": {
+          "Name": "b",
           "T": {
             "Name": "STRING",
-            "Len": 25,
+            "Len": 9223372036854775807,
             "IsArray": false
           },
-          "NotNull": true,
-          "Comment": "From: name varchar(25)"
+          "NotNull": false,
+          "Comment": "From: b text"
         }
       },
       "Pks": [
         {
-          "Col": "category_id",
+          "Col": "a",
           "Desc": false
         }
       ],
-      "Comment": "Spanner schema for source table category"
+      "Fks": null,
+      "Comment": "Spanner schema for source table test"
     },
-    "country": {
-      "Name": "country",
-      "ColNames": [
-        "country_id",
-        "country",
-        "last_update"
-      ],
+    "test2": {
+      "Name": "test2",
+      "ColNames": ["c", "d", "synth_id"],
       "ColDefs": {
-        "country": {
-          "Name": "country",
-          "T": {
-            "Name": "STRING",
-            "Len": 50,
-            "IsArray": false
-          },
-          "NotNull": true,
-          "Comment": "From: country varchar(50)"
-        },
-        "country_id": {
-          "Name": "country_id",
+        "c": {
+          "Name": "c",
           "T": {
             "Name": "INT64",
-            "Len": null,
+            "Len": 0,
             "IsArray": false
           },
-          "NotNull": true,
-          "Comment": "From: country_id smallint"
+          "NotNull": false,
+          "Comment": "From: c smallint(6)"
         },
-        "last_update": {
-          "Name": "last_update",
+        "d": {
+          "Name": "d",
           "T": {
-            "Name": "TIMESTAMP",
-            "Len": null,
+            "Name": "INT64",
+            "Len": 0,
             "IsArray": false
           },
-          "NotNull": true,
-          "Comment": "From: last_update timestamp"
+          "NotNull": false,
+          "Comment": "From: d smallint(6)"
+        },
+        "synth_id": {
+          "Name": "synth_id",
+          "T": {
+            "Name": "INT64",
+            "Len": 0,
+            "IsArray": false
+          },
+          "NotNull": false,
+          "Comment": ""
         }
       },
       "Pks": [
         {
-          "Col": "country_id",
+          "Col": "synth_id",
           "Desc": false
         }
       ],
-      "Comment": "Spanner schema for source table country"
+      "Fks": [
+        {
+          "Name": "fk_test",
+          "Columns": ["d"],
+          "ReferTable": "test",
+          "ReferColumns": ["a"]
+        },
+        {
+          "Name": "fk_test2",
+          "Columns": ["c"],
+          "ReferTable": "test3",
+          "ReferColumns": ["f"]
+        }
+      ],
+      "Comment": "Spanner schema for source table test2"
+    },
+    "test3": {
+      "Name": "test3",
+      "ColNames": ["f", "e"],
+      "ColDefs": {
+        "e": {
+          "Name": "e",
+          "T": {
+            "Name": "STRING",
+            "Len": 9223372036854775807,
+            "IsArray": false
+          },
+          "NotNull": false,
+          "Comment": "From: e text"
+        },
+        "f": {
+          "Name": "f",
+          "T": {
+            "Name": "INT64",
+            "Len": 0,
+            "IsArray": false
+          },
+          "NotNull": true,
+          "Comment": "From: f smallint(6)"
+        }
+      },
+      "Pks": [
+        {
+          "Col": "f",
+          "Desc": false
+        }
+      ],
+      "Fks": null,
+      "Comment": "Spanner schema for source table test3"
     }
   },
-  "SyntheticPKeys": {},
+  "SyntheticPKeys": {
+    "test2": {
+      "Col": "synth_id",
+      "Sequence": 0
+    }
+  },
   "SrcSchema": {
-    "category": {
-      "Name": "category",
-      "ColNames": [
-        "category_id",
-        "name",
-        "last_update"
-      ],
+    "test": {
+      "Name": "test",
+      "ColNames": ["a", "b"],
       "ColDefs": {
-        "category_id": {
-          "Name": "category_id",
+        "a": {
+          "Name": "a",
           "Type": {
-            "Name": "tinyint",
-            "Mods": null,
+            "Name": "smallint",
+            "Mods": [6],
             "ArrayBounds": null
           },
           "NotNull": true,
-          "Unique": false,
+          "Unique": true,
           "Ignored": {
             "Check": false,
             "Identity": false,
             "Default": false,
             "Exclusion": false,
             "ForeignKey": false,
-            "AutoIncrement": true
-          }
-        },
-        "last_update": {
-          "Name": "last_update",
-          "Type": {
-            "Name": "timestamp",
-            "Mods": null,
-            "ArrayBounds": null
-          },
-          "NotNull": true,
-          "Unique": false,
-          "Ignored": {
-            "Check": false,
-            "Identity": false,
-            "Default": true,
-            "Exclusion": false,
-            "ForeignKey": false,
             "AutoIncrement": false
           }
         },
-        "name": {
-          "Name": "name",
+        "b": {
+          "Name": "b",
           "Type": {
-            "Name": "varchar",
-            "Mods": [
-              25
-            ],
+            "Name": "text",
+            "Mods": null,
             "ArrayBounds": null
           },
-          "NotNull": true,
+          "NotNull": false,
           "Unique": false,
           "Ignored": {
             "Check": false,
@@ -303,30 +315,87 @@ var schemaConversionObj_original = {
       },
       "PrimaryKeys": [
         {
-          "Column": "category_id",
+          "Column": "a",
           "Desc": false
+        }
+      ],
+      "ForeignKeys": null,
+      "Indexes": null
+    },
+    "test2": {
+      "Name": "test2",
+      "ColNames": ["c", "d"],
+      "ColDefs": {
+        "c": {
+          "Name": "c",
+          "Type": {
+            "Name": "smallint",
+            "Mods": [6],
+            "ArrayBounds": null
+          },
+          "NotNull": false,
+          "Unique": false,
+          "Ignored": {
+            "Check": false,
+            "Identity": false,
+            "Default": false,
+            "Exclusion": false,
+            "ForeignKey": true,
+            "AutoIncrement": false
+          }
+        },
+        "d": {
+          "Name": "d",
+          "Type": {
+            "Name": "smallint",
+            "Mods": [6],
+            "ArrayBounds": null
+          },
+          "NotNull": false,
+          "Unique": false,
+          "Ignored": {
+            "Check": false,
+            "Identity": false,
+            "Default": false,
+            "Exclusion": false,
+            "ForeignKey": true,
+            "AutoIncrement": false
+          }
+        }
+      },
+      "PrimaryKeys": null,
+      "ForeignKeys": [
+        {
+          "Name": "fk_test",
+          "Columns": ["d"],
+          "ReferTable": "test",
+          "ReferColumns": ["a"],
+          "OnDelete": "RESTRICT",
+          "OnUpdate": "CASCADE"
+        },
+        {
+          "Name": "fk_test2",
+          "Columns": ["c"],
+          "ReferTable": "test3",
+          "ReferColumns": ["f"],
+          "OnDelete": "RESTRICT",
+          "OnUpdate": "CASCADE"
         }
       ],
       "Indexes": null
     },
-    "country": {
-      "Name": "country",
-      "ColNames": [
-        "country_id",
-        "country",
-        "last_update"
-      ],
+    "test3": {
+      "Name": "test3",
+      "ColNames": ["f", "e"],
       "ColDefs": {
-        "country": {
-          "Name": "country",
+        "e": {
+          "Name": "e",
           "Type": {
-            "Name": "varchar",
-            "Mods": [
-              50
-            ],
+            "Name": "text",
+            "Mods": null,
             "ArrayBounds": null
           },
-          "NotNull": true,
+          "NotNull": false,
           "Unique": false,
           "Ignored": {
             "Check": false,
@@ -337,37 +406,19 @@ var schemaConversionObj_original = {
             "AutoIncrement": false
           }
         },
-        "country_id": {
-          "Name": "country_id",
+        "f": {
+          "Name": "f",
           "Type": {
             "Name": "smallint",
-            "Mods": null,
+            "Mods": [6],
             "ArrayBounds": null
           },
           "NotNull": true,
-          "Unique": false,
+          "Unique": true,
           "Ignored": {
             "Check": false,
             "Identity": false,
             "Default": false,
-            "Exclusion": false,
-            "ForeignKey": false,
-            "AutoIncrement": true
-          }
-        },
-        "last_update": {
-          "Name": "last_update",
-          "Type": {
-            "Name": "timestamp",
-            "Mods": null,
-            "ArrayBounds": null
-          },
-          "NotNull": true,
-          "Unique": false,
-          "Ignored": {
-            "Check": false,
-            "Identity": false,
-            "Default": true,
             "Exclusion": false,
             "ForeignKey": false,
             "AutoIncrement": false
@@ -376,66 +427,69 @@ var schemaConversionObj_original = {
       },
       "PrimaryKeys": [
         {
-          "Column": "country_id",
+          "Column": "f",
           "Desc": false
         }
       ],
+      "ForeignKeys": null,
       "Indexes": null
     }
   },
   "Issues": {
-    "category": {
-      "category_id": [
-        13,
-        10
-      ],
-      "last_update": [
-        0
-      ]
+    "test": {
+      "a": [13]
     },
-    "country": {
-      "country_id": [
-        13,
-        10
-      ],
-      "last_update": [
-        0
-      ]
+    "test2": {
+      "c": [13, 1],
+      "d": [13, 1]
+    },
+    "test3": {
+      "f": [13]
     }
   },
   "ToSpanner": {
-    "category": {
-      "Name": "category",
+    "test": {
+      "Name": "test",
       "Cols": {
-        "category_id": "category_id",
-        "last_update": "last_update",
-        "name": "name"
+        "a": "a",
+        "b": "b"
       }
     },
-    "country": {
-      "Name": "country",
+    "test2": {
+      "Name": "test2",
       "Cols": {
-        "country": "country",
-        "country_id": "country_id",
-        "last_update": "last_update"
+        "c": "c",
+        "d": "d"
+      }
+    },
+    "test3": {
+      "Name": "test3",
+      "Cols": {
+        "e": "e",
+        "f": "f"
       }
     }
   },
   "ToSource": {
-    "category": {
-      "Name": "category",
+    "test": {
+      "Name": "test",
       "Cols": {
-        "category_id": "category_id",
-        "last_update": "last_update",
-        "name": "name"
+        "a": "a",
+        "b": "b"
       }
     },
-    "country": {
-      "Name": "country",
+    "test2": {
+      "Name": "test2",
       "Cols": {
-        "country": "country",
-        "country_id": "country_id",
-        "last_update": "last_update"
+        "c": "c",
+        "d": "d"
+      }
+    },
+    "test3": {
+      "Name": "test3",
+      "Cols": {
+        "e": "e",
+        "f": "f"
       }
     }
   },
@@ -444,8 +498,23 @@ var schemaConversionObj_original = {
     "Rows": {},
     "GoodRows": {},
     "BadRows": {},
-    "Statement": {},
-    "Unexpected": {},
+    "Statement": {
+      "AlterTableStmt": {
+        "Schema": 2,
+        "Data": 0,
+        "Skip": 0,
+        "Error": 0
+      },
+      "CreateTableStmt": {
+        "Schema": 3,
+        "Data": 0,
+        "Skip": 0,
+        "Error": 0
+      }
+    },
+    "Unexpected": {
+      "Multiple primary keys found. `CREATE TABLE` statement is overwriting primary key": 2
+    },
     "Reparsed": 0
   },
   "TimezoneOffset": "+00:00"

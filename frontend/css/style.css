@@ -10,34 +10,23 @@ a:hover{
     color: inherit;
 }
 
-/* .active{
-    color: #4285f4;
-} */
-
-#upload{
-    display:none
+.tooltip-inner {
+    background-color: #b9b9b9;
+    border-radius: .30rem;
+    border: 0px;
+}
+.tooltip .arrow::before{
+    border-top-color:#b9b9b9;
+    border-bottom-color: rgb(185 185 185 / 90%);
 }
 
-#upload_link{
-    text-decoration: underline;
-    color: #4285f4;
-}
-
-.btn:focus{
-    box-shadow: none !important;
-}
-
-nav.navbar.navbar-static-top{
-    padding: 0px !important;
-}
-
-.navbar, .navbar:hover, .navbar:active, .navbar:visited, .navbar:focus {
-    text-decoration: none;
-}
-
-.hide-content{
-    display: none;
-}
+#upload{display:none}
+#upload_link{text-decoration: underline;color: #4285f4;}
+.btn:focus{box-shadow: none !important;}
+nav.navbar.navbar-static-top{padding: 0px !important;}
+.navbar, .navbar:hover, .navbar:active, .navbar:visited, .navbar:focus {text-decoration: none;}
+.hide-content{display: none;}
+    
 
 header.main-header {
     color: black;
@@ -719,7 +708,7 @@ table{
 
   .dataMappingCard{
       background-color: #F2F2F2;
-      width: 315px;
+      width: 360px;
   }
 
   .data-type-modal-body{
@@ -735,22 +724,20 @@ table{
 
   .data-type-table th{
     padding: 8px;
-    text-align: left;
-    padding-left: 31px;
-  }
-
-  .data-type-table td {
-    padding: 0 0 0 31px;
-    text-align: left;
-  }
-
-  .data-type-table th{
+    text-align: center;
+    /* padding-left: 31px; */
     background-color: #4285f4;
     color: #ffffff;
+  }
+
+.data-type-table td {
+    padding: 0 0 0 31px;
+    text-align: left;
 }
 
 .src-td{
     border-right: 1px solid #dcdcdc;
+    padding-left: 65px !important;
 }
 
 .data-type-select{
@@ -887,4 +874,12 @@ ul {
     font-weight: inherit;
     padding-bottom: inherit;
 }
-  
+
+.cus-tip { padding: 5%; position: relative; display: contents;}
+.legend-hover { display:none;position: absolute;z-index: 99;background: #FFFFFF 0% 0% no-repeat padding-box;border: 1px solid #707070;opacity: 1;width: 300px;padding: 16px 14px;color: #5E5752;margin-top: 5px;}
+.cus-a:hover + div { display: block; }
+.legend-status {text-align: center;margin: 0px 10px;display: inline-block;}
+.legend-status span{width: 10px;height: 10px;border-radius: 50%;display: inline-block;margin: 0px 5px;}
+.legend-status .excellent{ background: #0F9D58;}
+.legend-status .good{ background: #4285F4}
+.legend-status .poor{ background: red;}

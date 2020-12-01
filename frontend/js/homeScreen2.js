@@ -8,7 +8,7 @@ const initHomeScreenTasks = () => {
     setSessionTableContent();
     $('#loadDbForm > div').keyup(function () {
       var empty = false;
-      $('#loadDbForm > input').each(function () {
+      $('#loadDbForm > div > input').each(function () {
         if ($(this).val() == '') {
           empty = true;
         }
@@ -109,8 +109,10 @@ const createEditDataTypeTable = (dataType) => {
       if (j == 0 && dataType[Object.keys(dataType)[i]] != null) {
         td.className = 'src-td';
         td.innerHTML = Object.keys(dataType)[i];
+        td.setAttribute('id', 'dataTypeKey' + (i + 1));
       }
       else {
+        td.setAttribute('id', 'dataTypeVal' +(i+1));
         if (dataType[Object.keys(dataType)[i]] != null) {
           var len = dataType[Object.keys(dataType)[i]].length;
           var dataTypeArr = [];
@@ -118,16 +120,26 @@ const createEditDataTypeTable = (dataType) => {
             dataTypeArr.push(dataType[Object.keys(dataType)[i]][k].T);
           }
   
-          var selectHTML = "";
-          var selectId = 'dataTypeSel' + (i + 1) + j;
-          selectHTML = `<select class='form-control tableSelect' id=${selectId} style='border: 0px !important; font-family: FontAwesome;'>`;
+          var selectHTML = '';
+          var optionHTML = '';
+          var selectId = 'dataTypeOption' + (i + 1);
+          selectHTML = `<div style='display: flex;'>
+                          <i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>
+                          <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${selectId} style='border: 0px !important;'>
+                        </div>`;
           for (var k = 0; k < len; k++) {
             if (dataType[Object.keys(dataType)[i]][k].Brief == "")
             {
-              selectHTML += `<option value=''> ${dataType[Object.keys(dataType)[i]][k].T} </option>`;
+              selectHTML += `<option value='${dataType[Object.keys(dataType)[i]][k].T}'>${dataType[Object.keys(dataType)[i]][k].T} </option>`;
             }
             else {
-              selectHTML += `<option value=''> &#xf071; &nbsp; ${dataType[Object.keys(dataType)[i]][k].T} </option>`;
+              if (k == 0) {
+                selectHTML = `<div style='display: flex;'>
+                              <i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${dataType[Object.keys(dataType)[i]][k].Brief}'>warning</i>
+                              <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${selectId} style='border: 0px !important; font-family: FontAwesome;'>
+                              </div>`;
+              }
+              selectHTML += `<option value='${dataType[Object.keys(dataType)[i]][k].T}'>${dataType[Object.keys(dataType)[i]][k].T} </option>`;
             }
           }
           selectHTML += `</select>`;
@@ -142,6 +154,40 @@ const createEditDataTypeTable = (dataType) => {
   var dataTypeDiv = document.getElementById('globalDataType');
   dataTypeDiv.innerHTML = '';
   dataTypeDiv.appendChild(dataTypeTable);
+  tooltipHandler();
+}
+
+const dataTypeUpdate = (id) => {
+  idNum = parseInt(id.match(/\d+/), 10);
+  dataTypeOptionArray = dataType[document.getElementById('dataTypeKey'+idNum).innerHTML];
+ 
+  var optionHTML = '';
+  selectHTML = `<div style='display: flex;'>
+                  <i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>
+                  <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${id} style='border: 0px !important;'>
+                </div>`;
+  for (var x = 0; x < dataTypeOptionArray.length; x++) {
+    optionFound = false;
+    if (dataTypeOptionArray[x].T == document.getElementById(id).value) {
+      optionFound = true;
+    }
+    if (dataTypeOptionArray[x].T == document.getElementById(id).value && dataTypeOptionArray[x].Brief != "") {
+      
+      selectHTML = `<div style='display: flex;'>
+                      <i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${dataTypeOptionArray[x].Brief}'>warning</i>
+                      <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${id} style='border: 0px !important;'>
+                    </div>`;
+    }
+    if (optionFound == true) {
+      optionHTML += `<option selected='selected' value='${dataTypeOptionArray[x].T}'>${dataTypeOptionArray[x].T} </option>`;
+    }
+    else {
+      optionHTML += `<option value='${dataTypeOptionArray[x].T}'>${dataTypeOptionArray[x].T} </option>`;
+    }
+  }
+  selectHTML += optionHTML + `</select>`;
+  document.getElementById('dataTypeVal'+idNum).innerHTML = selectHTML;
+  tooltipHandler();
 }
 
 /**
@@ -162,6 +208,7 @@ function editGlobalDataType() {
   .then(function (res) {
     res.json().then(function (result) {
       hideSpinner();
+      dataType = result;
       createEditDataTypeTable(result);
     })
   });
@@ -179,13 +226,13 @@ const editSpannerHandler = (event) => {
   tableColumnNumber = 0;
   tableCheckboxGroup = '.chckClass_' + tableNumber;
   $(tableId).each(function (index) {
-    if (index == 0) {
+    if (index == 1) {
       var temp = $(this).find('.src-tab-cell');
       temp.prepend(`<span class="bmd-form-group is-filled">
                       <div class="checkbox">
                         <label>
                           <input type="checkbox" id='chckAll_${tableNumber}' value="">
-                          <span class="checkbox-decorator"><span class="check"></span><div class="ripple-container"></div></span>
+                          <span class="checkbox-decorator"><span class="check" style='margin-left: -7px;'></span><div class="ripple-container"></div></span>
                         </label>
                       </div>
                     </span>`)
@@ -201,7 +248,7 @@ const editSpannerHandler = (event) => {
       }
     });
 
-    if (index > 0) {
+    if (index > 1) {
       var temp = $(this).find('.src-tab-cell');
       temp.prepend(`<span class="bmd-form-group is-filled">
                       <div class="checkbox">
@@ -286,7 +333,7 @@ const editSpannerHandler = (event) => {
 
           tableColumnNumber = 0;
           $(tableId).each(function (index) {
-            if (index > 0) {
+            if (index > 1) {
               notPrimary[tableNumber][tableColumnNumber] = true;
               currSeqId = '';
               for (var x = 0; x < pkArray[tableNumber].length; x++) {
@@ -401,10 +448,7 @@ const editSpannerHandler = (event) => {
 const saveSpannerChanges = (event) => {
   let saveEvent = event;
   if (event.html() == 'Save Changes') {
-    showSnackbar('changes saved successfully !!', '#0f9d58')
-    // saveEvent[0].setAttribute('data-toggle', 'snackbar');
-    // saveEvent[0].setAttribute('data-content', 'Changes saved successfully !!');
-    // saveEvent[0].setAttribute('data-timeout', 3000);
+    showSnackbar('changes saved successfully !!', ' greenBg');
   }
 
   tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
@@ -414,7 +458,7 @@ const saveSpannerChanges = (event) => {
   initialColNameArray[tableNumber] = [];
   currentPks = schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks;
   $(tableId).each(function (index) {
-    if (index > 0) {
+    if (index > 1) {
     // if ($(this).find("input[type=checkbox]").is(":checked")) {
       tableColumnNumber = parseInt($(this).find("input[type=checkbox]").attr('id').match(/\d+/), 10)
       list = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
@@ -473,10 +517,11 @@ const saveSpannerChanges = (event) => {
             currSeqId = currentPks[z].seqId;
           }
         }
-        list[0].innerHTML = `<span class="column left keyActive">
+        list[0].innerHTML = `
+                            <span class="column left" data-toggle="tooltip" data-placement="bottom" title="primary key : ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}" style="cursor:pointer">
                               <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
                             </span>
-                            <span class="column right" id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
+                            <span class="column right" data-toggle="tooltip" data-placement="bottom" title="primary key : ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}" id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' style="cursor:pointer">
                               ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}
                             </span>`;
         notPrimary[tableNumber][tableColumnNumber] = false;
@@ -572,7 +617,8 @@ const saveSpannerChanges = (event) => {
   document.getElementById('download-schema').setAttribute('data-obj', JSON.stringify(schemaConversionObj))
   $(tableId).each(function (index) {
     $(this).find('.src-tab-cell .bmd-form-group').remove();
-  })
+  });
+  tooltipHandler();
 }
 
 const showSnackbar = (message, bgClass) => {
@@ -591,6 +637,7 @@ const showSnackbar = (message, bgClass) => {
  */
 const createSourceAndSpannerTables = (obj) => {
   schemaConversionObj = obj;
+  // schemaConversionObj = schemaConversionObj_original;
   document.getElementById('download-schema').setAttribute('data-obj', JSON.stringify(schemaConversionObj));
 
   fetch(apiUrl + '/getTypeMap', {
@@ -748,28 +795,36 @@ const createSourceAndSpannerTables = (obj) => {
     div5 = document.createElement("div");
     div5.className = "acc-card-content";
 
-    var div6 = document.createElement("div");
-    div6.className = "acc-header";
+    // var div6 = document.createElement("div");
+    // div6.className = "acc-header";
 
-    var acc_table = document.createElement("table")
-    var acc_table_tr = acc_table.insertRow(-1)
-    var acc_table_th1 = document.createElement("th")
-    acc_table_th1.className = "acc-column"
-    acc_table_th1.innerHTML = "Column Name"
-    acc_table_tr.appendChild(acc_table_th1)
+    // var acc_table = document.createElement("table");
+    // acc_table.setAttribute('id', 'src-sp-headerTable' + i)
+    // // var acc_table_tr = acc_table.insertRow(-1)
+    // var table_header = document.createElement('thead');
+    // acc_table.appendChild(table_header);
+    // var acc_table_tr = table_header.insertRow(-1)
+    // var acc_table_th1 = document.createElement("th")
+    // acc_table_th1.className = "acc-column"
+    // acc_table_th1.innerHTML = "Column Name"
+    // // table_header.appendChild(acc_table_th1);
+    // acc_table_tr.appendChild(acc_table_th1)
 
-    var acc_table_th2 = document.createElement("th")
-    acc_table_th2.className = "acc-column"
-    acc_table_th2.innerHTML = "Data Type"
-    acc_table_tr.appendChild(acc_table_th2)
+    // var acc_table_th2 = document.createElement("th")
+    // acc_table_th2.className = "acc-column"
+    // acc_table_th2.innerHTML = "Data Type"
+    // // table_header.appendChild(acc_table_th2);
+    // acc_table_tr.appendChild(acc_table_th2)
 
-    var acc_table_th4 = document.createElement("th")
-    acc_table_th4.className = "acc-column"
-    acc_table_th4.innerHTML = "Constraints"
-    acc_table_tr.appendChild(acc_table_th4)
+    // var acc_table_th4 = document.createElement("th")
+    // acc_table_th4.className = "acc-column"
+    // acc_table_th4.innerHTML = "Constraints"
+    // acc_table_tr.appendChild(acc_table_th4)
+    // // table_header.appendChild(acc_table_th4);
+    // // acc_table_tr.appendChild(table_header);
 
-    div6.appendChild(acc_table)
-    div5.appendChild(div6)
+    // div6.appendChild(acc_table)
+    // div5.appendChild(div6)
 
     // creating column headers for each table
     var col = []
@@ -783,12 +838,40 @@ const createSourceAndSpannerTables = (obj) => {
     }
 
     // appending column headers to the table
-    var table = document.createElement("table")
-    table.setAttribute('id', 'src-sp-table' + i)
-    table.className = 'acc-table'
+    var table = document.createElement("table");
+    var table_header2 = document.createElement('thead');
+    table.appendChild(table_header2);
+    table.setAttribute('id', 'src-sp-table' + i);
+    table.className = 'acc-table';
+
+    var tr = table_header2.insertRow(-1);
+    var th1 = document.createElement('th');
+    th1.innerHTML = 'Column Name';
+    th1.className = 'acc-column';
+    th1.setAttribute('colspan', 2);
+    tr.appendChild(th1);
+
+    var th2 = document.createElement('th');
+    th2.innerHTML = 'Data Type';
+    th2.className = 'acc-column';
+    th2.setAttribute('colspan', 2);
+    tr.appendChild(th2);
+
+    var th3 = document.createElement('th');
+    th3.innerHTML = 'Constraints';
+    th3.className = 'acc-column';
+    th3.setAttribute('colspan', 2);
+    tr.appendChild(th3);
+
+    // var th4 = document.createElement('th');
+    // th4.innerHTML = 'Foreign Keys';
+    // th4.className = 'acc-column';
+    // th4.setAttribute('colspan', 2);
+    // tr.appendChild(th4);
+    
 
     // table.className = "acc-table"
-    var tr = table.insertRow(-1)
+    var tr = table_header2.insertRow(-1);
     for (var j = 0; j < col.length; j++) {
       var th = document.createElement("th")
       if (j % 2 == 0) {
@@ -821,10 +904,13 @@ const createSourceAndSpannerTables = (obj) => {
     schemaConversionObj.SpSchema[src_table_name[i]].Pks = pkArray[i];
     // schemaConversionObj_original.SpSchema[src_table_name[i]].Pks = pkArray[i];
 
+    var table_body = document.createElement('tbody');
+    table.appendChild(table_body);
+
     // for loop for spanner columns
     if (src_table_cols != null) {
       for (var k = 0; k < src_table_cols.length; k++) {
-        var tr_checkbox = table.insertRow(-1);
+        var tr_checkbox = table_body.insertRow(-1);
         var currentColumnSrc;
         var currentColumnSp;
 
@@ -833,25 +919,21 @@ const createSourceAndSpannerTables = (obj) => {
           var tabCell = tr_checkbox.insertCell(-1);
           if (l % 2 == 0) {
             currentColumnSrc = src_table_cols[k];
-            if (src_table.PrimaryKeys[0].Column == src_table_cols[k]) {
+            if (src_table.PrimaryKeys != null && src_table.PrimaryKeys[0].Column == src_table_cols[k]) {
               tabCell.innerHTML = `<span class="column left">
-                                  <!-- <i class="fas fa-key" aria-hidden="true" style="color: #eacc22; font-size: 18px;"></i> -->
-                                  <img src='./Icons/Icons/ic_vpn_key_24px.svg' style='margin-left: 3px;'>
-                                </span>
-                                <span class="column right">
-                                  ${src_table_cols[k]}
-                                </span>`
-              // tabCell.innerHTML = `<i class="fas fa-key" aria-hidden="true" style="color: #eacc22; font-size: 18px;"></i>${src_table_cols[k]}`
+                                    <img src='./Icons/Icons/ic_vpn_key_24px.svg' style='margin-left: 3px;'>
+                                  </span>
+                                  <span class="column right">
+                                    ${src_table_cols[k]}
+                                  </span>`;
             }
             else {
               tabCell.innerHTML = `<span class="column left">
-                                            <!-- <i class="fas fa-key" aria-hidden="true" style="color: #eacc22; font-size: 18px; visibility: hidden;"></i> -->
-                                            <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden; margin-left: 3px;'>
-                                          </span>
-                                          <span class="column right">
-                                            ${src_table_cols[k]}
-                                          </span>`
-              // tabCell.innerHTML = src_table_cols[k]
+                                    <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden; margin-left: 3px;'>
+                                  </span>
+                                  <span class="column right">
+                                    ${src_table_cols[k]}
+                                  </span>`
             }
             tabCell.className = 'acc-table-td src-tab-cell';
           }
@@ -862,13 +944,10 @@ const createSourceAndSpannerTables = (obj) => {
             for (var x = 0; x < pksSp.length; x++) {
               if (pksSp[x].Col == sp_table_cols[k]) {
                 pkFlag = true;
-                tabCell.innerHTML = `<span class="column left" id='keyIcon${i}${k}${k}'>
+                tabCell.innerHTML = `<span class="column left" data-toggle="tooltip" data-placement="bottom" title="primary key : ${sp_table_cols[k]}" id='keyIcon${i}${k}${k}' style="cursor:pointer">
                                       <sub>${pksSp[x].seqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg' class='primaryKey'>
-                                      <!-- <span class='hidePrimaryKey'>
-                                        <img src='./Icons/Icons/Group 2181.svg'>
-                                      </span> -->
                                     </span>
-                                    <span class="column right" id='columnNameText${i}${k}${k}'>
+                                    <span class="column right" data-toggle="tooltip" data-placement="bottom" title="primary key : ${sp_table_cols[k]}" id='columnNameText${i}${k}${k}' style="cursor:pointer">
                                       ${sp_table_cols[k]}
                                     </span>`;
                 notPrimary[i][k] = false;
@@ -884,8 +963,6 @@ const createSourceAndSpannerTables = (obj) => {
                                   <span class="column right" id='columnNameText${i}${k}${k}'>
                                     ${sp_table_cols[k]}
                                   </span>`;
-              // primaryTabCell[i][k] = tabCell.innerHTML;
-              // tabCell.innerHTML = sp_table_cols[k]
             }
             tabCell.setAttribute('class', 'sp-column acc-table-td spannerTabCell' + i + k)
             // tabCell.setAttribute('id', 'columnName'+i+k);
@@ -900,7 +977,7 @@ const createSourceAndSpannerTables = (obj) => {
         for (var l = 0; l < 2; l++) {
           var tabCell = tr_checkbox.insertCell(-1);
           if (l % 2 == 0) {
-            tabCell.className = "acc-table-td pl-data-type"
+            tabCell.className = "acc-table-td pl-data-type";
             if (src_table.ColDefs[currentColumnSrc].Type.ArrayBounds != null)
               tabCell.innerHTML = 'ARRAY(' + src_table.ColDefs[currentColumnSrc].Type.Name + ')';
             else
@@ -1023,6 +1100,20 @@ const createSourceAndSpannerTables = (obj) => {
             y++;
           }
         }
+
+        // for loop for data types
+        // for (var l = 0; l < 2; l++) {
+        //   var tabCell = tr_checkbox.insertCell(-1);
+        //   if (l % 2 == 0) {
+        //     tabCell.className = "acc-table-td";
+        //     tabCell.innerHTML = src_table.ForeignKeys;
+        //   }
+        //   else {
+        //     tabCell.setAttribute('class', 'sp-column acc-table-td');
+        //     tabCell.innerHTML = sp_table.Fks;
+        //   }
+        // }
+        
       }
     }
 
@@ -1039,7 +1130,6 @@ const createSourceAndSpannerTables = (obj) => {
     li.appendChild(div1);
   }
   accordion.appendChild(reportUl);
-
   z--;
   while (z != -1) {
     mySelect = new vanillaSelectBox('#srcConstraint' + z, {
@@ -1048,6 +1138,11 @@ const createSourceAndSpannerTables = (obj) => {
       maxHeight: 300
     });
     z--;
+  }
+
+  for (i = 0; i < src_table_num; i++) {
+    table_id = '#src-sp-table' + i;
+    $(table_id).DataTable();
   }
 
   for (var i = 0; i < sp_table_num; i++) {
@@ -1063,6 +1158,11 @@ const createSourceAndSpannerTables = (obj) => {
       }
     }
   }
+  tooltipHandler();
+}
+
+const tooltipHandler = () => {
+  $('[data-toggle="tooltip"]').tooltip()
 }
 
 function foreignKeyHandler(index) {
@@ -1585,10 +1685,7 @@ async function showSchemaAssessment(windowEvent) {
     summaryData = await fetch(apiUrl + '/getSummary');
     summaryDataResp = await summaryData.json();
     sourceTableFlag = localStorage.getItem('sourceDbName');
-    if (windowEvent != 'load') {
-      sessionRetrieval(sourceTableFlag);
-    }
-
+    
     jQuery('#connectModalSuccess').modal("hide");
     jQuery('#connectToDbModal').modal("hide");
     jQuery('#globalDataTypeModal').modal("hide");
@@ -1599,7 +1696,10 @@ async function showSchemaAssessment(windowEvent) {
     createSourceAndSpannerTables(reportDataResp);
     createDdlFromJson(ddlDataResp)
     createSummaryFromJson(summaryDataResp);
-    $('#src-sp-table0').DataTable();
+    if (windowEvent != 'load') {
+      sessionRetrieval(sourceTableFlag);
+      showSnackbar('schema converted successfully !!', ' greenBg');
+    }
   }
 }
 
@@ -1646,7 +1746,7 @@ function storeDumpFileValues(dbType, filePath) {
     localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   localStorage.setItem('globalDumpFilePath', filePath);
-  onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'), 'load');
+  onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'), window.event.type);
 }
 
 /**
@@ -1708,7 +1808,7 @@ async function onLoadDatabase(dbType, dumpFilePath, windowEvent) {
     createDdlFromJson(ddlDataResp);
     createSummaryFromJson(summaryDataResp);
 
-    if (windowEvent != 'load') {
+    if (windowEvent == 'hashchange') {
       sessionRetrieval(sourceTableFlag);
       showSnackbar('schema converted successfully', ' greenBg');
     }
@@ -1854,7 +1954,7 @@ function storeResumeSessionId(driver, path, fileName, sourceDb) {
  * @param {string} id session id
  * @return {null}
  */
-function resumeSession(driver, path, fileName, sourceDb) {
+function resumeSession(driver, path, fileName, sourceDb, windowEvent) {
 
   fetch(apiUrl + '/resumeSession', {
     method: 'POST',
@@ -1899,8 +1999,11 @@ function resumeSession(driver, path, fileName, sourceDb) {
           createSourceAndSpannerTables(data);
           createDdlFromJson(ddlDataResp)
           createSummaryFromJson(summaryDataResp);
+          if (windowEvent == 'hashchange') {
+            showSnackbar('schema resumed successfully', ' greenBg');
+          }
         });
-    }
+      }
   });
 }
 
@@ -2008,7 +2111,7 @@ function homeScreenHtml() {
    </nav>
 
    <nav class="navbar navbar-static-top">
-     <div class="header-topic"><a href="#" class="inactive" style="text-decoration: none;">Instructions</a></div>
+     <div class="header-topic"><a href="#/instructions" class="inactive" style="text-decoration: none;">Instructions</a></div>
    </nav>
 
  </header>
@@ -2153,9 +2256,6 @@ function homeScreenHtml() {
         <div class="modal-footer">
            <input type="submit" disabled="disabled" value="Connect" id="connectButton" class="connectButton" 
            onclick="onconnect( document.getElementById('dbType').value, document.getElementById('dbHost').value, document.getElementById('dbPort').value, document.getElementById('dbUser').value, document.getElementById('dbName').value, document.getElementById('dbPassword').value)" />
-           <button class="buttonload" id="loaderButton" style="display: none;">
-             <i class="fa fa-circle-o-notch fa-spin"></i>connecting
-           </button>
         </div>
       </div>
     </div>
@@ -2174,29 +2274,28 @@ function homeScreenHtml() {
          <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
        </div>
        <div class="modal-body">
-        <form id="loadDbForm">
+        <!-- <form id="loadDbForm"> -->
          <div class="form-group">
-         <label class="" for="loadDbType">Database Type</label>
-         <select class="form-control load-db-input" id="loadDbType" name="loadDbType" onchange="toggle()">
-           <option value="" style="display: none;"></option>
-           <option class="db-option" value="mysql">MySQL</option>
-           <option class="db-option" value="postgres">Postgres</option>
-         </select>
+          <label class="" for="loadDbType">Database Type</label>
+            <select class="form-control load-db-input" id="loadDbType" name="loadDbType" onchange="toggle()">
+              <option value="" style="display: none;"></option>
+              <option class="db-option" value="mysql">MySQL</option>
+              <option class="db-option" value="postgres">Postgres</option>
+            </select>
          </div>
 
-         <div class="form-group">
-         <label class="modal-label" for="dumpFilePath">Path of the Dump File</label>
-         <input type="text" class="form-control load-db-input" aria-describedby="" name="dumpFilePath" id="dumpFilePath" autocomplete="off" onfocusout="validateInput(document.getElementById('dumpFilePath'))"/>
-         <span class='formError'></span>
-         </div>
-
+         <form id="loadDbForm">
+          <div class="form-group">
+            <label class="modal-label" for="dumpFilePath">Path of the Dump File</label>
+            <input class="form-control load-db-input" aria-describedby="" type="text" name="dumpFilePath" id="dumpFilePath" autocomplete="off" onfocusout="validateInput(document.getElementById('dumpFilePath'))"/>
+            <span class='formError'></span>
+          </div>
+          <input type="text" style="display: none;">
         </form>
+
        </div>
        <div class="modal-footer">
-         <a><input type='submit' disabled='disabled' value='Confirm' id='loadConnectButton' class='connectButton'onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)' /></a>
-         <button class="buttonload" id="loaderModalButton" style="display: none;">
-          <i class="fa fa-circle-o-notch fa-spin"></i>converting
-        </button>
+         <input type="submit" disabled='disabled' value='Confirm' id='loadConnectButton' class='connectButton' onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)'/>
        </div>
      </div>
 

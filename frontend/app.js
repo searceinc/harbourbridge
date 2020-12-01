@@ -1,12 +1,17 @@
 // Home screen component
 const HomeComponent = {
-    render: (params) => homeScreen(params)
-  } 
+  render: (params) => homeScreen(params)
+} 
   
 // Edit Schema screen component
 const SchemaComponent = {
   render: (params) => schemaReport(params)
 } 
+
+// Instructions Component
+const InstructionsComponent = {
+  render: (params) => renderInstructionsHtml(params)
+}
 
 // Error component (for any unrecognized path)
 const ErrorComponent = {
@@ -26,6 +31,7 @@ const routes = [
 { path: '/schema-report-load-db-dump', component: SchemaComponent, },
 { path: '/schema-report-import-db', component: SchemaComponent, },
 { path: '/schema-report-resume-session', component: SchemaComponent, },
+{ path: '/instructions', component: InstructionsComponent, }
 ];
 
 // function to fetch browser url
@@ -49,7 +55,7 @@ const router = () => {
     onImport()
   }
   else if (path == '/schema-report-resume-session') {
-    resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'), localStorage.getItem('sourceDb'));
+    resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'), localStorage.getItem('sourceDb'), event.type);
   }
   else {
     document.getElementById('app').innerHTML = component.render();
