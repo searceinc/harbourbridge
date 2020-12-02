@@ -298,6 +298,104 @@ func setTypeMap(w http.ResponseWriter, r *http.Request) {
 	//json.NewEncoder(w).Encode(editTypeMap)
 }
 
+func setTypeMapGlobal(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), 500)
+		return
+	}
+	var t setT
+	err = json.Unmarshal(reqBody, &t)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), 400)
+		return
+	}
+
+	for k, v := range app.conv.SpSchema {
+		for kk, _ := range v.ColDefs {
+			for tk, tv := range t {
+				sourceTable := app.conv.ToSource[k].Name
+				sourceCol := app.conv.ToSource[k].Cols[kk]
+				srcCol := app.conv.SrcSchema[sourceTable].ColDefs[sourceCol]
+				if srcCol.Type.Name == tk {
+					ty, issues := toSpannerType(app.conv, srcCol.Type.Name, tv, srcCol.Type.Mods)
+					if len(srcCol.Type.ArrayBounds) > 1 {
+						ty = ddl.Type{Name: ddl.String, Len: ddl.MaxLength}
+						issues = append(issues, internal.MultiDimensionalArray)
+					}
+					if srcCol.Ignored.Default {
+						issues = append(issues, internal.DefaultValue)
+					}
+					if srcCol.Ignored.AutoIncrement {
+						issues = append(issues, internal.AutoIncrement)
+					}
+					if len(issues) > 0 {
+						app.conv.Issues[sourceTable][srcCol.Name] = issues
+					}
+					ty.IsArray = len(srcCol.Type.ArrayBounds) == 1
+					tempSpSchema := app.conv.SpSchema[k]
+					tempColDef := tempSpSchema.ColDefs[kk]
+					tempColDef.T = ty
+					tempSpSchema.ColDefs[kk] = tempColDef
+					app.conv.SpSchema[k] = tempSpSchema
+				}
+			}
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(app.conv)
+}
+
+func setTypeMapTableLevel(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), 500)
+		return
+	}
+	var t updateTable
+	err = json.Unmarshal(reqBody, &t)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), 400)
+		return
+	}
+	fmt.Println(t)
+	srcTableName := app.conv.ToSource[t.TableName].Name
+
+	for k, v := range t.ColToType {
+		srcColName := app.conv.ToSource[t.TableName].Cols[k]
+		srcCol := app.conv.SrcSchema[srcTableName].ColDefs[srcColName]
+		ty, issues := toSpannerType(app.conv, srcCol.Type.Name, v, srcCol.Type.Mods)
+		if len(srcCol.Type.ArrayBounds) > 1 {
+			ty = ddl.Type{Name: ddl.String, Len: ddl.MaxLength}
+			issues = append(issues, internal.MultiDimensionalArray)
+		}
+		if srcCol.Ignored.Default {
+			issues = append(issues, internal.DefaultValue)
+		}
+		if srcCol.Ignored.AutoIncrement {
+			issues = append(issues, internal.AutoIncrement)
+		}
+		if len(issues) > 0 {
+			app.conv.Issues[srcTableName][srcCol.Name] = issues
+		}
+		ty.IsArray = len(srcCol.Type.ArrayBounds) == 1
+		tempSpSchema := app.conv.SpSchema[t.TableName]
+		tempColDef := tempSpSchema.ColDefs[k]
+		tempColDef.T = ty
+		tempSpSchema.ColDefs[k] = tempColDef
+		app.conv.SpSchema[t.TableName] = tempSpSchema
+
+	}
+	// for _, spTable := range conv.SpSchema {
+	// 	for _, colDef := range spTable.ColDefs {
+	// 		colDef.T.Name = mysql.ToSpannerType[k].T.Name
+	// 	}
+	// }
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(app.conv)
+}
+
 type App struct {
 	sourceDB *sql.DB
 	dbName   string
@@ -324,6 +422,8 @@ func WebApp() {
 	router.HandleFunc("/getSummary", getSummary).Methods("GET")
 	router.HandleFunc("/getTypeMap", getTypeMap).Methods("GET")
 	router.HandleFunc("/setTypeMap", setTypeMap).Methods("POST")
+	router.HandleFunc("/setTypeMapGlobal", setTypeMapGlobal).Methods("POST")
+	router.HandleFunc("/setTypeMapTable", setTypeMapTableLevel).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
