@@ -62,7 +62,7 @@ func GenerateReport(driverName string, conv *Conv, w *bufio.Writer, badWrites ma
 			h = h + fmt.Sprintf(" (mapped to Spanner table %s)", t.SpTable)
 		}
 		writeHeading(w, h)
-		w.WriteString(rateConversion(t.rows, t.badRows, t.cols, t.warnings, t.syntheticPKey != "", false, conv.SchemaMode()))
+		w.WriteString(rateConversion(t.rows, t.badRows, t.Cols, t.Warnings, t.SyntheticPKey != "", false, conv.SchemaMode()))
 		w.WriteString("\n")
 		for _, x := range t.Body {
 			fmt.Fprintf(w, "%s\n", x.Heading)
@@ -81,9 +81,9 @@ type tableReport struct {
 	SpTable       string
 	rows          int64
 	badRows       int64
-	cols          int64
-	warnings      int64
-	syntheticPKey string // Empty string means no synthetic primary key was needed.
+	Cols          int64
+	Warnings      int64
+	SyntheticPKey string // Empty string means no synthetic primary key was needed.
 	Body          []tableReportBody
 }
 
@@ -118,10 +118,10 @@ func buildTableReport(conv *Conv, srcTable string, badWrites map[string]int64) t
 		return tr
 	}
 	issues, cols, warnings := analyzeCols(conv, srcTable, spTable)
-	tr.cols = cols
-	tr.warnings = warnings
+	tr.Cols = cols
+	tr.Warnings = warnings
 	if pk, ok := conv.SyntheticPKeys[spTable]; ok {
-		tr.syntheticPKey = pk.Col
+		tr.SyntheticPKey = pk.Col
 		tr.Body = buildTableReportBody(conv, srcTable, issues, spSchema, srcSchema, &pk.Col)
 	} else {
 		tr.Body = buildTableReportBody(conv, srcTable, issues, spSchema, srcSchema, nil)
@@ -374,9 +374,9 @@ func generateSummary(conv *Conv, r []tableReport, badWrites map[string]int64) st
 		if weight == 0 { // Tables without data count as if they had one row.
 			weight = 1
 		}
-		cols += t.cols * weight
-		warnings += t.warnings * weight
-		if t.syntheticPKey != "" {
+		cols += t.Cols * weight
+		warnings += t.Warnings * weight
+		if t.SyntheticPKey != "" {
 			missingPKey = true
 		}
 	}

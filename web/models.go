@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/cloudspannerecosystem/harbourbridge/internal"
-	"github.com/cloudspannerecosystem/harbourbridge/spanner/ddl"
 )
 
 type DriverConfig struct {
@@ -39,100 +38,13 @@ type typeIssue struct {
 	Brief string
 }
 
-// TODO(searce): Decide on the issue message that needs to be shown
-// in frontend.
-var mysqlTypeMap = map[string][]typeIssue{
-	"bool": []typeIssue{
-		typeIssue{T: ddl.Bool},
-		typeIssue{T: ddl.String, Issue: internal.Widened},
-		typeIssue{T: ddl.Int64, Issue: internal.Widened}},
-	"varchar": []typeIssue{
-		typeIssue{T: ddl.String},
-		typeIssue{T: ddl.Bytes, Issue: internal.Widened, Brief: internal.IssueDB[internal.Widened].Brief}},
-	"char": []typeIssue{
-		typeIssue{T: ddl.String},
-		typeIssue{T: ddl.Bytes, Issue: internal.Widened}},
-	"text": []typeIssue{
-		typeIssue{T: ddl.String},
-		typeIssue{T: ddl.Bytes, Issue: internal.Widened}},
-	"tinytext": []typeIssue{
-		typeIssue{T: ddl.String},
-		typeIssue{T: ddl.Bytes, Issue: internal.Widened}},
-	"mediumtext": []typeIssue{
-		typeIssue{T: ddl.String},
-		typeIssue{T: ddl.Bytes, Issue: internal.Widened}},
-	"longtext": []typeIssue{
-		typeIssue{T: ddl.String},
-		typeIssue{T: ddl.Bytes, Issue: internal.Widened}},
-	"set": []typeIssue{
-		typeIssue{T: ddl.String, Brief: "SET datatype only supports STRING values"}},
-	"enum": []typeIssue{
-		typeIssue{T: ddl.String, Brief: "ENUM datatype only supports STRING values"}},
-	"json": []typeIssue{
-		typeIssue{T: ddl.String},
-		typeIssue{T: ddl.Bytes, Issue: internal.Widened}},
-	"bit": []typeIssue{
-		typeIssue{T: ddl.Bytes},
-		typeIssue{T: ddl.String}},
-	"binary": []typeIssue{
-		typeIssue{T: ddl.Bytes},
-		typeIssue{T: ddl.String}},
-	"varbinary": []typeIssue{
-		typeIssue{T: ddl.Bytes},
-		typeIssue{T: ddl.String}},
-	"blob": []typeIssue{
-		typeIssue{T: ddl.Bytes},
-		typeIssue{T: ddl.String}},
-	"tinyblob": []typeIssue{
-		typeIssue{T: ddl.Bytes},
-		typeIssue{T: ddl.String}},
-	"mediumblob": []typeIssue{
-		typeIssue{T: ddl.Bytes},
-		typeIssue{T: ddl.String}},
-	"longblob": []typeIssue{
-		typeIssue{T: ddl.Bytes},
-		typeIssue{T: ddl.String}},
-	"tinyint": []typeIssue{
-		typeIssue{T: ddl.Int64},
-		typeIssue{T: ddl.String, Issue: internal.Widened, Brief: internal.IssueDB[internal.Widened].Brief}},
-	"smallint": []typeIssue{
-		typeIssue{T: ddl.Int64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"mediumint": []typeIssue{
-		typeIssue{T: ddl.Int64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"int": []typeIssue{
-		typeIssue{T: ddl.Int64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"integer": []typeIssue{
-		typeIssue{T: ddl.Int64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"bigint": []typeIssue{
-		typeIssue{T: ddl.Int64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"double": []typeIssue{
-		typeIssue{T: ddl.Float64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"float": []typeIssue{
-		typeIssue{T: ddl.Float64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"numeric": []typeIssue{
-		typeIssue{T: ddl.Float64},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"date": []typeIssue{
-		typeIssue{T: ddl.Date},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"datetime": []typeIssue{
-		typeIssue{T: ddl.Timestamp},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"timestamp": []typeIssue{
-		typeIssue{T: ddl.Timestamp},
-		typeIssue{T: ddl.String, Issue: internal.Widened}},
-	"time": []typeIssue{
-		typeIssue{T: ddl.String}},
-	"year": []typeIssue{
-		typeIssue{T: ddl.String}},
+type updateCol struct {
+	Removed    bool     `json:"Removed"`
+	Rename     string   `json:"Rename"`
+	PK         string   `json:"PK"`
+	Constraint []string `json:"Constraint"`
+	ToType     string   `json:"ToType"`
 }
-
-// TODO(searce): Fill up this datatype mapping
-var postgresTypeMap = map[string][]typeIssue{}
+type updateTable struct {
+	UpdateCols map[string]updateCol `json:"UpdateCols"`
+}
