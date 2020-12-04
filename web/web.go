@@ -318,7 +318,18 @@ func setTypeMapGlobal(w http.ResponseWriter, r *http.Request) {
 				sourceCol := app.conv.ToSource[k].Cols[kk]
 				srcCol := app.conv.SrcSchema[sourceTable].ColDefs[sourceCol]
 				if srcCol.Type.Name == tk {
-					ty, issues := toSpannerType(app.conv, srcCol.Type.Name, tv, srcCol.Type.Mods)
+					var ty ddl.Type
+					var issues []internal.SchemaIssue
+					switch app.driver {
+					case "mysql", "mysqldump":
+						ty, issues = toSpannerTypeMySQL(app.conv, srcCol.Type.Name, tv, srcCol.Type.Mods)
+					case "pg_dump", "postgres":
+						ty, issues = toSpannerTypePostgres(app.conv, srcCol.Type.Name, tv, srcCol.Type.Mods)
+					default:
+						http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), 400)
+						return
+					}
+
 					if len(srcCol.Type.ArrayBounds) > 1 {
 						ty = ddl.Type{Name: ddl.String, Len: ddl.MaxLength}
 						issues = append(issues, internal.MultiDimensionalArray)
@@ -346,54 +357,267 @@ func setTypeMapGlobal(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(app.conv)
 }
-
+func remove(slice []string, s int) []string {
+	return append(slice[:s], slice[s+1:]...)
+}
+func removePk(slice []ddl.IndexKey, s int) []ddl.IndexKey {
+	return append(slice[:s], slice[s+1:]...)
+}
 func setTypeMapTableLevel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), 500)
 		return
 	}
 	var t updateTable
+	table := vars["table"]
 	err = json.Unmarshal(reqBody, &t)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), 400)
 		return
 	}
-	fmt.Println(t)
-	srcTableName := app.conv.ToSource[t.TableName].Name
 
-	for k, v := range t.ColToType {
-		srcColName := app.conv.ToSource[t.TableName].Cols[k]
-		srcCol := app.conv.SrcSchema[srcTableName].ColDefs[srcColName]
-		ty, issues := toSpannerType(app.conv, srcCol.Type.Name, v, srcCol.Type.Mods)
-		if len(srcCol.Type.ArrayBounds) > 1 {
-			ty = ddl.Type{Name: ddl.String, Len: ddl.MaxLength}
-			issues = append(issues, internal.MultiDimensionalArray)
+	srcTableName := app.conv.ToSource[table].Name
+
+	for colName, v := range t.UpdateCols {
+		sp := app.conv.SpSchema[table]
+		if v.Removed {
+			for i, col := range sp.ColNames {
+				if col == colName {
+					sp.ColNames = remove(sp.ColNames, i)
+					break
+				}
+			}
+			if _, found := sp.ColDefs[colName]; found {
+				delete(sp.ColDefs, colName)
+			}
+			for i, pk := range sp.Pks {
+				if pk.Col == colName {
+					sp.Pks = removePk(sp.Pks, i)
+					break
+				}
+			}
+			srcName := app.conv.ToSource[table].Cols[colName]
+			delete(app.conv.ToSource[table].Cols, colName)
+			delete(app.conv.ToSpanner[srcTableName].Cols, srcName)
+			delete(app.conv.Issues[srcTableName], srcName)
+			app.conv.SpSchema[table] = sp
+			continue
 		}
-		if srcCol.Ignored.Default {
-			issues = append(issues, internal.DefaultValue)
+		newColName := colName
+		if v.Rename != "" {
+			for i, col := range sp.ColNames {
+				if col == colName {
+					sp.ColNames[i] = v.Rename
+					break
+				}
+			}
+			if _, found := sp.ColDefs[colName]; found {
+				sp.ColDefs[v.Rename] = ddl.ColumnDef{
+					Name:    v.Rename,
+					T:       sp.ColDefs[colName].T,
+					NotNull: sp.ColDefs[colName].NotNull,
+					Comment: sp.ColDefs[colName].Comment,
+					Disable: sp.ColDefs[colName].Disable,
+				}
+				delete(sp.ColDefs, colName)
+			}
+			for i, pk := range sp.Pks {
+				if pk.Col == colName {
+					sp.Pks[i].Col = v.Rename
+					break
+				}
+			}
+			srcName := app.conv.ToSource[table].Cols[colName]
+			app.conv.ToSpanner[srcTableName].Cols[srcName] = v.Rename
+			app.conv.ToSource[table].Cols[v.Rename] = srcName
+			delete(app.conv.ToSource[table].Cols, colName)
+			app.conv.SpSchema[table] = sp
+			newColName = v.Rename
 		}
-		if srcCol.Ignored.AutoIncrement {
-			issues = append(issues, internal.AutoIncrement)
+		if v.PK != "" {
+			if v.PK == "REMOVED" {
+				for i, pk := range sp.Pks {
+					if pk.Col == newColName {
+						sp.Pks = removePk(sp.Pks, i)
+						break
+					}
+				}
+			}
+			if v.PK == "ADDED" {
+				sp.Pks = append(sp.Pks, ddl.IndexKey{Col: newColName, Desc: false})
+			}
 		}
-		if len(issues) > 0 {
-			app.conv.Issues[srcTableName][srcCol.Name] = issues
+
+		if v.ToType != "" {
+			srcColName := app.conv.ToSource[table].Cols[newColName]
+			srcCol := app.conv.SrcSchema[srcTableName].ColDefs[srcColName]
+			var ty ddl.Type
+			var issues []internal.SchemaIssue
+			switch app.driver {
+			case "mysql", "mysqldump":
+				ty, issues = toSpannerTypeMySQL(app.conv, srcCol.Type.Name, v.ToType, srcCol.Type.Mods)
+			case "pg_dump", "postgres":
+				ty, issues = toSpannerTypePostgres(app.conv, srcCol.Type.Name, v.ToType, srcCol.Type.Mods)
+			default:
+				http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), 400)
+				return
+			}
+			if len(srcCol.Type.ArrayBounds) > 1 {
+				ty = ddl.Type{Name: ddl.String, Len: ddl.MaxLength}
+				issues = append(issues, internal.MultiDimensionalArray)
+			}
+			if srcCol.Ignored.Default {
+				issues = append(issues, internal.DefaultValue)
+			}
+			if srcCol.Ignored.AutoIncrement {
+				issues = append(issues, internal.AutoIncrement)
+			}
+			if len(issues) > 0 {
+				app.conv.Issues[srcTableName][srcCol.Name] = issues
+			}
+			ty.IsArray = len(srcCol.Type.ArrayBounds) == 1
+			tempColDef := sp.ColDefs[newColName]
+			tempColDef.T = ty
+			sp.ColDefs[newColName] = tempColDef
 		}
-		ty.IsArray = len(srcCol.Type.ArrayBounds) == 1
-		tempSpSchema := app.conv.SpSchema[t.TableName]
-		tempColDef := tempSpSchema.ColDefs[k]
-		tempColDef.T = ty
-		tempSpSchema.ColDefs[k] = tempColDef
-		app.conv.SpSchema[t.TableName] = tempSpSchema
+
+		if len(v.Constraint) > 0 {
+			for _, constraint := range v.Constraint {
+				switch constraint {
+				case "NOT NULL":
+					spColDef := sp.ColDefs[newColName]
+					spColDef.NotNull = true
+					sp.ColDefs[newColName] = spColDef
+				default:
+					fmt.Println("skip")
+				}
+			}
+		}
+
+		app.conv.SpSchema[table] = sp
 
 	}
-	// for _, spTable := range conv.SpSchema {
-	// 	for _, colDef := range spTable.ColDefs {
-	// 		colDef.T.Name = mysql.ToSpannerType[k].T.Name
+	//	Removed columns
+	// for _, v := range t.Removed {
+	// 	sp := app.conv.SpSchema[table]
+	// 	for i, col := range sp.ColNames {
+	// 		if col == v {
+	// 			sp.ColNames = remove(sp.ColNames, i)
+	// 			break
+	// 		}
 	// 	}
+	// 	if _, found := sp.ColDefs[v]; found {
+	// 		delete(sp.ColDefs, v)
+	// 	}
+	// 	for i, pk := range sp.Pks {
+	// 		if pk.Col == v {
+	// 			sp.Pks = removePk(sp.Pks, i)
+	// 			break
+	// 		}
+	// 	}
+	// 	srcName := app.conv.ToSource[table].Cols[v]
+	// 	delete(app.conv.ToSource[srcTableName].Cols, srcName)
+	// 	delete(app.conv.ToSpanner[table].Cols, v)
+	// 	delete(app.conv.Issues[srcTableName], srcName)
+	// 	app.conv.SpSchema[table] = sp
+	// }
+
+	//	PK change
+	// for col, v := range t.PKs {
+	// 	sp := app.conv.SpSchema[table]
+	// 	if !v {
+	// 		for i, pk := range sp.Pks {
+	// 			if pk.Col == col {
+	// 				sp.Pks = removePk(sp.Pks, i)
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+	// 	if v {
+	// 		sp.Pks = append(sp.Pks, ddl.IndexKey{Col: col, Desc: false})
+	// 	}
+	// 	app.conv.SpSchema[table] = sp
+	// }
+
+	// Change types
+	// for k, v := range t.ColToType {
+	// 	srcColName := app.conv.ToSource[table].Cols[k]
+	// 	srcCol := app.conv.SrcSchema[srcTableName].ColDefs[srcColName]
+	// 	var ty ddl.Type
+	// 	var issues []internal.SchemaIssue
+	// 	switch app.driver {
+	// 	case "mysql", "mysqldump":
+	// 		ty, issues = toSpannerTypeMySQL(app.conv, srcCol.Type.Name, v, srcCol.Type.Mods)
+	// 	case "pg_dump", "postgres":
+	// 		ty, issues = toSpannerTypePostgres(app.conv, srcCol.Type.Name, v, srcCol.Type.Mods)
+	// 	default:
+	// 		http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), 400)
+	// 		return
+	// 	}
+	// 	if len(srcCol.Type.ArrayBounds) > 1 {
+	// 		ty = ddl.Type{Name: ddl.String, Len: ddl.MaxLength}
+	// 		issues = append(issues, internal.MultiDimensionalArray)
+	// 	}
+	// 	if srcCol.Ignored.Default {
+	// 		issues = append(issues, internal.DefaultValue)
+	// 	}
+	// 	if srcCol.Ignored.AutoIncrement {
+	// 		issues = append(issues, internal.AutoIncrement)
+	// 	}
+	// 	if len(issues) > 0 {
+	// 		app.conv.Issues[srcTableName][srcCol.Name] = issues
+	// 	}
+	// 	ty.IsArray = len(srcCol.Type.ArrayBounds) == 1
+	// 	tempSpSchema := app.conv.SpSchema[table]
+	// 	tempColDef := tempSpSchema.ColDefs[k]
+	// 	tempColDef.T = ty
+	// 	tempSpSchema.ColDefs[k] = tempColDef
+	// 	app.conv.SpSchema[table] = tempSpSchema
+
 	// }
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(app.conv)
+}
+
+func rateSchema(cols, warnings int64, missingPKey bool) string {
+	switch {
+	case cols == 0:
+		return "GRAY"
+	case warnings == 0 && !missingPKey:
+		return "GREEN"
+	case warnings == 0 && missingPKey:
+		return "BLUE"
+	case good(cols, warnings) && !missingPKey:
+		return "BLUE"
+	case good(cols, warnings) && missingPKey:
+		return "BLUE"
+	case ok(cols, warnings) && !missingPKey:
+		return "YELLOW"
+	case ok(cols, warnings) && missingPKey:
+		return "YELLOW"
+	case !missingPKey:
+		return "RED"
+	default:
+		return "RED"
+	}
+}
+func good(total, badCount int64) bool {
+	return badCount < total/20
+}
+
+func ok(total, badCount int64) bool {
+	return badCount < total/3
+}
+func getConversionRate(w http.ResponseWriter, r *http.Request) {
+	reports := internal.AnalyzeTables(app.conv, nil)
+	rate := make(map[string]string)
+	for _, t := range reports {
+		rate[t.SpTable] = rateSchema(t.Cols, t.Warnings, t.SyntheticPKey != "")
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(rate)
 }
 
 type App struct {
@@ -408,22 +632,6 @@ var app App
 func WebApp() {
 
 	fmt.Println("-------------------")
-	router := mux.NewRouter().StrictSlash(true)
-	staticFileDirectory := http.Dir("./frontend/")
-	staticFileHandler := http.StripPrefix("/frontend/", http.FileServer(staticFileDirectory))
-	router.PathPrefix("/frontend/").Handler(staticFileHandler).Methods("GET")
-	router.HandleFunc("/", homeLink)
-	router.HandleFunc("/databaseConnection", databaseConnection).Methods("POST")
-	router.HandleFunc("/convertSchema", convertSchemaSQL).Methods("GET")
-	router.HandleFunc("/convertSchemaDump", convertSchemaDump).Methods("POST")
-	router.HandleFunc("/getDDL", getDDL).Methods("GET")
-	router.HandleFunc("/getSession", getSession).Methods("GET")
-	router.HandleFunc("/resumeSession", resumeSession).Methods("POST")
-	router.HandleFunc("/getSummary", getSummary).Methods("GET")
-	router.HandleFunc("/getTypeMap", getTypeMap).Methods("GET")
-	router.HandleFunc("/setTypeMap", setTypeMap).Methods("POST")
-	router.HandleFunc("/setTypeMapGlobal", setTypeMapGlobal).Methods("POST")
-	router.HandleFunc("/setTypeMapTable", setTypeMapTableLevel).Methods("POST")
-
+	router := getRoutes()
 	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}), handlers.AllowedOrigins([]string{"*"}))(router)))
 }
