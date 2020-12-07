@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"time"
 
@@ -35,6 +36,7 @@ import (
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to Harbourbridge!")
+	w.WriteHeader(http.StatusOK)
 }
 
 func databaseConnection(w http.ResponseWriter, r *http.Request) {
@@ -499,6 +501,7 @@ func setTypeMapTableLevel(w http.ResponseWriter, r *http.Request) {
 		app.conv.SpSchema[table] = sp
 
 	}
+	app.conv.AddPrimaryKeys()
 	//	Removed columns
 	// for _, v := range t.Removed {
 	// 	sp := app.conv.SpSchema[table]
@@ -618,6 +621,42 @@ func getConversionRate(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(rate)
+}
+
+func getSchemaAndReportFile(w http.ResponseWriter, r *http.Request) {
+	ioHelper := &conversion.IOStreams{In: os.Stdin, Out: os.Stdout}
+	dbName := app.dbName
+	var err error
+	now := time.Now()
+	if dbName == "" {
+		dbName, err = conversion.GetDatabaseName(app.driver, now)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Can not create database name : %v", err), 500)
+		}
+	}
+
+	filePrefix := dbName + "."
+
+	if err != nil {
+		fmt.Printf("\nCan't get database name: %v\n", err)
+		panic(fmt.Errorf("can't get database name"))
+	}
+	reportFileName := filePrefix + "report.txt"
+	schemaFileName := filePrefix + "schema.txt"
+
+	response := make(map[string]string)
+	conversion.WriteSchemaFile(app.conv, now, schemaFileName, ioHelper.Out)
+	conversion.Report(app.driver, nil, ioHelper.BytesRead, "", app.conv, reportFileName, ioHelper.Out)
+	reportAbsPath, err := filepath.Abs(reportFileName)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Can not create absolute path : %v", err), 500)
+	}
+	schemaAbsPath, err := filepath.Abs(schemaFileName)
+	response["reportFilePath"] = reportAbsPath
+	response["schemaFilePath"] = schemaAbsPath
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 type App struct {
