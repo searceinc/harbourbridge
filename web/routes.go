@@ -21,7 +21,7 @@ func getRoutes() *mux.Router {
 	router.HandleFunc("/summary", getSummary).Methods("GET")
 	router.HandleFunc("/conversion", getConversionRate).Methods("GET")
 	router.HandleFunc("/typemap", getTypeMap).Methods("GET")
-	// router.HandleFunc("/typemap", setTypeMap).Methods("POST")
+	router.HandleFunc("/filepaths", getSchemaAndReportFile).Methods("GET")
 	router.HandleFunc("/typemap/global", setTypeMapGlobal).Methods("POST")
 	router.HandleFunc("/typemap/table/{table}", setTypeMapTableLevel).Methods("POST")
 	return router
