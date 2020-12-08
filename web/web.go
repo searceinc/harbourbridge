@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	//"harbourbridge-web/models"
@@ -20,7 +21,6 @@ import (
 	"github.com/cloudspannerecosystem/harbourbridge/spanner/ddl"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
@@ -228,6 +228,81 @@ func getSummary(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(summary)
 }
+func writeHeading(s string) string {
+	return strings.Join([]string{
+		"----------------------------\n",
+		s, "\n",
+		"----------------------------\n"}, "")
+}
+func writeStmtStats(driverName string, conv *internal.Conv) string {
+	stmtstats := ""
+	type stat struct {
+		statement string
+		count     int64
+	}
+	var l []stat
+	for s, x := range conv.Stats.Statement {
+		l = append(l, stat{s, x.Schema + x.Data + x.Skip + x.Error})
+	}
+	// Sort by alphabetical order of statements.
+	sort.Slice(l, func(i, j int) bool {
+		return l[i].statement < l[j].statement
+	})
+	stmtstats = stmtstats + writeHeading("Statements Processed")
+	stmtstats = stmtstats + "Analysis of statements in " + driverName + " output, broken down by statement type.\n"
+	stmtstats = stmtstats + "  schema: statements successfully processed for Spanner schema information.\n"
+	stmtstats = stmtstats + "    data: statements successfully processed for data.\n"
+	stmtstats = stmtstats + "    skip: statements not relevant for Spanner schema or data.\n"
+	stmtstats = stmtstats + "   error: statements that could not be processed.\n"
+	stmtstats = stmtstats + "  --------------------------------------\n"
+	stmtstats = stmtstats + fmt.Sprintf("  %6s %6s %6s %6s  %s\n", "schema", "data", "skip", "error", "statement")
+	stmtstats = stmtstats + "  --------------------------------------\n"
+	for _, x := range l {
+		s := conv.Stats.Statement[x.statement]
+		stmtstats = stmtstats + fmt.Sprintf("  %6d %6d %6d %6d  %s\n", s.Schema, s.Data, s.Skip, s.Error, x.statement)
+	}
+	if driverName == "pg_dump" {
+		stmtstats = stmtstats + "See github.com/lfittl/pg_query_go/nodes for definitions of statement types\n"
+		stmtstats = stmtstats + "(lfittl/pg_query_go is the library we use for parsing pg_dump output).\n"
+		stmtstats = stmtstats + "\n"
+	} else if driverName == "mysqldump" {
+		stmtstats = stmtstats + "See https://github.com/pingcap/parser for definitions of statement types\n"
+		stmtstats = stmtstats + "(pingcap/parser is the library we use for parsing mysqldump output).\n"
+		stmtstats = stmtstats + "\n"
+	}
+	return stmtstats
+}
+func getOverview(w http.ResponseWriter, r *http.Request) {
+	reports := internal.AnalyzeTables(app.conv, nil)
+	summary := internal.GenerateSummary(app.conv, reports, nil)
+	overview := writeHeading("Summary of Conversion")
+	overview = overview + summary + "\n"
+	ignored := internal.IgnoredStatements(app.conv)
+
+	if len(ignored) > 0 {
+		overview = overview + fmt.Sprintf("Note that the following source DB statements "+
+			"were detected but ignored: %s.\n\n",
+			strings.Join(ignored, ", "))
+	}
+	statementsMsg := ""
+	var isDump bool
+	if strings.Contains(app.driver, "dump") {
+		isDump = true
+	}
+	if isDump {
+		statementsMsg = "stats on the " + app.driver + " statements processed, followed by "
+	}
+	overview = overview + "The remainder of this report provides " + statementsMsg +
+		"a table-by-table listing of schema and data conversion details. " +
+		"For background on the schema and data conversion process used, " +
+		"and explanations of the terms and notes used in this " +
+		"report, see HarbourBridge's README.\n\n"
+	if isDump {
+		overview = overview + writeStmtStats(app.driver, app.conv)
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(overview)
+}
 
 type severity int
 
@@ -366,14 +441,13 @@ func removePk(slice []ddl.IndexKey, s int) []ddl.IndexKey {
 	return append(slice[:s], slice[s+1:]...)
 }
 func setTypeMapTableLevel(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), 500)
 		return
 	}
 	var t updateTable
-	table := vars["table"]
+	table := r.FormValue("table")
 	err = json.Unmarshal(reqBody, &t)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), 400)
@@ -502,84 +576,6 @@ func setTypeMapTableLevel(w http.ResponseWriter, r *http.Request) {
 
 	}
 	app.conv.AddPrimaryKeys()
-	//	Removed columns
-	// for _, v := range t.Removed {
-	// 	sp := app.conv.SpSchema[table]
-	// 	for i, col := range sp.ColNames {
-	// 		if col == v {
-	// 			sp.ColNames = remove(sp.ColNames, i)
-	// 			break
-	// 		}
-	// 	}
-	// 	if _, found := sp.ColDefs[v]; found {
-	// 		delete(sp.ColDefs, v)
-	// 	}
-	// 	for i, pk := range sp.Pks {
-	// 		if pk.Col == v {
-	// 			sp.Pks = removePk(sp.Pks, i)
-	// 			break
-	// 		}
-	// 	}
-	// 	srcName := app.conv.ToSource[table].Cols[v]
-	// 	delete(app.conv.ToSource[srcTableName].Cols, srcName)
-	// 	delete(app.conv.ToSpanner[table].Cols, v)
-	// 	delete(app.conv.Issues[srcTableName], srcName)
-	// 	app.conv.SpSchema[table] = sp
-	// }
-
-	//	PK change
-	// for col, v := range t.PKs {
-	// 	sp := app.conv.SpSchema[table]
-	// 	if !v {
-	// 		for i, pk := range sp.Pks {
-	// 			if pk.Col == col {
-	// 				sp.Pks = removePk(sp.Pks, i)
-	// 				break
-	// 			}
-	// 		}
-	// 	}
-	// 	if v {
-	// 		sp.Pks = append(sp.Pks, ddl.IndexKey{Col: col, Desc: false})
-	// 	}
-	// 	app.conv.SpSchema[table] = sp
-	// }
-
-	// Change types
-	// for k, v := range t.ColToType {
-	// 	srcColName := app.conv.ToSource[table].Cols[k]
-	// 	srcCol := app.conv.SrcSchema[srcTableName].ColDefs[srcColName]
-	// 	var ty ddl.Type
-	// 	var issues []internal.SchemaIssue
-	// 	switch app.driver {
-	// 	case "mysql", "mysqldump":
-	// 		ty, issues = toSpannerTypeMySQL(app.conv, srcCol.Type.Name, v, srcCol.Type.Mods)
-	// 	case "pg_dump", "postgres":
-	// 		ty, issues = toSpannerTypePostgres(app.conv, srcCol.Type.Name, v, srcCol.Type.Mods)
-	// 	default:
-	// 		http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), 400)
-	// 		return
-	// 	}
-	// 	if len(srcCol.Type.ArrayBounds) > 1 {
-	// 		ty = ddl.Type{Name: ddl.String, Len: ddl.MaxLength}
-	// 		issues = append(issues, internal.MultiDimensionalArray)
-	// 	}
-	// 	if srcCol.Ignored.Default {
-	// 		issues = append(issues, internal.DefaultValue)
-	// 	}
-	// 	if srcCol.Ignored.AutoIncrement {
-	// 		issues = append(issues, internal.AutoIncrement)
-	// 	}
-	// 	if len(issues) > 0 {
-	// 		app.conv.Issues[srcTableName][srcCol.Name] = issues
-	// 	}
-	// 	ty.IsArray = len(srcCol.Type.ArrayBounds) == 1
-	// 	tempSpSchema := app.conv.SpSchema[table]
-	// 	tempColDef := tempSpSchema.ColDefs[k]
-	// 	tempColDef.T = ty
-	// 	tempSpSchema.ColDefs[k] = tempColDef
-	// 	app.conv.SpSchema[table] = tempSpSchema
-
-	// }
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(app.conv)
 }

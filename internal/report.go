@@ -28,10 +28,10 @@ import (
 // detailed report to w and returns a Brief summary (as a string).
 func GenerateReport(driverName string, conv *Conv, w *bufio.Writer, badWrites map[string]int64) string {
 	reports := AnalyzeTables(conv, badWrites)
-	summary := generateSummary(conv, reports, badWrites)
+	summary := GenerateSummary(conv, reports, badWrites)
 	writeHeading(w, "Summary of Conversion")
 	w.WriteString(summary)
-	ignored := ignoredStatements(conv)
+	ignored := IgnoredStatements(conv)
 	w.WriteString("\n")
 	if len(ignored) > 0 {
 		justifyLines(w, fmt.Sprintf("Note that the following source DB statements "+
@@ -365,7 +365,7 @@ func rateConversion(rows, badRows, cols, warnings int64, missingPKey, summary bo
 	return rate
 }
 
-func generateSummary(conv *Conv, r []tableReport, badWrites map[string]int64) string {
+func GenerateSummary(conv *Conv, r []tableReport, badWrites map[string]int64) string {
 	cols := int64(0)
 	warnings := int64(0)
 	missingPKey := false
@@ -393,7 +393,7 @@ func generateSummary(conv *Conv, r []tableReport, badWrites map[string]int64) st
 	return rateConversion(rows, badRows, cols, warnings, missingPKey, true, conv.SchemaMode())
 }
 
-func ignoredStatements(conv *Conv) (l []string) {
+func IgnoredStatements(conv *Conv) (l []string) {
 	for s := range conv.Stats.Statement {
 		switch s {
 		case "CreateFunctionStmt":

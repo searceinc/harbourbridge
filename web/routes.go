@@ -19,10 +19,11 @@ func getRoutes() *mux.Router {
 	router.HandleFunc("/session", getSession).Methods("GET")
 	router.HandleFunc("/session/resume", resumeSession).Methods("POST")
 	router.HandleFunc("/summary", getSummary).Methods("GET")
+	router.HandleFunc("/overview", getOverview).Methods("GET")
 	router.HandleFunc("/conversion", getConversionRate).Methods("GET")
 	router.HandleFunc("/typemap", getTypeMap).Methods("GET")
 	router.HandleFunc("/filepaths", getSchemaAndReportFile).Methods("GET")
 	router.HandleFunc("/typemap/global", setTypeMapGlobal).Methods("POST")
-	router.HandleFunc("/typemap/table/{table}", setTypeMapTableLevel).Methods("POST")
+	router.HandleFunc("/typemap/table", setTypeMapTableLevel).Methods("POST")
 	return router
 }
