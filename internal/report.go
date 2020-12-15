@@ -28,10 +28,10 @@ import (
 // detailed report to w and returns a Brief summary (as a string).
 func GenerateReport(driverName string, conv *Conv, w *bufio.Writer, badWrites map[string]int64) string {
 	reports := AnalyzeTables(conv, badWrites)
-	summary := generateSummary(conv, reports, badWrites)
+	summary := GenerateSummary(conv, reports, badWrites)
 	writeHeading(w, "Summary of Conversion")
 	w.WriteString(summary)
-	ignored := ignoredStatements(conv)
+	ignored := IgnoredStatements(conv)
 	w.WriteString("\n")
 	if len(ignored) > 0 {
 		justifyLines(w, fmt.Sprintf("Note that the following source DB statements "+
@@ -365,7 +365,7 @@ func rateConversion(rows, badRows, cols, warnings int64, missingPKey, summary bo
 	return rate
 }
 
-func generateSummary(conv *Conv, r []tableReport, badWrites map[string]int64) string {
+func GenerateSummary(conv *Conv, r []tableReport, badWrites map[string]int64) string {
 	cols := int64(0)
 	warnings := int64(0)
 	missingPKey := false
@@ -393,7 +393,7 @@ func generateSummary(conv *Conv, r []tableReport, badWrites map[string]int64) st
 	return rateConversion(rows, badRows, cols, warnings, missingPKey, true, conv.SchemaMode())
 }
 
-func ignoredStatements(conv *Conv) (l []string) {
+func IgnoredStatements(conv *Conv) (l []string) {
 	for s := range conv.Stats.Statement {
 		switch s {
 		case "CreateFunctionStmt":
@@ -538,4 +538,33 @@ func writeHeading(w *bufio.Writer, s string) {
 		"----------------------------\n",
 		s, "\n",
 		"----------------------------\n"}, ""))
+}
+
+// Provides a description and severity for each schema issue.
+// Note on batch: for some issues, we'd like to report just the first instance
+// in a table and suppress other instances i.e. adding more instances
+// of the issue in the same table has little value and could be very noisy.
+// This is controlled via 'batch': if true, we count only the first instance
+// for assessing warnings, and we give only the first instance in the report.
+// TODO: add links in these descriptions to further documentation
+// e.g. for timestamp description.
+var IssueDB = map[SchemaIssue]struct {
+	Brief    string // Short description of issue.
+	severity severity
+	batch    bool // Whether multiple instances of this issue are combined.
+}{
+	DefaultValue:          {Brief: "Some columns have default values which Spanner does not support", severity: warning, batch: true},
+	ForeignKey:            {Brief: "Spanner does not support foreign keys", severity: warning},
+	MultiDimensionalArray: {Brief: "Spanner doesn't support multi-dimensional arrays", severity: warning},
+	NoGoodType:            {Brief: "No appropriate Spanner type", severity: warning},
+	Numeric:               {Brief: "Spanner does not support numeric. This type mapping could lose precision and is not recommended for production use", severity: warning},
+	NumericThatFits:       {Brief: "Spanner does not support numeric, but this type mapping preserves the numeric's specified precision", severity: note},
+	Decimal:               {Brief: "Spanner does not support decimal. This type mapping could lose precision and is not recommended for production use", severity: warning},
+	DecimalThatFits:       {Brief: "Spanner does not support decimal, but this type mapping preserves the decimal's specified precision", severity: note},
+	Serial:                {Brief: "Spanner does not support autoincrementing types", severity: warning},
+	AutoIncrement:         {Brief: "Spanner does not support auto_increment attribute", severity: warning},
+	Timestamp:             {Brief: "Spanner timestamp is closer to PostgreSQL timestamptz", severity: note, batch: true},
+	Datetime:              {Brief: "Spanner timestamp is closer to MySQL timestamp", severity: note, batch: true},
+	Time:                  {Brief: "Spanner does not support time/year types", severity: note, batch: true},
+	Widened:               {Brief: "Some columns will consume more storage in Spanner", severity: note, batch: true},
 }

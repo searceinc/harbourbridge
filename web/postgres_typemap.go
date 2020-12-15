@@ -1,3 +1,17 @@
+// Copyright 2020 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package web
 
 import (
@@ -114,7 +128,7 @@ func toSpannerTypePostgres(conv *internal.Conv, id string, toType string, mods [
 			if len(mods) > 0 {
 				return ddl.Type{Name: ddl.Bytes, Len: mods[0]}, nil
 			}
-			return ddl.Type{Name: ddl.Bytes, Len: ddl.MaxLength}, nil
+			return ddl.Type{Name: ddl.Bytes, Len: 1}, nil
 		default:
 			if len(mods) > 0 {
 				return ddl.Type{Name: ddl.String, Len: mods[0]}, nil
@@ -194,7 +208,7 @@ func toSpannerTypePostgres(conv *internal.Conv, id string, toType string, mods [
 	case "text":
 		switch toType {
 		case ddl.Bytes:
-			return ddl.Type{Name: ddl.Bytes, Len: ddl.MaxLength}, []internal.SchemaIssue{internal.Widened}
+			return ddl.Type{Name: ddl.Bytes, Len: ddl.MaxLength}, nil
 		default:
 			return ddl.Type{Name: ddl.String, Len: ddl.MaxLength}, nil
 		}

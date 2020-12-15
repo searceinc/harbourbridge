@@ -79,23 +79,35 @@ func TestPrintCreateTable(t *testing.T) {
 	cds["col1"] = ColumnDef{Name: "col1", T: Type{Name: Int64}, NotNull: true}
 	cds["col2"] = ColumnDef{Name: "col2", T: Type{Name: String, Len: MaxLength}, NotNull: false}
 	cds["col3"] = ColumnDef{Name: "col3", T: Type{Name: Bytes, Len: int64(42)}, NotNull: false}
-	ct := CreateTable{
+	t1 := CreateTable{
 		"mytable",
 		[]string{"col1", "col2", "col3"},
 		cds,
 		[]IndexKey{IndexKey{Col: "col1", Desc: true}},
+		nil,
+		"",
+		"",
+	}
+	t2 := CreateTable{
+		"mytable",
+		[]string{"col1", "col2", "col3"},
+		cds,
+		[]IndexKey{IndexKey{Col: "col1", Desc: true}},
+		nil,
+		"parent",
 		"",
 	}
 	tests := []struct {
 		name       string
 		protectIds bool
 		expected   string
+		ct         CreateTable
 	}{
-		{"no quote", false, "CREATE TABLE mytable (col1 INT64 NOT NULL, col2 STRING(MAX), col3 BYTES(42)) PRIMARY KEY (col1 DESC)"},
-		{"quote", true, "CREATE TABLE `mytable` (`col1` INT64 NOT NULL, `col2` STRING(MAX), `col3` BYTES(42)) PRIMARY KEY (`col1` DESC)"},
+		{"no quote", false, "CREATE TABLE mytable (col1 INT64 NOT NULL, col2 STRING(MAX), col3 BYTES(42)) PRIMARY KEY (col1 DESC)", t1},
+		{"quote", true, "CREATE TABLE `mytable` (`col1` INT64 NOT NULL, `col2` STRING(MAX), `col3` BYTES(42)) PRIMARY KEY (`col1` DESC),\nINTERLEAVE IN PARENT `parent` ON DELETE CASCADE", t2},
 	}
 	for _, tc := range tests {
-		assert.Equal(t, normalizeSpace(tc.expected), normalizeSpace(ct.PrintCreateTable(Config{ProtectIds: tc.protectIds})))
+		assert.Equal(t, normalizeSpace(tc.expected), normalizeSpace(tc.ct.PrintCreateTable(tc.ct.InterleaveInto, Config{ProtectIds: tc.protectIds})))
 	}
 }
 
@@ -115,6 +127,66 @@ func TestPrintCreateIndex(t *testing.T) {
 	}
 	for _, tc := range tests {
 		assert.Equal(t, normalizeSpace(tc.expected), normalizeSpace(ci.PrintCreateIndex(Config{ProtectIds: tc.protectIds})))
+	}
+}
+
+func TestPrintForeignKey(t *testing.T) {
+	fk := []Foreignkey{
+		Foreignkey{
+			"fk_test",
+			[]string{"c1", "c2"},
+			"ref_table",
+			[]string{"ref_c1", "ref_c2"},
+		},
+		Foreignkey{
+			"",
+			[]string{"c1"},
+			"ref_table",
+			[]string{"ref_c1"},
+		},
+	}
+	tests := []struct {
+		name       string
+		protectIds bool
+		expected   string
+		fk         Foreignkey
+	}{
+		{"no quote", false, "CONSTRAINT fk_test FOREIGN KEY (c1,c2) REFERENCES ref_table (ref_c1,ref_c2)", fk[0]},
+		{"quote", true, "CONSTRAINT `fk_test` FOREIGN KEY (`c1`,`c2`) REFERENCES `ref_table` (`ref_c1`,`ref_c2`)", fk[0]},
+		{"no constraint name", false, "FOREIGN KEY (c1) REFERENCES ref_table (ref_c1)", fk[1]},
+	}
+	for _, tc := range tests {
+		assert.Equal(t, normalizeSpace(tc.expected), normalizeSpace(tc.fk.PrintForeignKey(Config{ProtectIds: tc.protectIds})))
+	}
+}
+func TestPrintForeignKeyAlterTable(t *testing.T) {
+	fk := []Foreignkey{
+		Foreignkey{
+			"fk_test",
+			[]string{"c1", "c2"},
+			"ref_table",
+			[]string{"ref_c1", "ref_c2"},
+		},
+		Foreignkey{
+			"",
+			[]string{"c1"},
+			"ref_table",
+			[]string{"ref_c1"},
+		},
+	}
+	tests := []struct {
+		name       string
+		table      string
+		protectIds bool
+		expected   string
+		fk         Foreignkey
+	}{
+		{"no quote", "table1", false, "ALTER TABLE table1 ADD CONSTRAINT fk_test FOREIGN KEY (c1,c2) REFERENCES ref_table (ref_c1,ref_c2)", fk[0]},
+		{"quote", "table1", true, "ALTER TABLE `table1` ADD CONSTRAINT `fk_test` FOREIGN KEY (`c1`,`c2`) REFERENCES `ref_table` (`ref_c1`,`ref_c2`)", fk[0]},
+		{"no constraint name", "table1", false, "ALTER TABLE table1 ADD FOREIGN KEY (c1) REFERENCES ref_table (ref_c1)", fk[1]},
+	}
+	for _, tc := range tests {
+		assert.Equal(t, normalizeSpace(tc.expected), normalizeSpace(tc.fk.PrintForeignKeyAlterTable(Config{ProtectIds: tc.protectIds}, tc.table)))
 	}
 }
 

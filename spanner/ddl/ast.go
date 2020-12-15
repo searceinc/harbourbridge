@@ -93,8 +93,9 @@ type ColumnDef struct {
 
 // Config controls how AST nodes are printed (aka unparsed).
 type Config struct {
-	Comments   bool // If true, print comments.
-	ProtectIds bool // If true, table and col names are quoted using backticks (avoids reserved-word issue).
+	Comments    bool // If true, print comments.
+	ProtectIds  bool // If true, table and col names are quoted using backticks (avoids reserved-word issue).
+	ForeignKeys bool // If true, print foreign key constraints.
 }
 
 func (c Config) quote(s string) string {
@@ -135,18 +136,44 @@ func (pk IndexKey) PrintIndexKey(c Config) string {
 	return col
 }
 
+// Foreignkey encodes the following DDL definition:
+//    [ CONSTRAINT constraint_name ]
+// 	  FOREIGN KEY ( column_name [, ... ] ) REFERENCES ref_table ( ref_column [, ... ] ) }
+type Foreignkey struct {
+	Name         string
+	Columns      []string
+	ReferTable   string
+	ReferColumns []string
+}
+
+// PrintForeignKey unparses the foreign keys.
+func (k Foreignkey) PrintForeignKey(c Config) string {
+	var cols, referCols []string
+	for i, col := range k.Columns {
+		cols = append(cols, c.quote(col))
+		referCols = append(referCols, c.quote(k.ReferColumns[i]))
+	}
+	var s string
+	if k.Name != "" {
+		s = fmt.Sprintf("CONSTRAINT %s ", c.quote(k.Name))
+	}
+	return s + fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s)", strings.Join(cols, ", "), c.quote(k.ReferTable), strings.Join(referCols, ", "))
+}
+
 // CreateTable encodes the following DDL definition:
 //     create_table: CREATE TABLE table_name ([column_def, ...] ) primary_key [, cluster]
 type CreateTable struct {
-	Name     string
-	ColNames []string             // Provides names and order of columns
-	ColDefs  map[string]ColumnDef // Provides definition of columns (a map for simpler/faster lookup during type processing)
-	Pks      []IndexKey
-	Comment  string
+	Name           string
+	ColNames       []string             // Provides names and order of columns
+	ColDefs        map[string]ColumnDef // Provides definition of columns (a map for simpler/faster lookup during type processing)
+	Pks            []IndexKey
+	Fks            []Foreignkey
+	InterleaveInto string //if not empty, this table will be interleaved
+	Comment        string
 }
 
 // PrintCreateTable unparses a CREATE TABLE statement.
-func (ct CreateTable) PrintCreateTable(config Config) string {
+func (ct CreateTable) PrintCreateTable(interleavedInto string, config Config) string {
 	var col []string
 	var colComment []string
 	var keys []string
@@ -176,7 +203,11 @@ func (ct CreateTable) PrintCreateTable(config Config) string {
 	if config.Comments && len(ct.Comment) > 0 {
 		tableComment = "--\n-- " + ct.Comment + "\n--\n"
 	}
-	return fmt.Sprintf("%sCREATE TABLE %s (%s\n) PRIMARY KEY (%s)", tableComment, config.quote(ct.Name), cols, strings.Join(keys, ", "))
+	var interleave string
+	if interleavedInto != "" {
+		interleave = ",\nINTERLEAVE IN PARENT " + config.quote(interleavedInto) + " ON DELETE CASCADE"
+	}
+	return fmt.Sprintf("%sCREATE TABLE %s (%s\n) PRIMARY KEY (%s)%s", tableComment, config.quote(ct.Name), cols, strings.Join(keys, ", "), interleave)
 }
 
 // CreateIndex encodes the following DDL definition:
@@ -196,6 +227,20 @@ func (ci CreateIndex) PrintCreateIndex(c Config) string {
 		keys = append(keys, p.PrintIndexKey(c))
 	}
 	return fmt.Sprintf("CREATE INDEX %s ON %s (%s)", c.quote(ci.Name), c.quote(ci.Table), strings.Join(keys, ", "))
+}
+
+// PrintForeignKeyAlterTable unparses the foreign keys using ALTER TABLE.
+func (k Foreignkey) PrintForeignKeyAlterTable(c Config, tableName string) string {
+	var cols, referCols []string
+	for i, col := range k.Columns {
+		cols = append(cols, c.quote(col))
+		referCols = append(referCols, c.quote(k.ReferColumns[i]))
+	}
+	var s string
+	if k.Name != "" {
+		s = fmt.Sprintf("CONSTRAINT %s ", c.quote(k.Name))
+	}
+	return fmt.Sprintf("ALTER TABLE %s ADD %s FOREIGN KEY (%s) REFERENCES %s (%s)", c.quote(tableName), s, strings.Join(cols, ", "), c.quote(k.ReferTable), strings.Join(referCols, ", "))
 }
 
 func maxStringLength(s []string) int {
