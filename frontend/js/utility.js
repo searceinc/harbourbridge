@@ -1,41 +1,6 @@
 // variables initialisation
 const RED = '#F44336';
 const apiUrl = '';
-let uncheckCount = [];
-var updatedColsData = [];
-var interleaveApiCallResp = [];
-var importSchemaObj = {};
-var sourceTableFlag = 'Source';
-var reportAccCount = 0;
-var summaryAccCount = 0;
-var ddlAccCount = 0;
-var tableListArea = 'accordion';
-var tabSearchInput = 'reportSearchInput';
-var isLive = true;
-var expanded = false;
-var srcPlaceholder = [];
-var spPlaceholder = [];
-var selectedConstraints = [];
-var pkArray = [];
-var sessionStorageArr = [];
-var initialPkSeqId = [];
-var keyColumnMap = [];
-var pkSeqId = [];
-var src_table_name = [];
-var maxSeqId;
-var count_src = [];
-var count_sp = [];
-var notPkArray = [];
-var initialColNameArray = [];
-var notNullFoundFlag = [];
-var notPrimary = [];
-var pksSp = [];
-var primaryTabCell = [];
-var constraintTabCell = [];
-var notFoundTxt;
-notFoundTxt = document.createElement('h5');
-notFoundTxt.innerHTML = `No Match Found`;
-notFoundTxt.className = 'noText';
 
 /**
  * Function to fetch panel border color based on conversion status
@@ -108,7 +73,7 @@ const showSnackbar = (message, bgClass) => {
  * @return {null}
  */
 const tooltipHandler = () => {
-  $('[data-toggle="tooltip"]').tooltip();
+  jQuery('[data-toggle="tooltip"]').tooltip();
 }
 
 /**
@@ -117,28 +82,15 @@ const tooltipHandler = () => {
  * @param {Element} inputField Input html element like <input>..
  * @return {null}
  */
-const validateInput = (inputField) => {
+const validateInput = (inputField, errorId) => {
   field = inputField;
-  if (field.value.trim() == '') {
-    field.nextElementSibling.innerHTML = `Required`;
-    field.nextElementSibling.style.color = RED;
+  if (field.value.trim() === '') {
+    document.getElementById(errorId).innerHTML = `Required`;
+    document.getElementById(errorId).style.color = RED;
   }
   else {
-    field.nextElementSibling.innerHTML = '';
+    document.getElementById(errorId).innerHTML = '';
   }
-}
-
-
-/**
- * Function to hide all modals when user clicks on cancel button.
- *
- * @return {null}
- */
-const clickCancelModal = () => {
-  clearModal();
-  $('#connectToDbModal').modal('hide');
-  $('#connectModalSuccess').modal('hide');
-  $('#connectModalFailure').modal('hide');
 }
 
 /**
@@ -146,27 +98,27 @@ const clickCancelModal = () => {
  *
  * @return {null}
  */
-const toggle = () => {
+const toggleDbType = () => {
   var val = document.getElementById("dbType")
-  if (val.value == "") {
+  if (val.value === "") {
     document.getElementById("sqlFields").style.display = "none"
     document.getElementById("sqlFieldsButtons").style.display = "none"
   }
-  else if (val.value == "mysql") {
-    $('.formError').html('');
-    $('.db-input').val('');
+  else if (val.value === "mysql") {
+    jQuery('.formError').html('');
+    jQuery('.db-input').val('');
     document.getElementById("sqlFields").style.display = "block"
     document.getElementById("sqlFieldsButtons").style.display = "block"
     sourceTableFlag = 'MySQL'
   }
-  else if (val.value == "postgres") {
-    $('.formError').html('');
-    $('.db-input').val('');
+  else if (val.value === "postgres") {
+    jQuery('.formError').html('');
+    jQuery('.db-input').val('');
     document.getElementById("sqlFields").style.display = "block"
     document.getElementById("sqlFieldsButtons").style.display = "block"
     sourceTableFlag = 'Postgres'
   }
-  else if (val.value == 'dynamodb') {
+  else if (val.value === 'dynamodb') {
     document.getElementById("sqlFields").style.display = "none";
     document.getElementById("sqlFieldsButtons").style.display = "none";
     sourceTableFlag = 'dynamoDB';
@@ -193,7 +145,6 @@ const findTab = (id) => {
       document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
 
       tableListArea = 'accordion';
-      tabSearchInput = 'reportSearchInput';
       break;
     case 'ddlTab':
       document.getElementById('download-schema').style.display = 'none';
@@ -206,7 +157,6 @@ const findTab = (id) => {
       document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
 
       tableListArea = 'ddl-accordion';
-      tabSearchInput = 'ddlSearchInput';
       break;
     case 'summaryTab':
       document.getElementById('download-schema').style.display = 'none';
@@ -219,7 +169,6 @@ const findTab = (id) => {
       document.getElementById('summarySearchForm').style.display = 'block';
 
       tableListArea = 'summary-accordion';
-      tabSearchInput = 'summarySearchInput';
       break;
   }
 }
@@ -230,14 +179,14 @@ const findTab = (id) => {
  * @return {null}
  */
 const clearModal = () => {
-  $('.formError').html('');
-  $('.db-input').val('');
-  $('.db-select-input').val('');
-  $('.load-db-input').val('');
-  $('.import-db-input').val('');
-  $("#upload_link").html('Upload File');
-  $('#loadConnectButton').attr('disabled', 'disabled');
-  $('#connectButton').attr('disabled', 'disabled');
+  jQuery('.formError').html('');
+  jQuery('.db-input').val('');
+  jQuery('.db-select-input').val('');
+  jQuery('.load-db-input').val('');
+  jQuery('.import-db-input').val('');
+  jQuery("#upload_link").html('Upload File');
+  jQuery('#loadConnectButton').attr('disabled', 'disabled');
+  jQuery('#connectButton').attr('disabled', 'disabled');
   document.getElementById("sqlFields").style.display = "none"
   document.getElementById("sqlFieldsButtons").style.display = "none"
 }

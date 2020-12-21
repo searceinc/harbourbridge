@@ -1,7 +1,7 @@
 const renderInstructionsHtml = (params) => {
   return (
-    `<body>
-        <header class="main-header" onLoad="CallbackFunction();">
+    `
+        <header class="main-header">
           <nav class="navbar navbar-static-top">
             <img src="Icons/Icons/google-spanner-logo.png" class="logo">
           </nav>
@@ -68,7 +68,6 @@ const renderInstructionsHtml = (params) => {
             </div>
           </div>
         </div>
-    </body>
   `
   )
 }

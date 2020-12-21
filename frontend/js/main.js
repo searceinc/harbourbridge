@@ -1,36 +1,60 @@
+var pkArray = [];
+var sessionStorageArr = [];
+var initialPkSeqId = [];
+var keyColumnMap = [];
+var pkSeqId = [];
+var src_table_name = [];
+var maxSeqId;
+var count_src = [];
+var count_sp = [];
+var notPkArray = [];
+var initialColNameArray = [];
+var notNullFoundFlag = [];
+var notPrimary = [];
+var pksSp = [];
+var notNullConstraint = [];
+var primaryTabCell = [];
+var constraintTabCell = [];
+var z;
+let uncheckCount = [];
+var updatedColsData = [];
+var interleaveApiCallResp = [];
+var importSchemaObj = {};
+var sourceTableFlag = 'Source';
+
 /**
  * Function to initiate home screen tasks like validating form input fields
  *
  * @return {null}
  */
 const initHomeScreenTasks = () => {
-  $(document).ready(function () {
+  jQuery(document).ready(function () {
     setSessionTableContent();
-    $('#loadDbForm > div').keyup(function () {
+    jQuery('#loadDbForm > div > input').keyup(function () {
       var empty = false;
-      $('#loadDbForm > div > input').each(function () {
-        if ($(this).val() == '') {
+      jQuery('#loadDbForm > div > input').each(function () {
+        if (jQuery(this).val() === '') {
           empty = true;
         }
       });
       if (empty) {
-        $('#loadConnectButton').attr('disabled', 'disabled');
+        jQuery('#loadConnectButton').attr('disabled', 'disabled');
       } else {
-        $('#loadConnectButton').removeAttr('disabled');
+        jQuery('#loadConnectButton').removeAttr('disabled');
       }
     });
-    $('#connectForm > div').keyup(function () {
+    jQuery('#connectForm > div > input').keyup(function () {
       var empty = false;
-      $('#connectForm > div > input').each(function () {
-        if ($(this).val() == '') {
+      jQuery('#connectForm > div > input').each(function () {
+        if (jQuery(this).val() === '') {
           empty = true;
         }
       });
       if (empty) {
-        $('#connectButton').attr('disabled', 'disabled');
+        jQuery('#connectButton').attr('disabled', 'disabled');
       }
       else {
-        $('#connectButton').removeAttr('disabled');
+        jQuery('#connectButton').removeAttr('disabled');
       }
     });
   })
@@ -41,10 +65,10 @@ const initHomeScreenTasks = () => {
  *
  * @return {null}
  */
-$(function () {
-  $("#upload_link").on('click', function (e) {
+jQuery(function () {
+  jQuery("#upload_link").on('click', function (e) {
     e.preventDefault();
-    $("#upload:hidden").trigger('click');
+    jQuery("#upload:hidden").trigger('click');
   });
 });
 
@@ -53,13 +77,13 @@ $(function () {
  *
  * @return {null}
  */
-$(document).ready(function () {
-  $('#upload').change(function () {
-    fileName = $('#upload')[0].files[0].name;
+jQuery(document).ready(function () {
+  jQuery('#upload').change(function () {
+    fileName = jQuery('#upload')[0].files[0].name;
     if (fileName != '') {
-      $('#importButton').removeAttr('disabled');
+      jQuery('#importButton').removeAttr('disabled');
     }
-    $("#upload_link").text(fileName);
+    jQuery("#upload_link").text(fileName);
   });
 });
 
@@ -68,11 +92,10 @@ $(document).ready(function () {
  *
  * @return {null}
  */
-$(document).on('change', '#upload', function (event) {
+jQuery(document).on('change', '#upload', function (event) {
   var reader = new FileReader();
   reader.onload = function (event) {
-    var jsonObj = JSON.parse(event.target.result);
-    importSchemaObj = jsonObj;
+    importSchemaObj = JSON.parse(event.target.result);
     localStorage.setItem('conversionReportContent', JSON.stringify(importSchemaObj));
   }
   reader.readAsText(event.target.files[0]);
@@ -105,12 +128,12 @@ const createEditDataTypeTable = () => {
     tableRow.setAttribute('id', 'dataTypeRow' + (i + 1));
     for (var j = 0; j < 2; j++) {
       tableCell = document.createElement('td');
-      if (j == 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]] != null) {
+      if (j === 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]] !== null) {
         tableCell.className = 'src-td';
         tableCell.innerHTML = Object.keys(globalDataTypeList)[i];
         tableCell.setAttribute('id', 'dataTypeKey' + (i + 1));
       }
-      else if (j == 1) {
+      else if (j === 1) {
         tableCell.setAttribute('id', 'dataTypeVal' + (i + 1));
         optionsLength = globalDataTypeList[Object.keys(globalDataTypeList)[i]].length;
         dataTypeArr = [];
@@ -125,7 +148,7 @@ const createEditDataTypeTable = () => {
                         <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${selectId} style='border: 0px !important;'>
                       </div>`;
         for (var k = 0; k < optionsLength; k++) {
-          if (k == 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].Brief !== "") {
+          if (k === 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].Brief !== "") {
             selectHTML = `<div style='display: flex;'>
                             <i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].Brief}'>warning</i>
                             <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${selectId} style='border: 0px !important; font-family: FontAwesome;'>
@@ -163,18 +186,15 @@ const dataTypeUpdate = (id) => {
                   <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${id} style='border: 0px !important;'>
                 </div>`;
   for (var x = 0; x < dataTypeOptionArray.length; x++) {
-    optionFound = false;
-    if (dataTypeOptionArray[x].T == document.getElementById(id).value) {
-      optionFound = true;
-    }
-    if (dataTypeOptionArray[x].T == document.getElementById(id).value && dataTypeOptionArray[x].Brief != "") {
+    optionFound = dataTypeOptionArray[x].T === document.getElementById(id).value;
+    if (dataTypeOptionArray[x].T === document.getElementById(id).value && dataTypeOptionArray[x].Brief !== "") {
 
       selectHTML = `<div style='display: flex;'>
                       <i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${dataTypeOptionArray[x].Brief}'>warning</i>
                       <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${id} style='border: 0px !important;'>
                     </div>`;
     }
-    if (optionFound == true) {
+    if (optionFound === true) {
       optionHTML += `<option selected='selected' value='${dataTypeOptionArray[x].T}'>${dataTypeOptionArray[x].T} </option>`;
     }
     else {
@@ -192,7 +212,8 @@ const dataTypeUpdate = (id) => {
  * @param {json} obj Json object contaning source and spanner table information
  * @return {null}
  */
-async function createSourceAndSpannerTables(obj) {
+const createSourceAndSpannerTables = async(obj) => {
+  let mySelect;
   getFilePaths();
   schemaConversionObj = obj;
 
@@ -205,7 +226,6 @@ async function createSourceAndSpannerTables(obj) {
     }
   })
   .then(function (res) {
-    console.log(res.ok);
     if (res.ok) {
       res.json().then(function (result) {
         globalDataTypes = result;
@@ -219,18 +239,18 @@ async function createSourceAndSpannerTables(obj) {
     showSnackbar(err, ' redBg');
   });
 
-  $("#download-schema").click(function () {
+  jQuery("#download-schema").click(function () {
     downloadFilePaths = JSON.parse(localStorage.getItem('downloadFilePaths'));
     schemaFilePath = downloadFilePaths.Schema;
     schemaFileName = schemaFilePath.split('/')[schemaFilePath.split('/').length - 1];
     filePath = './' + schemaFileName;
     readTextFile(filePath, function (text) {
-      $("<a />", {
+      jQuery("<a />", {
         "download": schemaFileName + ".txt",
         "href": "data:application/json;charset=utf-8," + encodeURIComponent(text),
       }).appendTo("body")
       .click(function () {
-        $(this).remove()
+        jQuery(this).remove()
       })[0].click()
     })
   });
@@ -246,13 +266,13 @@ async function createSourceAndSpannerTables(obj) {
   expand_button.innerHTML = "Expand All"
   expand_button.className = "expand"
   expand_button.addEventListener('click', function () {
-    if ($(this).html() == 'Expand All') {
-      $(this).html('Collapse All');
-      $('.reportCollapse').collapse('show');
+    if (jQuery(this).html() === 'Expand All') {
+      jQuery(this).html('Collapse All');
+      jQuery('.reportCollapse').collapse('show');
     }
     else {
-      $(this).html('Expand All');
-      $('.reportCollapse').collapse('hide');
+      jQuery(this).html('Expand All');
+      jQuery('.reportCollapse').collapse('hide');
     }
   })
   accordion.appendChild(expand_button);
@@ -264,34 +284,35 @@ async function createSourceAndSpannerTables(obj) {
   editButton.innerHTML = 'Edit Global Data Type';
   editButton.addEventListener('click', function () {
     createEditDataTypeTable();
-    $('#globalDataTypeModal').modal();
+    jQuery('#globalDataTypeModal').modal();
   });
   accordion.appendChild(editButton);
 
   var reportUl = document.createElement('ul');
   reportUl.setAttribute('id', 'reportUl');
+  var srcPlaceholder = [];
+  var spPlaceholder = [];
   z = 0;
 
   for (var x = 0; x < src_table_num; x++) {
-    initialPkSeqId[x] = new Array();
-    initialColNameArray[x] = new Array();
-    constraintTabCell[x] = new Array();
-    primaryTabCell[x] = new Array();
-    notPrimary[x] = new Array();
-    notNullFoundFlag[x] = new Array();
-    keyColumnMap[x] = new Array();
-    pkArray[x] = new Array();
-    selectedConstraints[x] = new Array();
-    spPlaceholder[x] = new Array();
-    count_sp[x] = new Array();
-    count_src[x] = new Array();
-    pksSp[x] = new Array();
+    initialPkSeqId[x] = [];
+    initialColNameArray[x] = [];
+    constraintTabCell[x] = [];
+    primaryTabCell[x] = [];
+    notPrimary[x] = [];
+    notNullFoundFlag[x] = [];
+    keyColumnMap[x] = [];
+    pkArray[x] = [];
+    spPlaceholder[x] = [];
+    count_sp[x] = [];
+    count_src[x] = [];
+    pksSp[x] = [];
   }
 
   interleaveApiCallResp = JSON.parse(localStorage.getItem('interleaveInfo'));
 
   // creating table accordion one by one for each table
-  for (i = 0; i < src_table_num; i++) {
+  for (var i = 0; i < src_table_num; i++) {
     src_table = schemaConversionObj.SrcSchema[Object.keys(schemaConversionObj.ToSpanner)[i]];
     src_table_name[i] = Object.keys(schemaConversionObj.ToSpanner)[i];
     src_table_cols = src_table.ColNames;
@@ -313,6 +334,7 @@ async function createSourceAndSpannerTables(obj) {
     tableCard.setAttribute('id', i);
 
     tableCardHeader = document.createElement("div");
+    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
     tableCardHeader.className = 'card-header report-card-header borderBottom' + panelBorderClass(conversionRateResp[src_table_name[i]]);
     tableCardHeader.role = 'tab';
 
@@ -320,7 +342,7 @@ async function createSourceAndSpannerTables(obj) {
     tableCardHeading.className = 'mb-0';
 
     tableCardHeaderLink = document.createElement("a");
-    tableCardHeaderLink.innerHTML = `Table: ${Object.keys(schemaConversionObj.SrcSchema)[i]} <i class="fas fa-angle-down rotate-icon"></i>`
+    tableCardHeaderLink.innerHTML = `Table: ${Object.keys(schemaConversionObj.SrcSchema)[i]} <i class="fas fa-angle-down rotate-icon" />`
     tableCardHeaderLink.setAttribute("data-toggle", "collapse");
     tableCardHeaderLink.setAttribute("href", "#" + Object.keys(schemaConversionObj.SrcSchema)[i]);
 
@@ -354,11 +376,11 @@ async function createSourceAndSpannerTables(obj) {
     editSpannerSpan.innerHTML = "Edit Spanner Schema";
     editSpannerSpan.setAttribute('id', 'editSpanner' + i);
     editSpannerSpan.addEventListener('click', function () {
-      if ($(this).html() === "Edit Spanner Schema") {
-        editSpannerHandler($(this));
+      if (jQuery(this).html() === "Edit Spanner Schema") {
+        editSpannerHandler(jQuery(this));
       }
-      else if ($(this).html() === "Save Changes") {
-        saveSpannerChanges($(this));
+      else if (jQuery(this).html() === "Save Changes") {
+        saveSpannerChanges(jQuery(this), spPlaceholder);
       }
     })
     tableCardHeading.appendChild(editSpannerSpan);
@@ -368,6 +390,7 @@ async function createSourceAndSpannerTables(obj) {
     tableCardCollapse.className = "collapse reportCollapse";
 
     tableCardContent = document.createElement("div");
+    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
     tableCardContent.className = 'mdc-card mdc-card-content table-card-border' + mdcCardBorder(conversionRateResp[src_table_name[i]]);
 
     tableAccContent = document.createElement("div");
@@ -376,7 +399,7 @@ async function createSourceAndSpannerTables(obj) {
     // creating column headers for each table
     tableColHeaders = [];
     for (var m = 0; m < 6; m++) {
-      if (m % 2 == 0) {
+      if (m % 2 === 0) {
         tableColHeaders.push(sourceTableFlag);
       }
       else
@@ -412,8 +435,8 @@ async function createSourceAndSpannerTables(obj) {
     tr = table_header2.insertRow(-1);
     for (var j = 0; j < tableColHeaders.length; j++) {
       th = document.createElement("th");
-      if (j % 2 == 0) {
-        if (j == 0) {
+      if (j % 2 === 0) {
+        if (j === 0) {
           th.className = "acc-table-th-src src-tab-cell";
         }
         else {
@@ -430,9 +453,7 @@ async function createSourceAndSpannerTables(obj) {
     table_body = document.createElement('tbody');
     table.appendChild(table_body);
     columnsLength = Object.keys(schemaConversionObj.ToSpanner[sp_table.Name].Cols).length;
-
-    spannerColumnsIterator(i);
-
+    spannerColumnsIterator(i, srcPlaceholder, spPlaceholder);
     tableAccContent.appendChild(table)
     tableCardContent.appendChild(tableAccContent)
     tableCardCollapse.appendChild(tableCardContent)
@@ -442,14 +463,13 @@ async function createSourceAndSpannerTables(obj) {
     if (sp_table.Fks != null) {
       foreignKeyHandler(i, sp_table.Fks);
     }
-    interleaveHandler(i, interleaveApiCallResp[i]);
     if (JSON.parse(localStorage.getItem('summaryReportContent')) != undefined) {
       createSummaryForEachTable(i, JSON.parse(localStorage.getItem('summaryReportContent')));
     }
   }
   accordion.appendChild(reportUl);
   z--;
-  while (z != -1) {
+  while (z >= 0) {
     mySelect = new vanillaSelectBox('#srcConstraint' + z, {
       placeHolder: srcPlaceholder[z] + " constraints selected",
       maxWidth: 500,
@@ -458,9 +478,9 @@ async function createSourceAndSpannerTables(obj) {
     z--;
   }
 
-  for (i = 0; i < src_table_num; i++) {
+  for (var i = 0; i < src_table_num; i++) {
     table_id = '#src-sp-table' + i;
-    $(table_id).DataTable();
+    jQuery(table_id).DataTable();
   }
 
   for (var i = 0; i < sp_table_num; i++) {
@@ -485,15 +505,15 @@ async function createSourceAndSpannerTables(obj) {
  * @param {number} i table index
  * @return {null}
  */
-const spannerColumnsIterator = (i) => {
+const spannerColumnsIterator = (i, srcPlaceholder, spPlaceholder) => {
   for (var k = 0; k < columnsLength; k++) {
     tr = table_body.insertRow(-1);
     currentColumnSrc = Object.keys(schemaConversionObj.ToSpanner[sp_table.Name].Cols)[k];
-    currentColumnSp = schemaConversionObj.ToSpanner[sp_table.Name].Cols[k];
+    currentColumnSp = schemaConversionObj.ToSpanner[sp_table.Name].Cols[currentColumnSrc];
 
     columnNameIterator(i, k);
     dataTypeIterator(i, k);
-    constraintIterator(i, k);
+    constraintIterator(i, k, srcPlaceholder, spPlaceholder);
   }
 }
 
@@ -507,8 +527,8 @@ const spannerColumnsIterator = (i) => {
 const columnNameIterator = (i, k) => {
   for (var l = 0; l < 2; l++) {
     tabCell = tr.insertCell(-1);
-    if (l % 2 == 0) {
-      if (src_table.PrimaryKeys != null && src_table.PrimaryKeys[0].Column == currentColumnSrc) {
+    if (l % 2 === 0) {
+      if (src_table.PrimaryKeys !== null && src_table.PrimaryKeys[0].Column === currentColumnSrc) {
         tabCell.innerHTML = `<span class="column left">
                               <img src='./Icons/Icons/ic_vpn_key_24px.svg' style='margin-left: 3px;'>
                             </span>
@@ -527,11 +547,11 @@ const columnNameIterator = (i, k) => {
       tabCell.className = 'acc-table-td src-tab-cell';
     }
     else {
-      currentColumnSp = sp_table_cols[k];
+      // currentColumnSp = sp_table_cols[k];
       pksSp[i] = [...sp_table.Pks];
       pkFlag = false
       for (var x = 0; x < pksSp[i].length; x++) {
-        if (pksSp[i][x].Col == currentColumnSp) {
+        if (pksSp[i][x].Col === currentColumnSp) {
           pkFlag = true;
           tabCell.innerHTML = `<span class="column left" data-toggle="tooltip" data-placement="bottom" title="primary key : ${sp_table_cols[k]}" id='keyIcon${i}${k}${k}' style="cursor:pointer">
                                 <sub>${pksSp[i][x].seqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg' class='primaryKey'>
@@ -544,7 +564,7 @@ const columnNameIterator = (i, k) => {
           break
         }
       }
-      if (pkFlag == false) {
+      if (pkFlag === false) {
         notPrimary[i][k] = true;
         tabCell.innerHTML = `<span class="column left" id='keyIcon${i}${k}${k}'>
                               <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden;'>
@@ -571,23 +591,17 @@ const columnNameIterator = (i, k) => {
  */
 const dataTypeIterator = (i, k) => {
   for (var l = 0; l < 2; l++) {
+   
     tabCell = tr.insertCell(-1);
-    if (l % 2 == 0) {
+    if (l % 2 === 0) {
       tabCell.className = "acc-table-td pl-data-type";
       tabCell.setAttribute('id', 'srcDataType' + i + k);
-      if (src_table.ColDefs[currentColumnSrc].Type.ArrayBounds != null)
-        tabCell.innerHTML = 'ARRAY(' + src_table.ColDefs[currentColumnSrc].Type.Name + ')';
-      else
-        tabCell.innerHTML = src_table.ColDefs[currentColumnSrc].Type.Name;
+      tabCell.innerHTML = src_table.ColDefs[currentColumnSrc].Type.Name;
     }
     else {
       tabCell.setAttribute('class', 'sp-column acc-table-td spannerTabCell' + i + k);
       tabCell.setAttribute('id', 'dataType' + i + k);
-      if (sp_table.ColDefs[currentColumnSp].IsArray == true)
-        tabCell.innerHTML = 'ARRAY(' + sp_table.ColDefs[currentColumnSp].T.Name + ')';
-      else {
-        tabCell.innerHTML = sp_table.ColDefs[currentColumnSp].T.Name;
-      }
+      tabCell.innerHTML = sp_table.ColDefs[currentColumnSp].T.Name;
     }
   }
 }
@@ -599,15 +613,15 @@ const dataTypeIterator = (i, k) => {
  * @param {number} k column index in table
  * @return {null}
  */
-const constraintIterator = (i, k) => {
+const constraintIterator = (i, k, srcPlaceholder, spPlaceholder) => {
   for (var l = 0; l < 2; l++) {
     tabCell = tr.insertCell(-1);
     tabCell.className = "acc-table-td";
-    if (l % 2 == 0) {
+    if (l % 2 === 0) {
       count_src[i][k] = 0;
       srcPlaceholder[z] = count_src[i][k];
-      if (src_table.ColDefs[currentColumnSrc].NotNull != undefined) {
-        if (src_table.ColDefs[currentColumnSrc].NotNull == true) {
+      if (src_table.ColDefs[currentColumnSrc].NotNull !== undefined) {
+        if (src_table.ColDefs[currentColumnSrc].NotNull === true) {
           count_src[i][k] = count_src[i][k] + 1;
           srcPlaceholder[z] = count_src[i][k];
           notNullFound = "<option disabled class='active'>Not Null</option>";
@@ -631,16 +645,18 @@ const constraintIterator = (i, k) => {
       count_sp[i][k] = 0;
       spPlaceholder[i][k] = count_sp[i][k];
       // checking not null consraint
-      if (sp_table.ColDefs[currentColumnSp].NotNull != undefined) {
-        if (sp_table.ColDefs[currentColumnSp].NotNull == true) {
+      if (sp_table.ColDefs[currentColumnSp].NotNull !== undefined) {
+        if (sp_table.ColDefs[currentColumnSp].NotNull === true) {
           count_sp[i][k] = count_sp[i][k] + 1
           spPlaceholder[i][k] = count_sp[i][k];
           notNullFound = "<option disabled class='active'>Not Null</option>";
           notNullFoundFlag[i][k] = true;
+          notNullConstraint[parseInt(String(i) + String(k))] = 'Not Null';
         }
         else {
           notNullFound = "<option disabled>Not Null</option>";
           notNullFoundFlag[i][k] = false;
+          notNullConstraint[parseInt(String(i) + String(k))] = '';
         }
       }
       else {
@@ -666,53 +682,118 @@ const constraintIterator = (i, k) => {
  * @return {null}
  */
 const foreignKeyHandler = (index, foreignKeys) => {
+  foreignKeyDiv = document.createElement('div');
+  foreignKeyDiv.className = 'summaryCard';
 
-}
+  foreignKeyHeader = document.createElement("div")
+  foreignKeyHeader.className = 'foreignKeyHeader';
+  foreignKeyHeader.role = 'tab';
 
-async function interleaveHandler(index, interleaveApiCallResp) {
-  // interleaveApiCall = await fetch(apiUrl + '/checkinterleave/table?table=' + tableName);
-  // interleaveApiCallResp = await interleaveApiCall.json();
-  interleaveCard = document.createElement('div');
-  interleaveCard.className = 'summaryCard';
+  foreignKeyHeading = document.createElement("h5")
+  foreignKeyHeading.className = 'mb-0';
 
-  interleaveCardHeader = document.createElement("div")
-  interleaveCardHeader.className = 'interleaveCardHeader';
-  interleaveCardHeader.role = 'tab';
+  foreignKeyLink = document.createElement("a")
+  foreignKeyLink.innerHTML = `Foreign Keys`;
+  foreignKeyLink.className = 'summaryFont';
+  foreignKeyLink.setAttribute("data-toggle", "collapse");
+  foreignKeyLink.setAttribute("href", "#foreignKey" + index);
+  
+  foreignKeyHeading.appendChild(foreignKeyLink);
+  foreignKeyHeader.appendChild(foreignKeyHeading);
+  foreignKeyDiv.appendChild(foreignKeyHeader);
 
-  interleaveCardHeading = document.createElement("h5")
-  interleaveCardHeading.className = 'mb-0';
+  foreignKeyCollapse = document.createElement("div")
+  foreignKeyCollapse.setAttribute("id", 'foreignKey' + index);
+  foreignKeyCollapse.className = "collapse summaryCollapse";
 
-  interleaveCardLink = document.createElement("a");
-  interleaveCardLink.innerHTML = `Interleave Table`;
-  interleaveCardLink.className = 'summaryFont';
-  interleaveCardLink.setAttribute("data-toggle", "collapse");
-  interleaveCardLink.setAttribute("href", "#viewInterleave" + index);
+  foreignKeyCard = document.createElement("div");
+  foreignKeyCard.className = "mdc-card mdc-card-content summaryBorder";
+  foreignKeyCard.setAttribute('border', '0px');
 
-  interleaveCardHeading.appendChild(interleaveCardLink);
-  interleaveCardHeader.appendChild(interleaveCardHeading);
-  interleaveCard.appendChild(interleaveCardHeader);
+  fkTable = document.createElement('table');
+  fkTable.className = 'acc-table fkTable';
+  fkHeader = document.createElement('thead');
+  fkTbody = document.createElement('tbody');
+  fkTable.appendChild(fkHeader);
+  fkTable.appendChild(fkTbody);
+  tr = fkHeader.insertRow(-1);
+  
+  th1 = document.createElement('th');
+  th1.innerHTML = 'Name';
+  tr.appendChild(th1);
 
-  interleaveCollapse = document.createElement("div")
-  interleaveCollapse.setAttribute("id", 'viewInterleave' + index);
-  interleaveCollapse.className = "collapse summaryCollapse";
+  th2 = document.createElement('th');
+  th2.innerHTML = 'Columns';
+  tr.appendChild(th2);
 
-  interleaveCollapseCard = document.createElement("div");
-  interleaveCollapseCard.className = "mdc-card mdc-card-content summaryBorder";
-  interleaveCollapseCard.setAttribute('border', '0px');
+  th3 = document.createElement('th');
+  th3.innerHTML = 'Refer Table';
+  tr.appendChild(th3);
 
-  if (interleaveApiCallResp.Parent == '') {
-    interleaveApiCallResp.Parent = 'None';
+  th4 = document.createElement('th');
+  th4.innerHTML = 'Refer Columns';
+  tr.appendChild(th4);
+
+  radioOptions = '';
+  radioOptions += `<fieldset style='overflow: hidden;'>
+            <div class="radio-class">
+              <input type="radio" class="radio" name="fks" value="add" id="add${index}" checked='checked' />
+              <label style='margin-right: 15px;' for="add">Use as Foreign Key</label>
+              <input type="radio" class="radio" name="fks" value="interleave" id="interleave${index}" />
+              <label style='margin-right: 15px;' for="interleave">Convert to Interleave</label>
+            </div>
+            <button style='float: right; padding: 0px 20px;' class='edit-button' id='saveInterleave${index}' onclick='saveInterleaveHandler(${index})'>save</button>
+            </fieldset><br>`;
+  jQuery('#add'+index).attr('checked', 'checked');
+
+  for (var p in foreignKeys) {
+    tr = fkTbody.insertRow(-1);
+    for (var k in foreignKeys[p]) {
+      tabCell = tr.insertCell(-1);
+      tabCell.innerHTML = foreignKeys[p][k];
+      tabCell.className = 'acc-table-td';
+    }
   }
 
-  interleaveContent = document.createElement('div');
-  interleaveContent.className = 'mdc-card summary-content';
-  interleaveContent.innerHTML = `<span style='font-weight: bold;'>Comment</span>: ${interleaveApiCallResp.Comment} </br> <span style='font-weight: bold;'>Parent</span>: ${interleaveApiCallResp.Parent} </br> <span style='font-weight: bold;'>Possible</span>: ${interleaveApiCallResp.Possible}`;
-  interleaveCollapseCard.appendChild(interleaveContent);
+  foreignKeyContent = document.createElement('div');
+  foreignKeyContent.className = 'mdc-card summary-content';
+  foreignKeyContent.innerHTML = radioOptions;
 
-  interleaveCollapse.appendChild(interleaveCollapseCard);
-  interleaveCard.appendChild(interleaveCollapse);
+  foreignKeyContent.appendChild(fkTable);
+  foreignKeyCard.appendChild(foreignKeyContent);
+  foreignKeyCollapse.appendChild(foreignKeyCard);
+  foreignKeyDiv.appendChild(foreignKeyCollapse);
+  tableAccContent.appendChild(foreignKeyDiv);
+}
 
-  tableAccContent.appendChild(interleaveCard);
+/**
+ * Function to select foreign key behaviour in each table (convert to interleave or use as is)
+ *
+ * @param {number} index table index
+ * @return {null}
+ */
+const saveInterleaveHandler = (index) => {
+  const radioValues = document.querySelectorAll('input[name="fks"]');
+            let selectedValue;
+            for (const x of radioValues) {
+                if (x.checked) {
+                    selectedValue = x.value;
+                    break;
+                }
+            }
+  if (selectedValue == 'interleave') {
+    console.log(index);
+    console.log(interleaveApiCallResp[index]);
+    if (interleaveApiCallResp[index].Possible == false) {
+      showSnackbar('Cannot be Interleaved', ' redBg');  
+    }
+    else if (interleaveApiCallResp[index].Possible == true) {
+      showSnackbar('Successfully Interleaved', ' greenBg');
+    }
+  }
+  else {
+    showSnackbar('Response Saved', ' greenBg');
+  }
 }
 
 /**
@@ -722,8 +803,8 @@ async function interleaveHandler(index, interleaveApiCallResp) {
  * @return {null}
  */
 const editSpannerHandler = (event) => {
-  if (event.html() == 'Edit Spanner Schema') {
-    $(event[0]).removeAttr('data-toggle');
+  if (event.html() === 'Edit Spanner Schema') {
+    jQuery(event[0]).removeAttr('data-toggle');
   }
 
   tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
@@ -733,9 +814,9 @@ const editSpannerHandler = (event) => {
   tableColumnNumber = 0;
   tableCheckboxGroup = '.chckClass_' + tableNumber;
 
-  $(tableId).each(function (index) {
-    if (index == 1) {
-      var temp = $(this).find('.src-tab-cell');
+  jQuery(tableId).each(function (index) {
+    if (index === 1) {
+      var temp = jQuery(this).find('.src-tab-cell');
       temp.prepend(`<span class="bmd-form-group is-filled">
                       <div class="checkbox">
                         <label>
@@ -745,21 +826,24 @@ const editSpannerHandler = (event) => {
                       </div>
                     </span>`)
     }
-    $('#chckAll_' + tableNumber).prop('checked', true);
-    $('#chckAll_' + tableNumber).click(function () {
-      tableNumber = parseInt($(this).attr('id').match(/\d+/), 10);
-      switch ($(this).is(':checked')) {
+    var checkAllTableNumber = jQuery('#chckAll_' + tableNumber);
+    var checkClassTableNumber = jQuery('.chckClass_' + tableNumber);
+    checkAllTableNumber.prop('checked', true);
+    checkAllTableNumber.click(function () {
+      tableNumber = parseInt(jQuery(this).attr('id').match(/\d+/), 10);
+      checkClassTableNumber = jQuery('.chckClass_' + tableNumber);
+      switch (jQuery(this).is(':checked')) {
         case true:
-          $('.chckClass_' + tableNumber).prop('checked', true);
+          checkClassTableNumber.prop('checked', true);
           break;
         case false:
-          $('.chckClass_' + tableNumber).prop('checked', false);
+          checkClassTableNumber.prop('checked', false);
           break;
       }
     });
 
     if (index > 1) {
-      var temp = $(this).find('.src-tab-cell');
+      var temp = jQuery(this).find('.src-tab-cell');
       temp.prepend(`<span class="bmd-form-group is-filled">
                       <div class="checkbox">
                         <label>
@@ -768,7 +852,7 @@ const editSpannerHandler = (event) => {
                         </label>
                       </div>
                     </span>`)
-      $(tableCheckboxGroup).prop('checked', true);
+      jQuery(tableCheckboxGroup).prop('checked', true);
       spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
 
       editSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber);
@@ -776,20 +860,21 @@ const editSpannerHandler = (event) => {
       editSpannerConstraint(spannerCellsList[2], tableNumber, tableColumnNumber);
       tableColumnNumber++;
     }
-  })
-  check_class = '.chckClass_' + tableNumber;
-  $(check_class).click(function () {
-    tableNumber = parseInt($(this).closest("table").attr('id').match(/\d+/), 10);
-    tableColumnNumber = parseInt($(this).attr('id').match(/\d+/), 10);
-    if ($(this).is(":checked")) {
+  });
+  checkClassTableNumber = jQuery('.chckClass_' + tableNumber);
+  checkClassTableNumber.click(function () {
+    tableNumber = parseInt(jQuery(this).closest("table").attr('id').match(/\d+/), 10);
+    tableColumnNumber = parseInt(jQuery(this).attr('id').match(/\d+/), 10);
+    checkAllTableNumber = jQuery('#chckAll_' + tableNumber);
+    if (jQuery(this).is(":checked")) {
       uncheckCount[tableNumber] = uncheckCount[tableNumber] - 1;
-      if (uncheckCount[tableNumber] == 0) {
-        $('#chckAll_' + tableNumber).prop('checked', true);
+      if (uncheckCount[tableNumber] === 0) {
+        checkAllTableNumber.prop('checked', true);
       }
     }
     else {
       uncheckCount[tableNumber] = uncheckCount[tableNumber] + 1;
-      $('#chckAll_' + tableNumber).prop('checked', false);
+      checkAllTableNumber.prop('checked', false);
     }
   });
 }
@@ -808,11 +893,11 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber) => {
   initialColNameArray[tableNumber].push(columnNameVal);
   currSeqId = '';
   for (var x = 0; x < pkArray[tableNumber].length; x++) {
-    if (pkArray[tableNumber][x].Col == columnNameVal.trim()) {
+    if (pkArray[tableNumber][x].Col === columnNameVal.trim()) {
       currSeqId = pkArray[tableNumber][x].seqId;
     }
   }
-  if (notPrimary[tableNumber][tableColumnNumber] == true) {
+  if (notPrimary[tableNumber][tableColumnNumber] === true) {
     spannerCellsList[0].innerHTML = `<span class="column left keyNotActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
                                       <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>
                                     </span>
@@ -828,11 +913,11 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber) => {
                                       <input id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' type="text" value=${columnNameVal} class="form-control spanner-input" autocomplete='off'>
                                     </span>`
   }
-  $('#keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).click(function () {
-    $(this).toggleClass('keyActive keyNotActive');
-    keyId = $(this).attr('id');
+  jQuery('#keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).click(function () {
+    jQuery(this).toggleClass('keyActive keyNotActive');
+    keyId = jQuery(this).attr('id');
     for (var z = 0; z < keyColumnMap[tableNumber].length; z++) {
-      if (keyId == keyColumnMap[tableNumber][z].keyIconId) {
+      if (keyId === keyColumnMap[tableNumber][z].keyIconId) {
         columnName = keyColumnMap[tableNumber][z].columnName;
       }
     }
@@ -850,7 +935,7 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber) => {
  * Function to get new seq number for primary key
  *
  * @param {html id} keyId
- * @param {number} tableColumnNumber
+ * @param {number} tableNumber specifies table number in json object
  * @return {null}
  */
 const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
@@ -872,7 +957,7 @@ const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
       break;
     }
   }
-  if (pkFoundFlag == false) {
+  if (pkFoundFlag === false) {
     pkArray[tableNumber].push({ 'Col': columnName, 'seqId': pkSeqId[tableNumber] });
   }
   schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks = pkArray[tableNumber];
@@ -887,7 +972,7 @@ const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
  */
 const removePrimaryKeyFromSeq = (tableNumber) => {
   for (var z = 0; z < pkArray[tableNumber].length; z++) {
-    if (columnName == pkArray[tableNumber][z].Col) {
+    if (columnName === pkArray[tableNumber][z].Col) {
       pkArray[tableNumber].splice(z, 1);
       break;
     }
@@ -898,20 +983,20 @@ const removePrimaryKeyFromSeq = (tableNumber) => {
   schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks = pkArray[tableNumber];
 
   tableColumnNumber = 0;
-  $(tableId).each(function (index) {
+  jQuery(tableId).each(function (index) {
     if (index > 1) {
       notPrimary[tableNumber][tableColumnNumber] = true;
       currSeqId = '';
       for (var x = 0; x < pkArray[tableNumber].length; x++) {
-        if (pkArray[tableNumber][x].Col == initialColNameArray[tableNumber][tableColumnNumber].trim()) {
+        if (pkArray[tableNumber][x].Col === initialColNameArray[tableNumber][tableColumnNumber].trim()) {
           currSeqId = pkArray[tableNumber][x].seqId;
           notPrimary[tableNumber][tableColumnNumber] = false;
         }
       }
-      if (notPrimary[tableNumber][tableColumnNumber] == true) {
+      if (notPrimary[tableNumber][tableColumnNumber] === true) {
         document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML = `<img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>`;
       }
-      if (notPrimary[tableNumber][tableColumnNumber] == false) {
+      if (notPrimary[tableNumber][tableColumnNumber] === false) {
         document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML = `<sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
       }
       tableColumnNumber++;
@@ -935,7 +1020,7 @@ const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
   dataType = '';
   globalDataTypesLength = Object.keys(globalDataTypes).length;
   for (var a = 0; a < globalDataTypesLength; a++) {
-    if (srcCellValue.toLowerCase() == (Object.keys(globalDataTypes)[a]).toLowerCase()) {
+    if (srcCellValue.toLowerCase() === (Object.keys(globalDataTypes)[a]).toLowerCase()) {
       dataTypeArray = globalDataTypes[Object.keys(globalDataTypes)[a]];
       break;
     }
@@ -943,7 +1028,7 @@ const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
   dataType = `<div class="form-group">
               <select class="form-control spanner-input tableSelect" id='dataType${tableNumber}${tableColumnNumber}${tableColumnNumber}'>`
 
-  if (dataTypeArray != null) {
+  if (dataTypeArray !== null) {
     for (var a = 0; a < dataTypeArray.length; a++) {
       dataType += `<option value=${dataTypeArray[a].T}>${dataTypeArray[a].T}</option>`
     }
@@ -964,12 +1049,13 @@ const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
  * @return {null}
  */
 const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
+  let mySelect;
   spannerCellsList[2] = editColumn;
   // not null flag
-  if (notNullFoundFlag[tableNumber][tableColumnNumber] == true) {
+  if (notNullFoundFlag[tableNumber][tableColumnNumber] === true) {
     notNullFound = "<option class='active' selected>Not Null</option>";
   }
-  else if (notNullFoundFlag[tableNumber][tableColumnNumber] == false) {
+  else if (notNullFoundFlag[tableNumber][tableColumnNumber] === false) {
     notNullFound = "<option>Not Null</option>";
   }
   else {
@@ -982,23 +1068,21 @@ const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
     + "</select>";
   spannerCellsList[2].innerHTML = constraintHtml;
   spannerCellsList[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + tableNumber + tableColumnNumber);
-
   mySelect = new vanillaSelectBox("#spConstraint" + tableNumber + tableColumnNumber, {
     placeHolder: "Select Constraints",
     maxWidth: 500,
     maxHeight: 300
   });
-  selectedConstraints[0] = undefined;
-  selectedConstraints[1] = undefined;
-  $('#spConstraint' + tableNumber + tableColumnNumber).on('change', function () {
-    constraintId = $(this).attr('id');
-    idNum = parseInt($(this).attr('id').match(/\d+/g), 10);
+  jQuery('#spConstraint' + tableNumber + tableColumnNumber).on('change', function () {
+    constraintId = jQuery(this).attr('id');
+    idNum = parseInt(jQuery(this).attr('id').match(/\d+/g), 10);
     constraints = document.getElementById(constraintId);
-    constraintsSelected = [];
+    notNullConstraint[idNum] = '';
     for (var c = 0; c < constraints.length; c++) {
-      if (constraints.options[c].selected) constraintsSelected.push(constraints.options[c].value);
+      if (constraints.options[c].selected) {
+        notNullConstraint[idNum] = 'Not Null';
+      }
     }
-    selectedConstraints[idNum] = constraintsSelected;
   });
 }
 
@@ -1008,8 +1092,9 @@ const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
  * @param {event} event event generated by clicking edit spanner button
  * @return {null}
  */
-const saveSpannerChanges = (event) => {
-  if (event.html() == 'Save Changes') {
+const saveSpannerChanges = (event, spPlaceholder) => {
+  let mySelect;
+  if (event.html() === 'Save Changes') {
     showSnackbar('changes saved successfully !!', ' greenBg');
   }
 
@@ -1023,18 +1108,17 @@ const saveSpannerChanges = (event) => {
     'UpdateCols': {
     }
   }
-  $(tableId).each(function (index) {
+  jQuery(tableId).each(function (index) {
     if (index > 1) {
       tableName = src_table_name[tableNumber];
-      tableColumnNumber = parseInt($(this).find('.srcColumn').attr('id').match(/\d+/), 10);
+      tableColumnNumber = parseInt(jQuery(this).find('.srcColumn').attr('id').match(/\d+/), 10);
+      srcColumnName = jQuery(this).find('.srcColumn').html().trim()
       spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
-
       newColumnName = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value;
-      originalColumnName = schemaConversionObj.SpSchema[src_table_name[tableNumber]].ColNames[tableColumnNumber];
-      
+      originalColumnName = schemaConversionObj.ToSpanner[src_table_name[tableNumber]].Cols[srcColumnName];
       updatedColsData.UpdateCols[originalColumnName] = {};
       updatedColsData.UpdateCols[originalColumnName]['Removed'] = false;
-      if (newColumnName == originalColumnName) {
+      if (newColumnName === originalColumnName) {
         updatedColsData.UpdateCols[originalColumnName]['Rename'] = '';
       }
       else {
@@ -1049,10 +1133,9 @@ const saveSpannerChanges = (event) => {
       
       saveSpannerConstraints();
 
-      if (!($(this).find("input[type=checkbox]").is(":checked"))) {
+      if (!(jQuery(this).find("input[type=checkbox]").is(":checked"))) {
         updatedColsData.UpdateCols[originalColumnName]['Removed'] = true;
       }
-
       mySelect = new vanillaSelectBox('#spConstraint' + tableNumber + tableColumnNumber, {
         placeHolder: spPlaceholder[tableNumber][tableColumnNumber] + " constraints selected",
         maxWidth: 500,
@@ -1061,8 +1144,8 @@ const saveSpannerChanges = (event) => {
     }
   })
 
-  $(tableId).each(function (index) {
-    $(this).find('.src-tab-cell .bmd-form-group').remove();
+  jQuery(tableId).each(function () {
+    jQuery(this).find('.src-tab-cell .bmd-form-group').remove();
   });
   tooltipHandler();
 
@@ -1082,7 +1165,7 @@ const saveSpannerChanges = (event) => {
           await getInterleaveInfo();
           const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
           document.getElementById('app').innerHTML = component.render();
-          showSchemaConversionReportContent(null);
+          showSchemaConversionReportContent();
         });
       }
       else {
@@ -1104,17 +1187,17 @@ const saveSpannerColumnName = () => {
     // checking if this key is newly added or removed
     foundOriginally = false;
     for (var z = 0; z < pksSp[tableNumber].length; z++) {
-      if (originalColumnName == pksSp[tableNumber][z].Col) {
+      if (originalColumnName === pksSp[tableNumber][z].Col) {
         foundOriginally = true;
         break;
       }
     }
-    if (foundOriginally == false) {
+    if (foundOriginally === false) {
       updatedColsData.UpdateCols[originalColumnName]['PK'] = 'ADDED';
     }
 
     for (var z = 0; z < currentPks.length; z++) {
-      if (currentPks[z].Col == newColumnName) {
+      if (currentPks[z].Col === newColumnName) {
         currSeqId = currentPks[z].seqId;
       }
     }
@@ -1132,7 +1215,7 @@ const saveSpannerColumnName = () => {
     // checking if this key is newly added or removed
     foundOriginally = false;
     for (var z = 0; z < pksSp[tableNumber].length; z++) {
-      if (originalColumnName == pksSp[tableNumber][z].Col) {
+      if (originalColumnName === pksSp[tableNumber][z].Col) {
         foundOriginally = true;
         updatedColsData.UpdateCols[originalColumnName]['PK'] = 'REMOVED';
         break;
@@ -1150,43 +1233,19 @@ const saveSpannerColumnName = () => {
 const saveSpannerConstraints = () => {
   constraintIndex = String(tableNumber) + String(tableColumnNumber);
   constraintIndex = parseInt(constraintIndex);
-  if (selectedConstraints[constraintIndex] == undefined) {
-    // not null flag
-    if (notNullFoundFlag[tableNumber][tableColumnNumber] == true) {
-      notNullFound = "<option disabled class='active' selected>Not Null</option>";
-      updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'ADDED';
-    }
-    else if (notNullFoundFlag[tableNumber][tableColumnNumber] == false) {
-      notNullFound = "<option disabled>Not Null</option>";
-      updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'REMOVED';
-    }
 
-    constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
-    constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
-      + notNullFound
-      + "</select>";
+  if (notNullConstraint[constraintIndex] === 'Not Null') {
+    notNullFound = "<option disabled class='active' selected>Not Null</option>";
+    updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'ADDED';
   }
-  else {
+  else if (notNullConstraint[constraintIndex] === '') {
     notNullFound = "<option disabled>Not Null</option>";
-    notNullFoundFlag[tableNumber][tableColumnNumber] = false;
-    for (var a = 0; a < selectedConstraints[constraintIndex].length; a++) {
-      if (selectedConstraints[constraintIndex][a] == 'Not Null') {
-        notNullFound = "<option disabled class='active' selected>Not Null</option>";
-        notNullFoundFlag[tableNumber][tableColumnNumber] = true;
-      }
-    }
-    if (notNullFoundFlag[tableNumber][tableColumnNumber] == true) {
-      updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'ADDED';
-    }
-    else {
-      updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'REMOVED';
-    }
-    spPlaceholder[tableNumber][tableColumnNumber] = selectedConstraints[constraintIndex].length;
-    constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
-    constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
-      + notNullFound
-      + "</select>";
+    updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'REMOVED';
   }
+  constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
+                  constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
+                    + notNullFound
+                    + "</select>";
 }
 
 /**
@@ -1232,7 +1291,6 @@ const createSummaryForEachTable = (index, summary) => {
 
   summaryCollapse.appendChild(summaryCollapseCard);
   summaryCard.appendChild(summaryCollapse);
-
   tableAccContent.appendChild(summaryCard);
 }
 
@@ -1243,18 +1301,18 @@ const createSummaryForEachTable = (index, summary) => {
  * @return {null}
  */
 const createSummaryFromJson = (result) => {
-  $("#download-report").click(function () {
+  jQuery("#download-report").click(function () {
     downloadFilePaths = JSON.parse(localStorage.getItem('downloadFilePaths'));
     reportFilePath = downloadFilePaths.Report;
     reportFileName = reportFilePath.split('/')[reportFilePath.split('/').length - 1];
     filePath = './' + reportFileName;
     readTextFile(filePath, function (text) {
-      $("<a />", {
+      jQuery("<a />", {
         "download": reportFileName + '.txt',
         "href": "data:application/json;charset=utf-8," + encodeURIComponent(text),
       }).appendTo("body")
         .click(function () {
-          $(this).remove()
+          jQuery(this).remove()
         })[0].click();
     })
   });
@@ -1270,13 +1328,13 @@ const createSummaryFromJson = (result) => {
   expand_button.innerHTML = "Expand All";
   expand_button.className = "expand";
   expand_button.addEventListener('click', function () {
-    if ($(this).html() == 'Expand All') {
-      $(this).html('Collapse All');
-      $('.summaryCollapse').collapse('show');
+    if (jQuery(this).html() === 'Expand All') {
+      jQuery(this).html('Collapse All');
+      jQuery('.summaryCollapse').collapse('show');
     }
     else {
-      $(this).html('Expand All');
-      $('.summaryCollapse').collapse('hide');
+      jQuery(this).html('Expand All');
+      jQuery('.summaryCollapse').collapse('hide');
     }
   })
   summaryAccordion.appendChild(expand_button);
@@ -1289,6 +1347,7 @@ const createSummaryFromJson = (result) => {
     summaryTabCard.className = "card";
 
     summaryTabCardHeader = document.createElement("div");
+    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
     summaryTabCardHeader.className = 'card-header ddl-card-header ddlBorderBottom' + panelBorderClass(conversionRateResp[src_table_name[i]]);
     summaryTabCardHeader.role = 'tab';
 
@@ -1296,7 +1355,7 @@ const createSummaryFromJson = (result) => {
     summaryTabHeading.className = 'mb-0';
 
     summaryTabLink = document.createElement("a");
-    summaryTabLink.innerHTML = `Table: ${Object.keys(summary)[i]} <i class="fas fa-angle-down rotate-icon"></i>`;
+    summaryTabLink.innerHTML = `Table: ${Object.keys(summary)[i]} <i class="fas fa-angle-down rotate-icon" />`;
     summaryTabLink.setAttribute("data-toggle", "collapse");
     summaryTabLink.setAttribute("href", "#" + Object.keys(summary)[i] + '-summary');
 
@@ -1309,6 +1368,7 @@ const createSummaryFromJson = (result) => {
     summaryTabCollapse.className = "collapse summaryCollapse";
 
     summaryTabCardContent = document.createElement("div");
+    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
     summaryTabCardContent.className = "mdc-card mdc-card-content ddl-border table-card-border" + mdcCardBorder(conversionRateResp[src_table_name[i]]);
 
     summaryTabCard2 = document.createElement('div');
@@ -1332,13 +1392,13 @@ const createSummaryFromJson = (result) => {
  * @return {null}
  */
 const createDdlFromJson = (result) => {
-  $("#download-ddl").click(function () {
-    $("<a />", {
+  jQuery("#download-ddl").click(function () {
+    jQuery("<a />", {
       "download": "ddl.json",
       "href": "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 4)),
     }).appendTo("body")
       .click(function () {
-        $(this).remove()
+        jQuery(this).remove()
       })[0].click()
   });
 
@@ -1351,13 +1411,13 @@ const createDdlFromJson = (result) => {
   expand_button.innerHTML = "Expand All";
   expand_button.className = "expand";
   expand_button.addEventListener('click', function () {
-    if ($(this).html() == 'Expand All') {
-      $(this).html('Collapse All');
-      $('.ddlCollapse').collapse('show');
+    if (jQuery(this).html() === 'Expand All') {
+      jQuery(this).html('Collapse All');
+      jQuery('.ddlCollapse').collapse('show');
     }
     else {
-      $(this).html('Expand All');
-      $('.ddlCollapse').collapse('hide');
+      jQuery(this).html('Expand All');
+      jQuery('.ddlCollapse').collapse('hide');
     }
   })
   ddl_accordion.appendChild(expand_button);
@@ -1371,6 +1431,7 @@ const createDdlFromJson = (result) => {
     ddlCard.className = "card";
 
     ddlCardHeader = document.createElement("div");
+    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
     ddlCardHeader.className = 'card-header ddl-card-header ddlBorderBottom' + panelBorderClass(conversionRateResp[src_table_name[i]]);
     ddlCardHeader.role = 'tab';
 
@@ -1378,7 +1439,7 @@ const createDdlFromJson = (result) => {
     ddlCardHeading.className = 'mb-0';
 
     ddlCardLink = document.createElement("a");
-    ddlCardLink.innerHTML = `Table: ${Object.keys(ddl)[i]} <i class="fas fa-angle-down rotate-icon"></i>`;
+    ddlCardLink.innerHTML = `Table: ${Object.keys(ddl)[i]} <i class="fas fa-angle-down rotate-icon" />`;
     ddlCardLink.setAttribute("data-toggle", "collapse");
     ddlCardLink.setAttribute("href", "#" + Object.keys(ddl)[i] + '-ddl');
 
@@ -1391,6 +1452,7 @@ const createDdlFromJson = (result) => {
     ddlCardCollapse.className = "collapse ddlCollapse";
 
     ddlCardContent = document.createElement("div");
+    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
     ddlCardContent.className = "mdc-card mdc-card-content ddl-border table-card-border" + mdcCardBorder(conversionRateResp[src_table_name[i]]);
     createIndex = (ddl[Object.keys(ddl)[i]]).search('CREATE TABLE');
     createEndIndex = createIndex + 12;
@@ -1416,7 +1478,7 @@ const createDdlFromJson = (result) => {
  * @param {event} windowEvent hashchange or load event
  * @return {null}
  */
-async function showSchemaAssessment(windowEvent) {
+const showSchemaAssessment = async(windowEvent) => {
   showSpinner();
   reportData = await fetch(apiUrl + '/convert/infoschema')
   .then(function (response) {
@@ -1440,47 +1502,19 @@ async function showSchemaAssessment(windowEvent) {
   jQuery('#globalDataTypeModal').modal("hide");
   const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
   document.getElementById('app').innerHTML = component.render();
-  showSchemaConversionReportContent(windowEvent);
-  sessionRetrieval(sourceTableFlag);
+  showSchemaConversionReportContent();
+  if (windowEvent == 'hashchange') {
+    sessionRetrieval(sourceTableFlag);
+  }
   showSnackbar('schema converted successfully !!', ' greenBg');
 }
 
 /**
- * Function to make ddl and summary api calls
+ * Function to make conversion api call
  *
  * @return {null}
  */
-async function ddlSummaryAndConversionApiCall() {
-  ddlData = await fetch(apiUrl + '/ddl')
-  .then(function (response) {
-    if (response.ok) {
-      return response;
-    }
-    else {
-      return Promise.reject(response);
-    }
-  })
-  .catch(function (err) {
-    showSnackbar(err, ' redBg');
-  });
-  ddlDataResp = await ddlData.json();
-  localStorage.setItem('ddlStatementsContent', JSON.stringify(ddlDataResp));
-
-  summaryData = await fetch(apiUrl + '/summary')
-  .then(function (response) {
-    if (response.ok) {
-      return response;
-    }
-    else {
-      return Promise.reject(response);
-    }
-  })
-  .catch(function (err) {
-    showSnackbar(err, ' redBg');
-  });
-  summaryDataResp = await summaryData.json();
-  localStorage.setItem('summaryReportContent', JSON.stringify(summaryDataResp));
-
+const getConversionRate = async() => {
   conversionRate = await fetch(apiUrl + '/conversion')
   .then(function (response) {
     if (response.ok) {
@@ -1498,12 +1532,66 @@ async function ddlSummaryAndConversionApiCall() {
 }
 
 /**
+ * Function to make ddl, summary and conversion api calls
+ *
+ * @return {null}
+ */
+const ddlSummaryAndConversionApiCall = async() => {
+  fetch(apiUrl + '/ddl')
+  .then(async function (response) {
+    if (response.ok) {
+      ddlData=response;
+      ddlDataResp = await ddlData.json();
+      localStorage.setItem('ddlStatementsContent', JSON.stringify(ddlDataResp));
+
+      fetch(apiUrl + '/summary')
+      .then(async function (response) {
+        if (response.ok) {
+          summaryData=response;
+          summaryDataResp = await summaryData.json();
+          localStorage.setItem('summaryReportContent', JSON.stringify(summaryDataResp));
+
+          fetch(apiUrl + '/conversion')
+          .then(async function (response) {
+            if (response.ok) {
+              conversionRate=response;
+              conversionRateResp = await conversionRate.json();
+              localStorage.setItem('tableBorderColor', JSON.stringify(conversionRateResp));
+            }
+            else {
+              return Promise.reject(response);
+            }
+          })
+          .catch(function (err) {
+            showSnackbar(err, ' redBg');
+          });
+        }
+        else {
+          return Promise.reject(response);
+        }
+      })
+      .catch(function (err) {
+        showSnackbar(err, ' redBg');
+      });
+      
+    }
+    else {
+      return Promise.reject(response);
+    }
+  })
+  .catch(function (err) {
+    showSnackbar(err, ' redBg');
+  });
+  
+}
+
+/**
  * Function to call create tables function for edit schema screen
  *
  * @param {event} windowEvent hashchange or load event
  * @return {null}
  */
-const showSchemaConversionReportContent = (windowEvent) => {
+const showSchemaConversionReportContent = () => {
   createSourceAndSpannerTables(JSON.parse(localStorage.getItem('conversionReportContent')));
   createDdlFromJson(JSON.parse(localStorage.getItem('ddlStatementsContent')));
   createSummaryFromJson(JSON.parse(localStorage.getItem('summaryReportContent')));
@@ -1514,21 +1602,21 @@ const showSchemaConversionReportContent = (windowEvent) => {
  *
  * @return {null}
  */
-async function getFilePaths() {
-  filePaths = await fetch(apiUrl + '/filepaths')
-    .then(function (response) {
-      if (response.ok) {
-        return response;
-      }
-      else {
-        return Promise.reject(response);
-      }
-    })
-    .catch(function (err) {
-      showSnackbar(err, ' redBg');
-    });
-  filePathsResp = await filePaths.json();
-  localStorage.setItem('downloadFilePaths', JSON.stringify(filePathsResp));
+const getFilePaths = () => {
+  fetch(apiUrl + '/filepaths')
+  .then(async function (response) {
+    if (response.ok) {
+      filePaths =  response;
+      filePathsResp = await filePaths.json();
+      localStorage.setItem('downloadFilePaths', JSON.stringify(filePathsResp));
+    }
+    else {
+      filePaths = Promise.reject(response);
+    }
+  })
+  .catch(function (err) {
+    showSnackbar(err, ' redBg');
+  });
 }
 
 /**
@@ -1545,23 +1633,22 @@ const sessionRetrieval = (dbType) => {
       'Content-Type': 'application/json'
     }
   })
-  .then(function (res) {
+  .then(async function (res) {
     if (res.ok) {
-      res.json().then(function (sessionInfoResp) {
-        sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
-        sessionInfoResp.sourceDbType = dbType;
-        if (sessionStorageArr == null) {
-          sessionStorageArr = [];
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        else {
-          sessionStorageArr.push(sessionInfoResp);
-        }
-        sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
-      })
+      sessionInfoResp = await res.json();
+      sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
+      sessionInfoResp.sourceDbType = dbType;
+      if (sessionStorageArr === null) {
+        sessionStorageArr = [];
+        sessionStorageArr.push(sessionInfoResp);
+      }
+      else {
+        sessionStorageArr.push(sessionInfoResp);
+      }
+      sessionStorage.setItem('sessionStorage', JSON.stringify(sessionStorageArr));
     }
     else {
-      return Promise.reject(res);
+      sessionInfoResp = Promise.reject(res);
     }
   })
   .catch(function (err) {
@@ -1577,12 +1664,12 @@ const sessionRetrieval = (dbType) => {
  * @return {null}
  */
 const storeDumpFileValues = (dbType, filePath) => {
-  if (dbType == 'mysql') {
+  if (dbType === 'mysql') {
     localStorage.setItem('globalDbType', dbType + 'dump');
     sourceTableFlag = 'MySQL';
     localStorage.setItem('sourceDbName', sourceTableFlag);
   }
-  else if (dbType == 'postgres') {
+  else if (dbType === 'postgres') {
     localStorage.setItem('globalDbType', 'pg_dump');
     sourceTableFlag = 'Postgres';
     localStorage.setItem('sourceDbName', sourceTableFlag);
@@ -1598,7 +1685,7 @@ const storeDumpFileValues = (dbType, filePath) => {
  * @param {string} dumpFilePath path entered for the dump file
  * @return {null}
  */
-async function onLoadDatabase(dbType, dumpFilePath, windowEvent) {
+const onLoadDatabase = async(dbType, dumpFilePath, windowEvent) => {
   showSpinner();
   reportData = await fetch(apiUrl + '/convert/dump', {
     method: 'POST',
@@ -1630,28 +1717,33 @@ async function onLoadDatabase(dbType, dumpFilePath, windowEvent) {
   sourceTableFlag = localStorage.getItem('sourceDbName');
   const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
   document.getElementById('app').innerHTML = component.render();
-  showSchemaConversionReportContent(windowEvent);
+  showSchemaConversionReportContent();
   sessionRetrieval(sourceTableFlag);
   showSnackbar('schema converted successfully !!', ' greenBg');
 }
 
-async function getInterleaveInfo() {
+/**
+ * Function to get interleave info for each table
+ *
+ * @return {null}
+ */
+const getInterleaveInfo = async() => {
   schemaObj = JSON.parse(localStorage.getItem('conversionReportContent'));
   tablesNumber = Object.keys(schemaObj.SpSchema).length;
-  for (i = 0; i < tablesNumber; i++) {
+  for (var i = 0; i < tablesNumber; i++) {
     tableName = Object.keys(schemaObj.ToSpanner)[i];
     interleaveApiCall = await fetch(apiUrl + '/checkinterleave/table?table=' + tableName)
-      .then(function (response) {
-        if (response.ok) {
-          return response;
-        }
-        else {
-          return Promise.reject(response);
-        }
-      })
-      .catch(function (err) {
-        showSnackbar(err, ' redBg');
-      });
+    .then(async function (response) {
+      if (response.ok) {
+        return response;
+      }
+      else {
+        return Promise.reject(response);
+      }
+    })
+    .catch(function (err) {
+      showSnackbar(err, ' redBg');
+    });
     interleaveApiCallResp[i] = await interleaveApiCall.json();
   }
   localStorage.setItem('interleaveInfo', JSON.stringify(interleaveApiCallResp));
@@ -1669,53 +1761,41 @@ async function getInterleaveInfo() {
  * @return {null}
  */
 const onconnect = (dbType, dbHost, dbPort, dbUser, dbName, dbPassword) => {
-  if (!isLive) {
-    jQuery('#connectToDbModal').modal('hide');
-    jQuery('#connectModalSuccess').modal();
-  }
-
-  else {
-    showSpinner();
-    fetch(apiUrl + '/connect', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "Driver": dbType,
-        "Database": dbName,
-        "Password": dbPassword,
-        "User": dbUser,
-        "Port": dbPort,
-        "Host": dbHost
-      })
+  showSpinner();
+  fetch(apiUrl + '/connect', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      "Driver": dbType,
+      "Database": dbName,
+      "Password": dbPassword,
+      "User": dbUser,
+      "Port": dbPort,
+      "Host": dbHost
     })
-    .then(function (res) {
-      if (res.ok) {
-        res.text().then(function (result) {
-          hideSpinner();
-          error = result
-          if (error == "") {
-            sourceTableFlag = 'MySQL';
-            localStorage.setItem('sourceDbName', sourceTableFlag);
-            jQuery('#connectToDbModal').modal('hide');
-            jQuery('#connectModalSuccess').modal();
-          }
-          else {
-            jQuery('#connectToDbModal').modal('hide');
-            jQuery('#connectModalFailure').modal();
-          }
-        })
-      }
-      else {
-        return Promise.reject(res);
-      }
-    })
-    .catch(function (err) {
-      showSnackbar(err, ' redBg');
-    })
-  }
+  })
+  .then(function (res) {
+    hideSpinner();
+    if (res.ok) {
+      sourceTableFlag = 'MySQL';
+      localStorage.setItem('sourceDbName', sourceTableFlag);
+      jQuery('#connectToDbModal').modal('hide');
+      jQuery('#connectModalSuccess').modal();
+      
+    }
+    else {
+      res.text().then(function (result) {
+        jQuery('#connectToDbModal').modal('hide');
+        jQuery('#connectModalFailure').modal();
+      });
+    }
+  })
+  .catch(function (err) {
+    showSnackbar(err, ' redBg');
+  })
 }
 
 /**
@@ -1723,21 +1803,8 @@ const onconnect = (dbType, dbHost, dbPort, dbUser, dbName, dbPassword) => {
  *
  * @return {null}
  */
-async function onImport() {
-  conversionRate = await fetch(apiUrl + '/conversion')
-    .then(function (response) {
-      if (response.ok) {
-        return response;
-      }
-      else {
-        return Promise.reject(response);
-      }
-    })
-    .catch(function (err) {
-      showSnackbar(err, ' redBg');
-    });
-  conversionRateResp = await conversionRate.json();
-  localStorage.setItem('tableBorderColor', JSON.stringify(conversionRateResp));
+const onImport = async() => {
+  await getConversionRate();
   await ddlSummaryAndConversionApiCall();
   await getInterleaveInfo();
   jQuery('#importSchemaModal').modal('hide');
@@ -1772,45 +1839,74 @@ const storeResumeSessionId = (driver, path, fileName, sourceDb) => {
  * @param {string} windowEvent hashchange or load event
  * @return {null}
  */
-const resumeSession = (driver, path, fileName, sourceDb, windowEvent) => {
+const resumeSession = async(driver, path, fileName, sourceDb, windowEvent) => {
   filePath = './' + fileName;
-  readTextFile(filePath, async function (text) {
+  readTextFile(filePath, function (text) {
     var data = JSON.parse(text);
     localStorage.setItem('conversionReportContent', JSON.stringify(data));
     sourceTableFlag = sourceDb;
-    fileData = await fetch(apiUrl + '/session/resume', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "driver": driver,
-        "path": path,
-        "fileName": fileName
-      })
-    })
-    .then(function (response) {
-      if (response.ok) {
-        return response;
-      }
-      else {
-        return Promise.reject(response);
-      }
-    })
-    .catch(function (err) {
-      showSnackbar(err, ' redBg');
-    });
-    await ddlSummaryAndConversionApiCall();
-    await getInterleaveInfo();
-    jQuery('#importSchemaModal').modal('hide');
-    const { component = ErrorComponent } = findComponentByPath('/schema-report-resume-session', routes) || {};
-    document.getElementById('app').innerHTML = component.render();
-    showSchemaConversionReportContent();
-    if (windowEvent == 'hashchange') {
-      showSnackbar('schema resumed successfully', ' greenBg');
-    }
   });
+  fetch(apiUrl + '/session/resume', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      "driver": driver,
+      "path": path,
+      "fileName": fileName
+    })
+  })
+  .then(function (response) {
+    if (response.ok) {
+      fetch(apiUrl + '/ddl')
+      .then(async function (response) {
+        if (response.ok) {
+          ddlData=response;
+          ddlDataResp = await ddlData.json();
+          localStorage.setItem('ddlStatementsContent', JSON.stringify(ddlDataResp));
+
+          fetch(apiUrl + '/summary')
+          .then(async function (response) {
+            if (response.ok) {
+              summaryData=response;
+              summaryDataResp = await summaryData.json();
+              localStorage.setItem('summaryReportContent', JSON.stringify(summaryDataResp));
+            }
+            else {
+              return Promise.reject(response);
+            }
+            })
+            .catch(function (err) {
+              showSnackbar(err, ' redBg');
+            });
+          }
+          else {
+            return Promise.reject(response);
+          }
+          })
+          .catch(function (err) {
+            showSnackbar(err, ' redBg');
+          });
+    }
+    else {
+      Promise.reject(response);
+    }
+  })
+  .catch(function (err) {
+    showSnackbar(err, ' redBg');
+  });
+  // await ddlSummaryAndConversionApiCall();
+  await getConversionRate();
+  await getInterleaveInfo();
+  jQuery('#importSchemaModal').modal('hide');
+  const { component = ErrorComponent } = findComponentByPath('/schema-report-resume-session', routes) || {};
+  document.getElementById('app').innerHTML = component.render();
+  showSchemaConversionReportContent();
+  if (windowEvent === 'hashchange') {
+    showSnackbar('schema resumed successfully', ' greenBg');
+  }
 }
 
 /**
@@ -1824,7 +1920,7 @@ const readTextFile = (file, callback) => {
   rawFile.overrideMimeType("application/json");
   rawFile.open("GET", file, true);
   rawFile.onreadystatechange = function () {
-    if (rawFile.readyState === 4 && rawFile.status == "200") {
+    if (rawFile.readyState == 4 && rawFile.status == "200") {
       callback(rawFile.responseText);
     }
   }
@@ -1838,16 +1934,16 @@ const readTextFile = (file, callback) => {
  */
 const setSessionTableContent = () => {
   sessionArray = JSON.parse(sessionStorage.getItem('sessionStorage'));
-  if (sessionArray == null) {
+  if (sessionArray === null) {
     document.getElementById('session-table-content').innerHTML = `<tr>
-      <td colspan='5' class='center session-image'><img src='assets/icons/Group 2154.svg' alt='nothing to show'></td>
+      <td colspan='5' class='center session-image'><img src='Icons/Icons/Group 2154.svg' alt='nothing to show'></td>
     </tr>
     <tr>
       <td colspan='5' class='center simple-grey-text'>No active session available! <br> Please connect a database to initiate a new session.</td>
     </tr>`
   }
   else {
-    sessionTableContent = document.getElementById('session-table-content');
+    let sessionTableContentEle = document.getElementById('session-table-content');
     for (var x = 0; x < sessionArray.length; x++) {
       session = sessionArray[x];
       driver = session.driver;
@@ -1876,7 +1972,7 @@ const setSessionTableContent = () => {
       td4.innerHTML = `<a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;'>Resume Session</a>`;
 
       td4.addEventListener('click', function () {
-        var index = $(this).attr('id');
+        var index = jQuery(this).attr('id');
         storeResumeSessionId(sessionArray[index].driver, sessionArray[index].path, sessionArray[index].fileName, sessionArray[index].sourceDbType);
       });
 
@@ -1885,16 +1981,16 @@ const setSessionTableContent = () => {
       sessionTableTr.appendChild(td3);
       sessionTableTr.appendChild(td4);
 
-      sessionTableContent.appendChild(sessionTableTr);
+      sessionTableContentEle.appendChild(sessionTableTr);
     }
   }
 }
 
 const sourceSchema = (val) => {
-  if (val == 'mysql') {
+  if (val === 'mysql') {
     sourceTableFlag = 'MySQL';
   }
-  else if (val == 'postgres') {
+  else if (val === 'postgres') {
     sourceTableFlag = 'Postgres';
   }
 }
@@ -1905,7 +2001,7 @@ const sourceSchema = (val) => {
  * @param {any} params 
  * @return {null}
  */
-const homeScreen = (params) => {
+const homeScreen = () => {
   initHomeScreenTasks();
   return homeScreenHtml()
 }
@@ -1917,14 +2013,13 @@ const homeScreen = (params) => {
  */
 const homeScreenHtml = () => {
   return (`
-   <body>
    <header class="main-header">
    <nav class="navbar navbar-static-top">
      <img src="Icons/Icons/google-spanner-logo.png" class="logo">
    </nav>
 
    <nav class="navbar navbar-static-top">
-     <div class="header-topic"><a href='/frontend/' class="active">Home</a></div>
+     <div class="header-topic"><a href='#/' class="active">Home</a></div>
    </nav>
 
    <nav class="navbar navbar-static-top">
@@ -2015,7 +2110,7 @@ const homeScreenHtml = () => {
       <div class="modal-body">
         <div class="form-group">
           <label for="dbType" class="">Database Type</label>
-          <select class="form-control db-select-input" id="dbType" name="dbType" onchange="toggle()">
+          <select class="form-control db-select-input" id="dbType" name="dbType" onchange="toggleDbType()">
              <option value="" style="display: none;"></option>
              <option class="db-option" value="mysql">MySQL</option>
              <option class="db-option" value="postgres">Postgres</option>
@@ -2026,32 +2121,32 @@ const homeScreenHtml = () => {
              <form id="connectForm">
               <div class="form-group">
                 <label class="modal-label" for="dbHost">Database Host</label>
-                <input type="text" class="form-control db-input" aria-describedby="" name="dbHost" id="dbHost" autocomplete="off" onfocusout="validateInput(document.getElementById('dbHost'))"/>
-                <span class='formError'></span><br>
+                <input type="text" class="form-control db-input" aria-describedby="" name="dbHost" id="dbHost" autocomplete="off" onfocusout="validateInput(document.getElementById('dbHost'), 'dbHostError')"/>
+                <span class='formError' id='dbHostError'></span><br>
               </div>
 
               <div class="form-group">
                 <label class="modal-label" for="dbPort">Database Port</label>
-                <input class="form-control db-input" aria-describedby="" type="text" name="dbPort" id="dbPort" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPort'))"/>
-                <span class='formError'></span><br>
+                <input class="form-control db-input" aria-describedby="" type="text" name="dbPort" id="dbPort" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPort'), 'dbPortError')"/>
+                <span class='formError' id='dbPortError'></span><br>
               </div>
 
               <div class="form-group">
                 <label class="modal-label" for="dbUser">Database User</label>
-                <input class="form-control db-input" aria-describedby="" type="text" name="dbUser" id="dbUser" autocomplete="off" onfocusout="validateInput(document.getElementById('dbUser'))"/>
-                <span class='formError'></span><br>
+                <input class="form-control db-input" aria-describedby="" type="text" name="dbUser" id="dbUser" autocomplete="off" onfocusout="validateInput(document.getElementById('dbUser'), 'dbUserError')"/>
+                <span class='formError' id='dbUserError'></span><br>
               </div>
 
               <div class="form-group">
                 <label class="modal-label" for="dbName">Database Name</label>
-                <input class="form-control db-input" aria-describedby="" type="text" name="dbName" id="dbName" autocomplete="off" onfocusout="validateInput(document.getElementById('dbName'))"/>
-                <span class='formError'></span><br>
+                <input class="form-control db-input" aria-describedby="" type="text" name="dbName" id="dbName" autocomplete="off" onfocusout="validateInput(document.getElementById('dbName'), 'dbNameError')"/>
+                <span class='formError' id='dbNameError'></span><br>
               </div>
 
               <div class="form-group">
                 <label class="modal-label" for="dbPassword">Database Password</label>
-                <input class="form-control db-input" aria-describedby="" type="password" name="dbPassword" id="dbPassword" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPassword'))"/>
-                <span class='formError'></span><br>
+                <input class="form-control db-input" aria-describedby="" type="password" name="dbPassword" id="dbPassword" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPassword'), 'dbPassError')"/>
+                <span class='formError' id='dbPassError'></span><br>
               </div>
             </form>
            </div>
@@ -2081,7 +2176,7 @@ const homeScreenHtml = () => {
         <!-- <form id="loadDbForm"> -->
          <div class="form-group">
           <label class="" for="loadDbType">Database Type</label>
-            <select class="form-control load-db-input" id="loadDbType" name="loadDbType" onchange="toggle()">
+            <select class="form-control load-db-input" id="loadDbType" name="loadDbType">
               <option value="" style="display: none;"></option>
               <option class="db-option" value="mysql">MySQL</option>
               <option class="db-option" value="postgres">Postgres</option>
@@ -2091,8 +2186,8 @@ const homeScreenHtml = () => {
          <form id="loadDbForm">
           <div class="form-group">
             <label class="modal-label" for="dumpFilePath">Path of the Dump File</label>
-            <input class="form-control load-db-input" aria-describedby="" type="text" name="dumpFilePath" id="dumpFilePath" autocomplete="off" onfocusout="validateInput(document.getElementById('dumpFilePath'))"/>
-            <span class='formError'></span>
+            <input class="form-control load-db-input" aria-describedby="" type="text" name="dumpFilePath" id="dumpFilePath" autocomplete="off" onfocusout="validateInput(document.getElementById('dumpFilePath'), 'filePathError')"/>
+            <span class='formError' id='filePathError'></span>
           </div>
           <input type="text" style="display: none;">
         </form>
@@ -2122,7 +2217,7 @@ const homeScreenHtml = () => {
          <form id="importForm" class="importForm">
          <div class="form-group">
          <label class="modal-label" for="importDbType">Database Type</label>
-         <select class="form-control import-db-input" id="importDbType" name="importDbType" onchange="toggle()">
+         <select class="form-control import-db-input" id="importDbType" name="importDbType" >
            <option value="" style="display: none;"></option>
            <option class="db-option" value="mysql">MySQL</option>
            <option class="db-option" value="postgres">Postgres</option>
@@ -2155,7 +2250,7 @@ const homeScreenHtml = () => {
        <div class="modal-header content-center">
          
          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Successful</h5>
-         <i class="large material-icons close" data-dismiss="modal" onclick="clickCancelModal()">cancel</i>
+         <i class="large material-icons close" data-dismiss="modal" onclick='clearModal()'>cancel</i>
          
        </div>
        <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
@@ -2183,21 +2278,18 @@ const homeScreenHtml = () => {
      <div class="modal-content">
        <div class="modal-header content-center">
          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Failure</h5>
-         <i class="large material-icons close" data-dismiss="modal" onclick="clickCancelModal()">cancel</i>
+         <i class="large material-icons close" data-dismiss="modal" onclick='clearModal()'>cancel</i>
        </div>
        <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
           <div><i class="large material-icons connectionFailure">cancel</i></div>
           <div>Please check database configuration details and try again !!</div>
        </div>
        <div class="modal-footer">
-         <button onclick="clickCancelModal()" class="connectButton" type="button">Ok</button>
+         <button data-dismiss="modal" onclick='clearModal()' class="connectButton" type="button">Ok</button>
        </div>
      </div>
 
    </div>
  </div>
- 
-    </body>
-  
      `)
 }

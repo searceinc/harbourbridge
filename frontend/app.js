@@ -1,16 +1,16 @@
 // Home screen component
 const HomeComponent = {
-  render: (params) => homeScreen(params)
+  render: () => homeScreen()
 }
 
 // Edit Schema screen component
 const SchemaComponent = {
-  render: (params) => schemaReport(params)
+  render: () => schemaReport()
 }
 
 // Instructions Component
 const InstructionsComponent = {
-  render: (params) => renderInstructionsHtml(params)
+  render: () => renderInstructionsHtml()
 }
 
 // Error component (for any unrecognized path)
@@ -45,10 +45,10 @@ const router = () => {
   const path = parseLocation();
   const { component = ErrorComponent } = findComponentByPath(path, routes) || {};
 
-  if (path == '/schema-report-connect-to-db' && event.type == 'hashchange') {
-    showSchemaAssessment(event.type);
+  if (path === '/schema-report-connect-to-db' && window.event.type === 'hashchange') {
+    showSchemaAssessment(window.event.type);
   }
-  else if (path == '/schema-report-connect-to-db' && event.type == 'load') {
+  else if ( (path === '/schema-report-connect-to-db' || path === '/schema-report-load-db-dump') && window.event.type === 'load') {
     const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
     document.getElementById('app').innerHTML = component.render();
     conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
@@ -56,21 +56,11 @@ const router = () => {
     createDdlFromJson(JSON.parse(localStorage.getItem('ddlStatementsContent')));
     createSummaryFromJson(JSON.parse(localStorage.getItem('summaryReportContent')));
   }
-  else if (path == '/schema-report-load-db-dump' && event.type == 'load') {
-    // onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'), event.type);
-    // getSchemaConversionReportContent(event.type);
-    const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
-    document.getElementById('app').innerHTML = component.render();
-    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
-    createSourceAndSpannerTables(JSON.parse(localStorage.getItem('conversionReportContent')));
-    createDdlFromJson(JSON.parse(localStorage.getItem('ddlStatementsContent')));
-    createSummaryFromJson(JSON.parse(localStorage.getItem('summaryReportContent')));
-  }
-  else if (path == '/schema-report-import-db') {
+  else if (path === '/schema-report-import-db') {
     onImport();
   }
-  else if (path == '/schema-report-resume-session') {
-    resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'), localStorage.getItem('sourceDb'), event.type);
+  else if (path === '/schema-report-resume-session') {
+    resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'), localStorage.getItem('sourceDb'), window.event.type);
   }
   else {
     document.getElementById('app').innerHTML = component.render();

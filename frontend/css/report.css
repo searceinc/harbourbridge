@@ -1039,4 +1039,11 @@ input.radio {
     color: #5E5752;
 }
 
+input[type=radio], input.radio {
+    float: left;
+    clear: none;
+    margin: 2px 15px 0 2px;
+    cursor: pointer;
+}
+
 
