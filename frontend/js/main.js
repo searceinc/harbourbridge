@@ -1,26 +1,4 @@
-var pkArray = [];
-var sessionStorageArr = [];
-var initialPkSeqId = [];
-var keyColumnMap = [];
-var pkSeqId = [];
-var src_table_name = [];
-var maxSeqId;
-var count_src = [];
-var count_sp = [];
-var notPkArray = [];
-var initialColNameArray = [];
-var notNullFoundFlag = [];
-var notPrimary = [];
-var pksSp = [];
-var notNullConstraint = [];
-var primaryTabCell = [];
-var constraintTabCell = [];
-var z;
-let uncheckCount = [];
-var updatedColsData = [];
-var interleaveApiCallResp = [];
-var importSchemaObj = {};
-var sourceTableFlag = 'Source';
+var conversionRateResp = {};
 
 /**
  * Function to initiate home screen tasks like validating form input fields
@@ -65,41 +43,30 @@ const initHomeScreenTasks = () => {
  *
  * @return {null}
  */
-jQuery(function () {
-  jQuery("#upload_link").on('click', function (e) {
-    e.preventDefault();
-    jQuery("#upload:hidden").trigger('click');
-  });
-});
+const uploadFileHandler = (e) => {
+  e.preventDefault();
+  jQuery("#upload:hidden").trigger('click');
+}
 
 /**
- * Function to update selected file name while file uploading
+ * Function to update selected file name and to read the json content of selected file while file uploading while file uploading
  *
  * @return {null}
  */
-jQuery(document).ready(function () {
-  jQuery('#upload').change(function () {
-    fileName = jQuery('#upload')[0].files[0].name;
-    if (fileName != '') {
-      jQuery('#importButton').removeAttr('disabled');
-    }
-    jQuery("#upload_link").text(fileName);
-  });
-});
+const filenameChangeHandler = () => {
+  let fileName = jQuery('#upload')[0].files[0].name;
+  if (fileName != '') {
+    jQuery('#importButton').removeAttr('disabled');
+  }
+  jQuery("#upload_link").text(fileName);
 
-/**
- * Function to read the json content of selected file while file uploading
- *
- * @return {null}
- */
-jQuery(document).on('change', '#upload', function (event) {
-  var reader = new FileReader();
+  let reader = new FileReader();
   reader.onload = function (event) {
-    importSchemaObj = JSON.parse(event.target.result);
+    let importSchemaObj = JSON.parse(event.target.result);
     localStorage.setItem('conversionReportContent', JSON.stringify(importSchemaObj));
   }
   reader.readAsText(event.target.files[0]);
-});
+}
 
 /**
  * Function to create global edit data type table
@@ -108,41 +75,26 @@ jQuery(document).on('change', '#upload', function (event) {
  */
 const createEditDataTypeTable = () => {
   globalDataTypeList = JSON.parse(localStorage.getItem('globalDataTypeList'));
-  dataTypeListLength = Object.keys(globalDataTypeList).length;
-  globalDataTypeTable = document.createElement('table');
-  globalDataTypeTable.className = 'data-type-table';
-  globalDataTypeTable.setAttribute('id', 'globalDataType');
-  tableBody = document.createElement('tbody');
-
-  tableRow = document.createElement('tr');
-  tableHeader1 = document.createElement('th');
-  tableHeader1.innerHTML = 'Source';
-  tableHeader2 = document.createElement('th');
-  tableHeader2.innerHTML = 'Spanner';
-  tableRow.appendChild(tableHeader1);
-  tableRow.appendChild(tableHeader2);
-  tableBody.appendChild(tableRow);
+  let dataTypeListLength = Object.keys(globalDataTypeList).length;
+  let tableContent = '';
+  let globalDataTypeTable = '';
+  let globalDataTypeDiv = document.getElementById('globalDataType');
 
   for (var i = 0; i < dataTypeListLength; i++) {
-    tableRow = document.createElement('tr');
-    tableRow.setAttribute('id', 'dataTypeRow' + (i + 1));
+    tableContent += `<tr id='dataTypeRow${(i + 1)}'>`;
     for (var j = 0; j < 2; j++) {
-      tableCell = document.createElement('td');
       if (j === 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]] !== null) {
-        tableCell.className = 'src-td';
-        tableCell.innerHTML = Object.keys(globalDataTypeList)[i];
-        tableCell.setAttribute('id', 'dataTypeKey' + (i + 1));
+        tableContent += `<td class='src-td' id='dataTypeKey${(i + 1)}'>${Object.keys(globalDataTypeList)[i]}</td>`;
       }
       else if (j === 1) {
-        tableCell.setAttribute('id', 'dataTypeVal' + (i + 1));
-        optionsLength = globalDataTypeList[Object.keys(globalDataTypeList)[i]].length;
-        dataTypeArr = [];
+        tableContent += `<td id='dataTypeVal${(i + 1)}'>`
+        let dataTypeArr = [];
+        let selectHTML = '';
+        let selectId = 'dataTypeOption' + (i + 1);
+        let optionsLength = globalDataTypeList[Object.keys(globalDataTypeList)[i]].length;
         for (var k = 0; k < optionsLength; k++) {
           dataTypeArr.push(globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T);
         }
-
-        selectHTML = '';
-        selectId = 'dataTypeOption' + (i + 1);
         selectHTML = `<div style='display: flex;'>
                         <i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>
                         <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${selectId} style='border: 0px !important;'>
@@ -157,16 +109,21 @@ const createEditDataTypeTable = () => {
           selectHTML += `<option value='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T}'>${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T} </option>`;
         }
         selectHTML += `</select>`;
-        tableCell.innerHTML = selectHTML;
+        tableContent += selectHTML + `</td>`;
       }
-      tableRow.appendChild(tableCell);
     }
-    tableBody.appendChild(tableRow);
   }
-  globalDataTypeTable.appendChild(tableBody);
-  globalDataTypeDiv = document.getElementById('globalDataType');
-  globalDataTypeDiv.innerHTML = '';
-  globalDataTypeDiv.appendChild(globalDataTypeTable);
+
+  globalDataTypeTable = `<table class='data-type-table' id='globalDataType'>
+                            <tbody>
+                              <tr>
+                                <th>Source</th>
+                                <th>Spanner</th>
+                              </tr>
+                              ${tableContent}
+                            </tbody>
+                         </table>`;
+  globalDataTypeDiv.innerHTML = globalDataTypeTable;
   tooltipHandler();
 }
 
@@ -177,16 +134,16 @@ const createEditDataTypeTable = () => {
  * @return {null}
  */
 const dataTypeUpdate = (id) => {
-  idNum = parseInt(id.match(/\d+/), 10);
-  dataTypeOptionArray = globalDataTypeList[document.getElementById('dataTypeKey' + idNum).innerHTML];
-
-  optionHTML = '';
-  selectHTML = `<div style='display: flex;'>
+  let idNum = parseInt(id.match(/\d+/), 10);
+  let dataTypeOptionArray = globalDataTypeList[document.getElementById('dataTypeKey' + idNum).innerHTML];
+  let optionHTML = '';
+  let length = dataTypeOptionArray.length;
+  let selectHTML = `<div style='display: flex;'>
                   <i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>
                   <select onchange='dataTypeUpdate(id)' class='form-control tableSelect' id=${id} style='border: 0px !important;'>
                 </div>`;
-  for (var x = 0; x < dataTypeOptionArray.length; x++) {
-    optionFound = dataTypeOptionArray[x].T === document.getElementById(id).value;
+  for (var x = 0; x < length; x++) {
+    let optionFound = dataTypeOptionArray[x].T === document.getElementById(id).value;
     if (dataTypeOptionArray[x].T === document.getElementById(id).value && dataTypeOptionArray[x].Brief !== "") {
 
       selectHTML = `<div style='display: flex;'>
@@ -213,11 +170,17 @@ const dataTypeUpdate = (id) => {
  * @return {null}
  */
 const createSourceAndSpannerTables = async(obj) => {
-  let mySelect;
-  getFilePaths();
   schemaConversionObj = obj;
+  notNullFoundFlag = [], initialColNameArray = [], srcTableName = [], pkSeqId = [], notNullConstraint = [], pkArray = [], pksSp = [], notPrimary = [], keyColumnMap = [];
+  let mySelect, spannerColumnsContent, columnNameContent, dataTypeContent, constraintsContent, notNullFound, constraintId, srcConstraintHtml;
+  let initialPkSeqId = [], constraintTabCell = [], primaryTabCell = [], spPlaceholder = [], srcPlaceholder = [], countSp = [], countSrc = [];
+  let tableContent = '';
+  let constraintCount = 0;
+  let accordion = document.getElementById("accordion");
+  let srcTableNum = Object.keys(schemaConversionObj.SrcSchema).length;
+  let spTable_num = Object.keys(schemaConversionObj.SpSchema).length;
+  getFilePaths();
 
-  // fetch global data type list
   fetch(apiUrl + '/typemap', {
     method: 'GET',
     headers: {
@@ -239,62 +202,10 @@ const createSourceAndSpannerTables = async(obj) => {
     showSnackbar(err, ' redBg');
   });
 
-  jQuery("#download-schema").click(function () {
-    downloadFilePaths = JSON.parse(localStorage.getItem('downloadFilePaths'));
-    schemaFilePath = downloadFilePaths.Schema;
-    schemaFileName = schemaFilePath.split('/')[schemaFilePath.split('/').length - 1];
-    filePath = './' + schemaFileName;
-    readTextFile(filePath, function (text) {
-      jQuery("<a />", {
-        "download": schemaFileName + ".txt",
-        "href": "data:application/json;charset=utf-8," + encodeURIComponent(text),
-      }).appendTo("body")
-      .click(function () {
-        jQuery(this).remove()
-      })[0].click()
-    })
-  });
-
-  accordion = document.getElementById("accordion");
-
-  // fetching number of tables in source and spanner schema
-  src_table_num = Object.keys(schemaConversionObj.SrcSchema).length;
-  sp_table_num = Object.keys(schemaConversionObj.SpSchema).length;
-
-  expand_button = document.createElement("button")
-  expand_button.setAttribute('id', 'reportExpandButton');
-  expand_button.innerHTML = "Expand All"
-  expand_button.className = "expand"
-  expand_button.addEventListener('click', function () {
-    if (jQuery(this).html() === 'Expand All') {
-      jQuery(this).html('Collapse All');
-      jQuery('.reportCollapse').collapse('show');
-    }
-    else {
-      jQuery(this).html('Expand All');
-      jQuery('.reportCollapse').collapse('hide');
-    }
-  })
-  accordion.appendChild(expand_button);
-
-  // global edit data type button
-  editButton = document.createElement('button');
-  editButton.setAttribute('id', 'editButton');
-  editButton.className = 'expand right-align';
-  editButton.innerHTML = 'Edit Global Data Type';
-  editButton.addEventListener('click', function () {
-    createEditDataTypeTable();
-    jQuery('#globalDataTypeModal').modal();
-  });
-  accordion.appendChild(editButton);
-
-  var reportUl = document.createElement('ul');
+  let reportUl = document.createElement('ul');
   reportUl.setAttribute('id', 'reportUl');
-  var srcPlaceholder = [];
-  var spPlaceholder = [];
-  z = 0;
 
-  for (var x = 0; x < src_table_num; x++) {
+  for (var x = 0; x < srcTableNum; x++) {
     initialPkSeqId[x] = [];
     initialColNameArray[x] = [];
     constraintTabCell[x] = [];
@@ -304,189 +215,244 @@ const createSourceAndSpannerTables = async(obj) => {
     keyColumnMap[x] = [];
     pkArray[x] = [];
     spPlaceholder[x] = [];
-    count_sp[x] = [];
-    count_src[x] = [];
+    countSp[x] = [];
+    countSrc[x] = [];
     pksSp[x] = [];
   }
 
   interleaveApiCallResp = JSON.parse(localStorage.getItem('interleaveInfo'));
-
-  // creating table accordion one by one for each table
-  for (var i = 0; i < src_table_num; i++) {
-    src_table = schemaConversionObj.SrcSchema[Object.keys(schemaConversionObj.ToSpanner)[i]];
-    src_table_name[i] = Object.keys(schemaConversionObj.ToSpanner)[i];
-    src_table_cols = src_table.ColNames;
-    sp_table = schemaConversionObj.SpSchema[src_table_name[i]];
-    sp_table_cols = sp_table.ColNames;
+  conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
+  for (var i = 0; i < srcTableNum; i++) {
+    srcTable = schemaConversionObj.SrcSchema[Object.keys(schemaConversionObj.ToSpanner)[i]];
+    srcTableName[i] = Object.keys(schemaConversionObj.ToSpanner)[i];
+    spTable = schemaConversionObj.SpSchema[srcTableName[i]];
+    spTableCols = spTable.ColNames;
     pkArray[i] = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[i]].Pks;
     pkSeqId[i] = 1;
-    for (var x = 0; x < pkArray[i].length; x++) {
+    let pkArrayLength = pkArray[i].length;
+    let columnsLength = Object.keys(schemaConversionObj.ToSpanner[spTable.Name].Cols).length;
+    for (var x = 0; x < pkArrayLength; x++) {
       pkArray[i][x].seqId = pkSeqId[i];
       pkSeqId[i]++;
     }
-    schemaConversionObj.SpSchema[src_table_name[i]].Pks = pkArray[i];
-
-    li = document.createElement('area');
-    reportUl.appendChild(li);
-
-    tableCard = document.createElement("div");
-    tableCard.className = "card";
-    tableCard.setAttribute('id', i);
-
-    tableCardHeader = document.createElement("div");
-    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
-    tableCardHeader.className = 'card-header report-card-header borderBottom' + panelBorderClass(conversionRateResp[src_table_name[i]]);
-    tableCardHeader.role = 'tab';
-
-    tableCardHeading = document.createElement("h5");
-    tableCardHeading.className = 'mb-0';
-
-    tableCardHeaderLink = document.createElement("a");
-    tableCardHeaderLink.innerHTML = `Table: ${Object.keys(schemaConversionObj.SrcSchema)[i]} <i class="fas fa-angle-down rotate-icon" />`
-    tableCardHeaderLink.setAttribute("data-toggle", "collapse");
-    tableCardHeaderLink.setAttribute("href", "#" + Object.keys(schemaConversionObj.SrcSchema)[i]);
-
-    tableCardHeading.appendChild(tableCardHeaderLink);
-    tableCardHeader.appendChild(tableCardHeading);
-    tableCard.appendChild(tableCardHeader);
-
-    spannerTextSpan = document.createElement("span");
-    spannerTextSpan.className = "spanner-text right-align hide-content";
-    spannerTextSpan.innerHTML = "Spanner";
-    spannerTextSpan.removeAttribute('data-toggle');
-    tableCardHeading.appendChild(spannerTextSpan);
-
-    spannerIconSpan = document.createElement("span");
-    spannerIconSpan.className = "spanner-icon right-align hide-content";
-    spannerIconSpan.innerHTML = `<i class="large material-icons" style="font-size: 18px;">circle</i>`;
-    tableCardHeading.appendChild(spannerIconSpan);
-
-    sourceTextSpan = document.createElement("span");
-    sourceTextSpan.className = "source-text right-align hide-content";
-    sourceTextSpan.innerHTML = "Source";
-    tableCardHeading.appendChild(sourceTextSpan);
-
-    sourceIconSpan = document.createElement("span");
-    sourceIconSpan.className = "source-icon right-align hide-content";
-    sourceIconSpan.innerHTML = `<i class="large material-icons" style="font-size: 18px;">circle</i>`;
-    tableCardHeading.appendChild(sourceIconSpan);
-
-    editSpannerSpan = document.createElement("button");
-    editSpannerSpan.className = "right-align hide-content edit-button";
-    editSpannerSpan.innerHTML = "Edit Spanner Schema";
-    editSpannerSpan.setAttribute('id', 'editSpanner' + i);
-    editSpannerSpan.addEventListener('click', function () {
-      if (jQuery(this).html() === "Edit Spanner Schema") {
-        editSpannerHandler(jQuery(this));
-      }
-      else if (jQuery(this).html() === "Save Changes") {
-        saveSpannerChanges(jQuery(this), spPlaceholder);
-      }
-    })
-    tableCardHeading.appendChild(editSpannerSpan);
-
-    tableCardCollapse = document.createElement("div");
-    tableCardCollapse.setAttribute("id", Object.keys(schemaConversionObj.SrcSchema)[i]);
-    tableCardCollapse.className = "collapse reportCollapse";
-
-    tableCardContent = document.createElement("div");
-    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
-    tableCardContent.className = 'mdc-card mdc-card-content table-card-border' + mdcCardBorder(conversionRateResp[src_table_name[i]]);
-
-    tableAccContent = document.createElement("div");
-    tableAccContent.className = "acc-card-content";
-
-    // creating column headers for each table
-    tableColHeaders = [];
-    for (var m = 0; m < 6; m++) {
-      if (m % 2 === 0) {
-        tableColHeaders.push(sourceTableFlag);
-      }
-      else
-        tableColHeaders.push('Spanner');
-    }
-
-    // appending column headers to the table
-    table = document.createElement("table");
-    table_header2 = document.createElement('thead');
-    table.appendChild(table_header2);
-    table.setAttribute('id', 'src-sp-table' + i);
-    table.className = 'acc-table';
-
-    tr = table_header2.insertRow(-1);
-    th1 = document.createElement('th');
-    th1.innerHTML = 'Column Name';
-    th1.className = 'acc-column';
-    th1.setAttribute('colspan', 2);
-    tr.appendChild(th1);
-
-    th2 = document.createElement('th');
-    th2.innerHTML = 'Data Type';
-    th2.className = 'acc-column';
-    th2.setAttribute('colspan', 2);
-    tr.appendChild(th2);
-
-    th3 = document.createElement('th');
-    th3.innerHTML = 'Constraints';
-    th3.className = 'acc-column';
-    th3.setAttribute('colspan', 2);
-    tr.appendChild(th3);
-
-    tr = table_header2.insertRow(-1);
-    for (var j = 0; j < tableColHeaders.length; j++) {
-      th = document.createElement("th");
-      if (j % 2 === 0) {
-        if (j === 0) {
-          th.className = "acc-table-th-src src-tab-cell";
+    schemaConversionObj.SpSchema[srcTableName[i]].Pks = pkArray[i];
+    spannerColumnsContent = '';
+    for (var k = 0; k < columnsLength; k++) {
+      spannerColumnsContent += `<tr>`
+      let currentColumnSrc = Object.keys(schemaConversionObj.ToSpanner[spTable.Name].Cols)[k];
+      let currentColumnSp = schemaConversionObj.ToSpanner[spTable.Name].Cols[currentColumnSrc];
+      for (var l = 0; l < 2; l++) {
+        columnNameContent = '';
+        if (l % 2 === 0) {
+          columnNameContent += `<td class='acc-table-td src-tab-cell'>`
+          if (srcTable.PrimaryKeys !== null && srcTable.PrimaryKeys[0].Column === currentColumnSrc) {
+            columnNameContent += `<span class="column left">
+                                  <img src='./Icons/Icons/ic_vpn_key_24px.svg' style='margin-left: 3px;'>
+                                </span>
+                                <span class="column right srcColumn" id='srcColumn${k}'>
+                                  ${currentColumnSrc}
+                                </span>`;
+          }
+          else {
+            columnNameContent += `<span class="column left">
+                                  <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden; margin-left: 3px;'>
+                                </span>
+                                <span class="column right srcColumn" id='srcColumn${k}'>
+                                  ${currentColumnSrc}
+                                </span>`
+          }
+          columnNameContent += `</td>`;
         }
         else {
-          th.className = "acc-table-th-src";
+          columnNameContent += `<td class='sp-column acc-table-td spannerTabCell${i}${k}'>`
+          pksSp[i] = [...spTable.Pks];
+          pkFlag = false;
+          let pksSpLength = pksSp[i].length;
+          for (var x = 0; x < pksSpLength; x++) {
+            if (pksSp[i][x].Col === currentColumnSp) {
+              pkFlag = true;
+              columnNameContent += `<span class="column left" data-toggle="tooltip" data-placement="bottom" title="primary key : ${spTableCols[k]}" id='keyIcon${i}${k}${k}' style="cursor:pointer">
+                                    <sub>${pksSp[i][x].seqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg' class='primaryKey'>
+                                  </span>
+                                  <span class="column right" data-toggle="tooltip" data-placement="bottom" title="primary key : ${spTableCols[k]}" id='columnNameText${i}${k}${k}' style="cursor:pointer">
+                                    ${currentColumnSp}
+                                  </span>`;
+              notPrimary[i][k] = false;
+              initialPkSeqId[i][k] = pksSp[i][x].seqId;
+              break
+            }
+          }
+          if (pkFlag === false) {
+            notPrimary[i][k] = true;
+            columnNameContent += `<span class="column left" id='keyIcon${i}${k}${k}'>
+                                  <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden;'>
+                                </span>
+                                <span class="column right" id='columnNameText${i}${k}${k}'>
+                                  ${currentColumnSp}
+                                </span>`;
+          }
+          columnNameContent += `</td>`;
+          primaryTabCell[i][k] = columnNameContent;
+          keyIconValue = 'keyIcon' + i + k + k;
+          keyColumnObj = { 'keyIconId': keyIconValue, 'columnName': currentColumnSp };
+          keyColumnMap[i].push(keyColumnObj);
         }
+        spannerColumnsContent += columnNameContent;
       }
-      else {
-        th.className = "acc-table-th-spn";
+
+      for (var l = 0; l < 2; l++) {
+        dataTypeContent = '';
+        notNullFound = ''
+        if (l % 2 === 0) {
+          dataTypeContent += `<td class='acc-table-td pl-data-type' id='srcDataType${i}${k}'>${srcTable.ColDefs[currentColumnSrc].Type.Name}</td>`;
+        }
+        else {
+          dataTypeContent += `<td class='sp-column acc-table-td spannerTabCell${i}${k}' id='dataType${i}${k}'>${spTable.ColDefs[currentColumnSp].T.Name}</td>`;
+        }
+        spannerColumnsContent += dataTypeContent;
       }
-      th.innerHTML = tableColHeaders[j];
-      tr.appendChild(th);
-    }
 
-    table_body = document.createElement('tbody');
-    table.appendChild(table_body);
-    columnsLength = Object.keys(schemaConversionObj.ToSpanner[sp_table.Name].Cols).length;
-    spannerColumnsIterator(i, srcPlaceholder, spPlaceholder);
-    tableAccContent.appendChild(table)
-    tableCardContent.appendChild(tableAccContent)
-    tableCardCollapse.appendChild(tableCardContent)
-    tableCard.appendChild(tableCardCollapse)
-    li.appendChild(tableCard);
+      for (var l = 0; l < 2; l++) {
+        constraintsContent = '';
+        if (l % 2 === 0) {
+          constraintsContent += `<td class='acc-table-td'>`
+          countSrc[i][k] = 0;
+          srcPlaceholder[constraintCount] = countSrc[i][k];
+          if (srcTable.ColDefs[currentColumnSrc].NotNull !== undefined) {
+            if (srcTable.ColDefs[currentColumnSrc].NotNull === true) {
+              countSrc[i][k] = countSrc[i][k] + 1;
+              srcPlaceholder[constraintCount] = countSrc[i][k];
+              notNullFound = "<option disabled class='active'>Not Null</option>";
+            }
+            else {
+              notNullFound = "<option disabled>Not Null</option>";
+            }
+          }
+          else {
+            notNullFound = '';
+          }
+    
+          constraintId = 'srcConstraint' + constraintCount;
+          srcConstraintHtml = "<select id=" + constraintId + " multiple size='1' class='form-control spanner-input tableSelect'>"
+            + notNullFound
+            + "</select>";
+          constraintsContent += srcConstraintHtml;
+          constraintsContent += `</td>`;
+          constraintCount++;
+        }
+        else {
+          constraintsContent += `<td class='acc-table-td sp-column acc-table-td spannerTabCell${i}${k}'>`;
+          countSp[i][k] = 0;
+          spPlaceholder[i][k] = countSp[i][k];
+          // checking not null consraint
+          if (spTable.ColDefs[currentColumnSp].NotNull !== undefined) {
+            if (spTable.ColDefs[currentColumnSp].NotNull === true) {
+              countSp[i][k] = countSp[i][k] + 1
+              spPlaceholder[i][k] = countSp[i][k];
+              notNullFound = "<option disabled class='active'>Not Null</option>";
+              notNullFoundFlag[i][k] = true;
+              notNullConstraint[parseInt(String(i) + String(k))] = 'Not Null';
+            }
+            else {
+              notNullFound = "<option disabled>Not Null</option>";
+              notNullFoundFlag[i][k] = false;
+              notNullConstraint[parseInt(String(i) + String(k))] = '';
+            }
+          }
+          else {
+            notNullFound = "<option disabled>Not Null</option>";
+            notNullFoundFlag[i][k] = false;
+          }
+          constraintId = 'spConstraint' + i + k;
+          spConstraintHtml = "<select id=" + constraintId + " multiple size='1' class='form-control spanner-input tableSelect'>"
+            + notNullFound
+            + "</select>";
+          constraintsContent += spConstraintHtml;
+          constraintsContent += `</td>`;
+          constraintTabCell[i][k] = constraintsContent;
+        }
+        spannerColumnsContent += constraintsContent;
+      }
+      spannerColumnsContent += `</tr>`;
+    }
+    sourceTableFlag = localStorage.getItem('sourceDbName');
+    tableContent =  `<section>
+                        <div class='card' id=${i}>
+                          <div role='tab' class='card-header report-card-header borderBottom ${panelBorderClass(conversionRateResp[srcTableName[i]])}'>
+                            <h5 class='mb-0'>
+                              <a href='#${Object.keys(schemaConversionObj.SrcSchema)[i]}' data-toggle='collapse'>
+                                Table: ${Object.keys(schemaConversionObj.SrcSchema)[i]} <i class="fas fa-angle-down rotate-icon"></i>
+                              </a>
+                              <span class='spanner-text right-align hide-content'>Spanner</span>
+                              <span class='spanner-icon right-align hide-content'>
+                                <i class='large material-icons' style='font-size: 18px;'>circle</i>
+                              </span>
+                              <span class='source-text right-align hide-content'>Source</span>
+                              <span class='source-icon right-align hide-content'>
+                                <i class='large material-icons' style='font-size: 18px;'></i>
+                              </span>
+                              <button class='right-align edit-button hide-content' id='editSpanner${i}' onclick='editAndSaveButtonHandler(jQuery(this), ${JSON.stringify(spPlaceholder)})'>
+                                Edit Spanner Schema
+                              </button>
+                            </h5>
+                          </div>
 
-    if (sp_table.Fks != null) {
-      foreignKeyHandler(i, sp_table.Fks);
-    }
-    if (JSON.parse(localStorage.getItem('summaryReportContent')) != undefined) {
-      createSummaryForEachTable(i, JSON.parse(localStorage.getItem('summaryReportContent')));
-    }
+                          <div class='collapse reportCollapse' id='${Object.keys(schemaConversionObj.SrcSchema)[i]}'>
+                            <div class='mdc-card mdc-card-content table-card-border ${mdcCardBorder(conversionRateResp[srcTableName[i]])}'>
+                              <div class='acc-card-content' id='acc_card_content'>
+                                <table id='src-sp-table${i}' class='acc-table'>
+                                  <thead>
+                                    <tr>
+                                      <th class='acc-column' colspan='2'>Column Name</th>
+                                      <th class='acc-column' colspan='2'>Data Type</th>
+                                      <th class='acc-column' colspan='2'>Constraints</th>
+                                    </tr>
+                                    <tr>
+                                      <th class='acc-table-th-src src-tab-cell'>${sourceTableFlag}</th>
+                                      <th class='acc-table-th-spn'>Spanner</th>
+                                      <th class='acc-table-th-src'>${sourceTableFlag}</th>
+                                      <th class='acc-table-th-spn'>Spanner</th>
+                                      <th class='acc-table-th-src'>${sourceTableFlag}</th>
+                                      <th class='acc-table-th-spn'>Spanner</th>
+                                    </tr>
+                                  </thead>
+
+                                  <tbody>
+                                    ${spannerColumnsContent}
+                                  </tbody>
+                                </table>` + 
+                                  foreignKeyHandler(i, spTable.Fks)
+                                 +
+                                 createSummaryForEachTable(i, JSON.parse(localStorage.getItem('summaryReportContent')))
+                                 +
+                              `</div>
+                            </div>
+                          </div>
+                        </div>
+                      </section>`;
+    reportUl.innerHTML += tableContent;
   }
   accordion.appendChild(reportUl);
-  z--;
-  while (z >= 0) {
-    mySelect = new vanillaSelectBox('#srcConstraint' + z, {
-      placeHolder: srcPlaceholder[z] + " constraints selected",
+  constraintCount--;
+  while (constraintCount >= 0) {
+    mySelect = new vanillaSelectBox('#srcConstraint' + constraintCount, {
+      placeHolder: srcPlaceholder[constraintCount] + " constraints selected",
       maxWidth: 500,
       maxHeight: 300
     });
-    z--;
+    constraintCount--;
   }
 
-  for (var i = 0; i < src_table_num; i++) {
-    table_id = '#src-sp-table' + i;
-    jQuery(table_id).DataTable();
+  for (var i = 0; i < srcTableNum; i++) {
+    let tableId = '#src-sp-table' + i;
+    jQuery(tableId).DataTable();
   }
 
-  for (var i = 0; i < sp_table_num; i++) {
-    sp_table = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[i]]
-    sp_table_cols = sp_table.ColNames;
-    for (var j = 0; j < sp_table_cols.length; j++) {
+  for (var i = 0; i < spTable_num; i++) {
+    spTable = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[i]]
+    spTableCols = spTable.ColNames;
+    let spTableColsLength = spTableCols.length;
+    for (var j = 0; j < spTableColsLength; j++) {
       if (document.getElementById('spConstraint' + i + j) != null) {
         mySelect = new vanillaSelectBox('#spConstraint' + i + j, {
           placeHolder: spPlaceholder[i][j] + " constraints selected",
@@ -500,177 +466,18 @@ const createSourceAndSpannerTables = async(obj) => {
 }
 
 /**
- * Function to create spanner columns
+ * Function to handle click event on edit spanner schema button of table
  *
- * @param {number} i table index
+ * @param {HTMLElement} event click event
+ * @param {array} spPlaceholder array to store number of selected constraints in spanner constraint cell
  * @return {null}
  */
-const spannerColumnsIterator = (i, srcPlaceholder, spPlaceholder) => {
-  for (var k = 0; k < columnsLength; k++) {
-    tr = table_body.insertRow(-1);
-    currentColumnSrc = Object.keys(schemaConversionObj.ToSpanner[sp_table.Name].Cols)[k];
-    currentColumnSp = schemaConversionObj.ToSpanner[sp_table.Name].Cols[currentColumnSrc];
-
-    columnNameIterator(i, k);
-    dataTypeIterator(i, k);
-    constraintIterator(i, k, srcPlaceholder, spPlaceholder);
+const editAndSaveButtonHandler = (event, spPlaceholder) => {
+  if (event[0].innerText === "Edit Spanner Schema") {
+    editSpannerHandler(event);
   }
-}
-
-/**
- * Function to create name column for spanner table
- *
- * @param {number} i table index
- * @param {number} k column index in table
- * @return {null}
- */
-const columnNameIterator = (i, k) => {
-  for (var l = 0; l < 2; l++) {
-    tabCell = tr.insertCell(-1);
-    if (l % 2 === 0) {
-      if (src_table.PrimaryKeys !== null && src_table.PrimaryKeys[0].Column === currentColumnSrc) {
-        tabCell.innerHTML = `<span class="column left">
-                              <img src='./Icons/Icons/ic_vpn_key_24px.svg' style='margin-left: 3px;'>
-                            </span>
-                            <span class="column right srcColumn" id='srcColumn${k}'>
-                              ${currentColumnSrc}
-                            </span>`;
-      }
-      else {
-        tabCell.innerHTML = `<span class="column left">
-                              <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden; margin-left: 3px;'>
-                            </span>
-                            <span class="column right srcColumn" id='srcColumn${k}'>
-                              ${currentColumnSrc}
-                            </span>`
-      }
-      tabCell.className = 'acc-table-td src-tab-cell';
-    }
-    else {
-      // currentColumnSp = sp_table_cols[k];
-      pksSp[i] = [...sp_table.Pks];
-      pkFlag = false
-      for (var x = 0; x < pksSp[i].length; x++) {
-        if (pksSp[i][x].Col === currentColumnSp) {
-          pkFlag = true;
-          tabCell.innerHTML = `<span class="column left" data-toggle="tooltip" data-placement="bottom" title="primary key : ${sp_table_cols[k]}" id='keyIcon${i}${k}${k}' style="cursor:pointer">
-                                <sub>${pksSp[i][x].seqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg' class='primaryKey'>
-                              </span>
-                              <span class="column right" data-toggle="tooltip" data-placement="bottom" title="primary key : ${sp_table_cols[k]}" id='columnNameText${i}${k}${k}' style="cursor:pointer">
-                                ${currentColumnSp}
-                              </span>`;
-          notPrimary[i][k] = false;
-          initialPkSeqId[i][k] = pksSp[i][x].seqId;
-          break
-        }
-      }
-      if (pkFlag === false) {
-        notPrimary[i][k] = true;
-        tabCell.innerHTML = `<span class="column left" id='keyIcon${i}${k}${k}'>
-                              <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg' style='visibility: hidden;'>
-                            </span>
-                            <span class="column right" id='columnNameText${i}${k}${k}'>
-                              ${currentColumnSp}
-                            </span>`;
-      }
-      tabCell.setAttribute('class', 'sp-column acc-table-td spannerTabCell' + i + k);
-      primaryTabCell[i][k] = tabCell.innerHTML;
-      keyIconValue = 'keyIcon' + i + k + k;
-      keyColumnObj = { 'keyIconId': keyIconValue, 'columnName': currentColumnSp };
-      keyColumnMap[i].push(keyColumnObj);
-    }
-  }
-}
-
-/**
- * Function to create data type column for spanner table
- *
- * @param {number} i table index
- * @param {number} k column index in table
- * @return {null}
- */
-const dataTypeIterator = (i, k) => {
-  for (var l = 0; l < 2; l++) {
-   
-    tabCell = tr.insertCell(-1);
-    if (l % 2 === 0) {
-      tabCell.className = "acc-table-td pl-data-type";
-      tabCell.setAttribute('id', 'srcDataType' + i + k);
-      tabCell.innerHTML = src_table.ColDefs[currentColumnSrc].Type.Name;
-    }
-    else {
-      tabCell.setAttribute('class', 'sp-column acc-table-td spannerTabCell' + i + k);
-      tabCell.setAttribute('id', 'dataType' + i + k);
-      tabCell.innerHTML = sp_table.ColDefs[currentColumnSp].T.Name;
-    }
-  }
-}
-
-/**
- * Function to create constraint column for spanner table
- *
- * @param {number} i table index
- * @param {number} k column index in table
- * @return {null}
- */
-const constraintIterator = (i, k, srcPlaceholder, spPlaceholder) => {
-  for (var l = 0; l < 2; l++) {
-    tabCell = tr.insertCell(-1);
-    tabCell.className = "acc-table-td";
-    if (l % 2 === 0) {
-      count_src[i][k] = 0;
-      srcPlaceholder[z] = count_src[i][k];
-      if (src_table.ColDefs[currentColumnSrc].NotNull !== undefined) {
-        if (src_table.ColDefs[currentColumnSrc].NotNull === true) {
-          count_src[i][k] = count_src[i][k] + 1;
-          srcPlaceholder[z] = count_src[i][k];
-          notNullFound = "<option disabled class='active'>Not Null</option>";
-        }
-        else {
-          notNullFound = "<option disabled>Not Null</option>";
-        }
-      }
-      else {
-        notNullFound = '';
-      }
-
-      constraintId = 'srcConstraint' + z;
-      srcConstraintHtml = "<select id=" + constraintId + " multiple size='1' class='form-control spanner-input tableSelect'>"
-        + notNullFound
-        + "</select>";
-      tabCell.innerHTML = srcConstraintHtml;
-      z++;
-    }
-    else {
-      count_sp[i][k] = 0;
-      spPlaceholder[i][k] = count_sp[i][k];
-      // checking not null consraint
-      if (sp_table.ColDefs[currentColumnSp].NotNull !== undefined) {
-        if (sp_table.ColDefs[currentColumnSp].NotNull === true) {
-          count_sp[i][k] = count_sp[i][k] + 1
-          spPlaceholder[i][k] = count_sp[i][k];
-          notNullFound = "<option disabled class='active'>Not Null</option>";
-          notNullFoundFlag[i][k] = true;
-          notNullConstraint[parseInt(String(i) + String(k))] = 'Not Null';
-        }
-        else {
-          notNullFound = "<option disabled>Not Null</option>";
-          notNullFoundFlag[i][k] = false;
-          notNullConstraint[parseInt(String(i) + String(k))] = '';
-        }
-      }
-      else {
-        notNullFound = "<option disabled>Not Null</option>";
-        notNullFoundFlag[i][k] = false;
-      }
-      constraintId = 'spConstraint' + i + k;
-      spConstraintHtml = "<select id=" + constraintId + " multiple size='1' class='form-control spanner-input tableSelect'>"
-        + notNullFound
-        + "</select>";
-      tabCell.innerHTML = spConstraintHtml;
-      tabCell.setAttribute('class', 'sp-column acc-table-td spannerTabCell' + i + k);
-      constraintTabCell[i][k] = tabCell.innerHTML;
-    }
+  else if (event[0].innerText === "Save Changes") {
+    saveSpannerChanges(event, spPlaceholder);
   }
 }
 
@@ -682,88 +489,59 @@ const constraintIterator = (i, k, srcPlaceholder, spPlaceholder) => {
  * @return {null}
  */
 const foreignKeyHandler = (index, foreignKeys) => {
-  foreignKeyDiv = document.createElement('div');
-  foreignKeyDiv.className = 'summaryCard';
-
-  foreignKeyHeader = document.createElement("div")
-  foreignKeyHeader.className = 'foreignKeyHeader';
-  foreignKeyHeader.role = 'tab';
-
-  foreignKeyHeading = document.createElement("h5")
-  foreignKeyHeading.className = 'mb-0';
-
-  foreignKeyLink = document.createElement("a")
-  foreignKeyLink.innerHTML = `Foreign Keys`;
-  foreignKeyLink.className = 'summaryFont';
-  foreignKeyLink.setAttribute("data-toggle", "collapse");
-  foreignKeyLink.setAttribute("href", "#foreignKey" + index);
-  
-  foreignKeyHeading.appendChild(foreignKeyLink);
-  foreignKeyHeader.appendChild(foreignKeyHeading);
-  foreignKeyDiv.appendChild(foreignKeyHeader);
-
-  foreignKeyCollapse = document.createElement("div")
-  foreignKeyCollapse.setAttribute("id", 'foreignKey' + index);
-  foreignKeyCollapse.className = "collapse summaryCollapse";
-
-  foreignKeyCard = document.createElement("div");
-  foreignKeyCard.className = "mdc-card mdc-card-content summaryBorder";
-  foreignKeyCard.setAttribute('border', '0px');
-
-  fkTable = document.createElement('table');
-  fkTable.className = 'acc-table fkTable';
-  fkHeader = document.createElement('thead');
-  fkTbody = document.createElement('tbody');
-  fkTable.appendChild(fkHeader);
-  fkTable.appendChild(fkTbody);
-  tr = fkHeader.insertRow(-1);
-  
-  th1 = document.createElement('th');
-  th1.innerHTML = 'Name';
-  tr.appendChild(th1);
-
-  th2 = document.createElement('th');
-  th2.innerHTML = 'Columns';
-  tr.appendChild(th2);
-
-  th3 = document.createElement('th');
-  th3.innerHTML = 'Refer Table';
-  tr.appendChild(th3);
-
-  th4 = document.createElement('th');
-  th4.innerHTML = 'Refer Columns';
-  tr.appendChild(th4);
-
-  radioOptions = '';
-  radioOptions += `<fieldset style='overflow: hidden;'>
-            <div class="radio-class">
-              <input type="radio" class="radio" name="fks" value="add" id="add${index}" checked='checked' />
-              <label style='margin-right: 15px;' for="add">Use as Foreign Key</label>
-              <input type="radio" class="radio" name="fks" value="interleave" id="interleave${index}" />
-              <label style='margin-right: 15px;' for="interleave">Convert to Interleave</label>
-            </div>
-            <button style='float: right; padding: 0px 20px;' class='edit-button' id='saveInterleave${index}' onclick='saveInterleaveHandler(${index})'>save</button>
-            </fieldset><br>`;
-  jQuery('#add'+index).attr('checked', 'checked');
-
-  for (var p in foreignKeys) {
-    tr = fkTbody.insertRow(-1);
-    for (var k in foreignKeys[p]) {
-      tabCell = tr.insertCell(-1);
-      tabCell.innerHTML = foreignKeys[p][k];
-      tabCell.className = 'acc-table-td';
-    }
+  if (spTable.Fks == null) {
+    return '';
   }
+  let fkContentForTable = '';
+  let fkTbodyContent = '';
+  for (var p in foreignKeys) {
+    fkTbodyContent = `<tr>`;
+    for (var k in foreignKeys[p]) {
+      fkTbodyContent += `<td class='acc-table-td'>${foreignKeys[p][k]}</td>`;
+    }
+    fkTbodyContent += `</tr>`
+  }
+  fkContentForTable = `<div class='summaryCard'>
+                          <div class='foreignKeyHeader' role='tab'>
+                            <h5 class='mb-0'>
+                              <a class='summaryFont' data-toggle='collapse' href='#foreignKey${index}'>
+                                Foreign Keys
+                              </a>
+                            </h5>
+                          </div>
 
-  foreignKeyContent = document.createElement('div');
-  foreignKeyContent.className = 'mdc-card summary-content';
-  foreignKeyContent.innerHTML = radioOptions;
+                          <div id='foreignKey${index}' class='collapse summaryCollapse'>
+                            <div class='mdc-card mdc-card-content summaryBorder' style='border: 0px;'>
+                              <div class='mdc-card summary-content'>
+                                <fieldset style='overflow: hidden;'>
+                                  <div class="radio-class">
+                                    <input type="radio" class="radio" name="fks" value="add" id="add${index}" checked='checked' />
+                                    <label style='margin-right: 15px;' for="add">Use as Foreign Key</label>
+                                    <input type="radio" class="radio" name="fks" value="interleave" id="interleave${index}" />
+                                    <label style='margin-right: 15px;' for="interleave">Convert to Interleave</label>
+                                  </div>
+                                  <button style='float: right; padding: 0px 20px;' class='edit-button' id='saveInterleave${index}' onclick='saveInterleaveHandler(${index})'>save</button>
+                                </fieldset><br>
 
-  foreignKeyContent.appendChild(fkTable);
-  foreignKeyCard.appendChild(foreignKeyContent);
-  foreignKeyCollapse.appendChild(foreignKeyCard);
-  foreignKeyDiv.appendChild(foreignKeyCollapse);
-  tableAccContent.appendChild(foreignKeyDiv);
+                                <table class='acc-table fkTable'>
+                                  <thead>
+                                    <tr>
+                                      <th>Name</th>
+                                      <th>Columns</th>
+                                      <th>Refer Table</th>
+                                      <th>Refer Columns</th>
+                                    </tr>
+                                  </thead>
+
+                                  <tbody>
+                                    ${fkTbodyContent}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                       </div>`;
+    return fkContentForTable;         
 }
 
 /**
@@ -803,16 +581,17 @@ const saveInterleaveHandler = (index) => {
  * @return {null}
  */
 const editSpannerHandler = (event) => {
+  let uncheckCount = [];
   if (event.html() === 'Edit Spanner Schema') {
     jQuery(event[0]).removeAttr('data-toggle');
   }
-
-  tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
-  uncheckCount[tableNumber] = 0;
-  tableId = '#src-sp-table' + tableNumber + ' tr';
   event.html("Save Changes");
-  tableColumnNumber = 0;
-  tableCheckboxGroup = '.chckClass_' + tableNumber;
+
+  let tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
+  let tableId = '#src-sp-table' + tableNumber + ' tr';
+  let tableColumnNumber = 0;
+  let tableCheckboxGroup = '.chckClass_' + tableNumber;
+  uncheckCount[tableNumber] = 0;
 
   jQuery(tableId).each(function (index) {
     if (index === 1) {
@@ -853,9 +632,9 @@ const editSpannerHandler = (event) => {
                       </div>
                     </span>`)
       jQuery(tableCheckboxGroup).prop('checked', true);
-      spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
+      let spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
 
-      editSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber);
+      editSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, tableId);
       editSpannerDataType(spannerCellsList[1], tableNumber, tableColumnNumber);
       editSpannerConstraint(spannerCellsList[2], tableNumber, tableColumnNumber);
       tableColumnNumber++;
@@ -885,20 +664,21 @@ const editSpannerHandler = (event) => {
  * @param {html Element} editColumn
  * @param {number} tableNumber
  * @param {number} tableColumnNumber
+ * @param {string} tableId
  * @return {null}
  */
-const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber) => {
-  spannerCellsList[0] = editColumn;
-  columnNameVal = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML;
-  initialColNameArray[tableNumber].push(columnNameVal);
+const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber, tableId) => {
+  let columnNameVal = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML;
   currSeqId = '';
-  for (var x = 0; x < pkArray[tableNumber].length; x++) {
+  let pkArrayLength = pkArray[tableNumber].length;
+  initialColNameArray[tableNumber].push(columnNameVal);
+  for (var x = 0; x < pkArrayLength; x++) {
     if (pkArray[tableNumber][x].Col === columnNameVal.trim()) {
       currSeqId = pkArray[tableNumber][x].seqId;
     }
   }
   if (notPrimary[tableNumber][tableColumnNumber] === true) {
-    spannerCellsList[0].innerHTML = `<span class="column left keyNotActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
+    editColumn.innerHTML = `<span class="column left keyNotActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
                                       <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>
                                     </span>
                                     <span class="column right form-group">
@@ -906,7 +686,7 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber) => {
                                     </span>`
   }
   else {
-    spannerCellsList[0].innerHTML = `<span class="column left keyActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
+    editColumn.innerHTML = `<span class="column left keyActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
                                       <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
                                     </span>
                                     <span class="column right form-group">
@@ -915,18 +695,18 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber) => {
   }
   jQuery('#keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).click(function () {
     jQuery(this).toggleClass('keyActive keyNotActive');
-    keyId = jQuery(this).attr('id');
-    for (var z = 0; z < keyColumnMap[tableNumber].length; z++) {
+    let keyId = jQuery(this).attr('id');
+    let keyColumnMapLength = keyColumnMap[tableNumber].length;
+    for (var z = 0; z < keyColumnMapLength; z++) {
       if (keyId === keyColumnMap[tableNumber][z].keyIconId) {
         columnName = keyColumnMap[tableNumber][z].columnName;
       }
     }
-
     if (document.getElementById(keyId).classList.contains('keyActive')) {
       getNewSeqNumForPrimaryKey(keyId, tableNumber);
     }
     else {
-      removePrimaryKeyFromSeq(tableNumber);
+      removePrimaryKeyFromSeq(tableNumber, tableId);
     }
   });
 }
@@ -939,16 +719,17 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber) => {
  * @return {null}
  */
 const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
-  maxSeqId = 0;
-  for (var z = 0; z < pkArray[tableNumber].length; z++) {
+  let maxSeqId = 0;
+  let pkArrayLength = pkArray[tableNumber].length;
+  let pkFoundFlag = false;
+  for (var z = 0; z < pkArrayLength; z++) {
     if (pkArray[tableNumber][z].seqId > maxSeqId) {
       maxSeqId = pkArray[tableNumber][z].seqId;
     }
   }
   maxSeqId = maxSeqId + 1;
   pkSeqId[tableNumber] = maxSeqId;
-  pkFoundFlag = false;
-  for (var z = 0; z < pkArray[tableNumber].length; z++) {
+  for (var z = 0; z < pkArrayLength; z++) {
     if (columnName != pkArray[tableNumber][z].Col) {
       pkFoundFlag = false;
     }
@@ -960,7 +741,7 @@ const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
   if (pkFoundFlag === false) {
     pkArray[tableNumber].push({ 'Col': columnName, 'seqId': pkSeqId[tableNumber] });
   }
-  schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks = pkArray[tableNumber];
+  schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks = pkArray[tableNumber];
   document.getElementById(keyId).innerHTML = `<sub>${pkSeqId[tableNumber]}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
 }
 
@@ -968,26 +749,28 @@ const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
  * Function to remove primary key from existing sequence
  *
  * @param {number} tableNumber
+ * @param {string} tableId
  * @return {null}
  */
-const removePrimaryKeyFromSeq = (tableNumber) => {
-  for (var z = 0; z < pkArray[tableNumber].length; z++) {
+const removePrimaryKeyFromSeq = (tableNumber, tableId) => {
+  let pkArrayLength = pkArray[tableNumber].length;
+  let tableColumnNumber = 0;
+  for (var z = 0; z < pkArrayLength; z++) {
     if (columnName === pkArray[tableNumber][z].Col) {
       pkArray[tableNumber].splice(z, 1);
       break;
     }
   }
-  for (var x = z; x < pkArray[tableNumber].length; x++) {
+  pkArrayLength = pkArray[tableNumber].length;
+  for (var x = z; x < pkArrayLength; x++) {
     pkArray[tableNumber][x].seqId = pkArray[tableNumber][x].seqId - 1;
   }
-  schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks = pkArray[tableNumber];
-
-  tableColumnNumber = 0;
+  schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks = pkArray[tableNumber];
   jQuery(tableId).each(function (index) {
     if (index > 1) {
       notPrimary[tableNumber][tableColumnNumber] = true;
-      currSeqId = '';
-      for (var x = 0; x < pkArray[tableNumber].length; x++) {
+      let currSeqId = '';
+      for (var x = 0; x < pkArrayLength; x++) {
         if (pkArray[tableNumber][x].Col === initialColNameArray[tableNumber][tableColumnNumber].trim()) {
           currSeqId = pkArray[tableNumber][x].seqId;
           notPrimary[tableNumber][tableColumnNumber] = false;
@@ -1013,12 +796,11 @@ const removePrimaryKeyFromSeq = (tableNumber) => {
  * @return {null}
  */
 const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
-  spannerCellsList[1] = editColumn;
-  spannerCellValue = spannerCellsList[1].innerHTML;
-  srcCellValue = document.getElementById('srcDataType' + tableNumber + tableColumnNumber).innerHTML;
-  dataTypeArray = null;
-  dataType = '';
-  globalDataTypesLength = Object.keys(globalDataTypes).length;
+  let spannerCellValue = editColumn.innerHTML;
+  let srcCellValue = document.getElementById('srcDataType' + tableNumber + tableColumnNumber).innerHTML;
+  let dataTypeArray = null;
+  let dataType = '';
+  let globalDataTypesLength = Object.keys(globalDataTypes).length;
   for (var a = 0; a < globalDataTypesLength; a++) {
     if (srcCellValue.toLowerCase() === (Object.keys(globalDataTypes)[a]).toLowerCase()) {
       dataTypeArray = globalDataTypes[Object.keys(globalDataTypes)[a]];
@@ -1029,7 +811,8 @@ const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
               <select class="form-control spanner-input tableSelect" id='dataType${tableNumber}${tableColumnNumber}${tableColumnNumber}'>`
 
   if (dataTypeArray !== null) {
-    for (var a = 0; a < dataTypeArray.length; a++) {
+    let dataTypeArrayLength = dataTypeArray.length;
+    for (var a = 0; a < dataTypeArrayLength; a++) {
       dataType += `<option value=${dataTypeArray[a].T}>${dataTypeArray[a].T}</option>`
     }
   }
@@ -1037,7 +820,7 @@ const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
     dataType += `<option value=${spannerCellValue}>${spannerCellValue}</option>`
   }
   dataType += `</select> </div>`;
-  spannerCellsList[1].innerHTML = dataType;
+  editColumn.innerHTML = dataType;
 }
 
 /**
@@ -1050,8 +833,8 @@ const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
  */
 const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
   let mySelect;
-  spannerCellsList[2] = editColumn;
-  // not null flag
+  let notNullFound = '';
+  let constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
   if (notNullFoundFlag[tableNumber][tableColumnNumber] === true) {
     notNullFound = "<option class='active' selected>Not Null</option>";
   }
@@ -1061,24 +844,23 @@ const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
   else {
     notNullFound = '';
   }
-
-  constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
   constraintHtml = "<select id=" + constraintId + " multiple size='0' class='form-control spanner-input tableSelect' >"
     + notNullFound
     + "</select>";
-  spannerCellsList[2].innerHTML = constraintHtml;
-  spannerCellsList[2].setAttribute('class', 'sp-column acc-table-td spannerTabCell' + tableNumber + tableColumnNumber);
+  editColumn.innerHTML = constraintHtml;
+  editColumn.setAttribute('class', 'sp-column acc-table-td spannerTabCell' + tableNumber + tableColumnNumber);
   mySelect = new vanillaSelectBox("#spConstraint" + tableNumber + tableColumnNumber, {
     placeHolder: "Select Constraints",
     maxWidth: 500,
     maxHeight: 300
   });
   jQuery('#spConstraint' + tableNumber + tableColumnNumber).on('change', function () {
+    let idNum = parseInt(jQuery(this).attr('id').match(/\d+/g), 10);
     constraintId = jQuery(this).attr('id');
-    idNum = parseInt(jQuery(this).attr('id').match(/\d+/g), 10);
-    constraints = document.getElementById(constraintId);
+    let constraints = document.getElementById(constraintId);
     notNullConstraint[idNum] = '';
-    for (var c = 0; c < constraints.length; c++) {
+    let constraintsLength = constraints.length;
+    for (var c = 0; c < constraintsLength; c++) {
       if (constraints.options[c].selected) {
         notNullConstraint[idNum] = 'Not Null';
       }
@@ -1097,25 +879,23 @@ const saveSpannerChanges = (event, spPlaceholder) => {
   if (event.html() === 'Save Changes') {
     showSnackbar('changes saved successfully !!', ' greenBg');
   }
-
-  tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
-  tableId = '#src-sp-table' + tableNumber + ' tr';
   event.html("Edit Spanner Schema");
-  notPkArray = [];
+
+  let tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
+  let tableId = '#src-sp-table' + tableNumber + ' tr';
   initialColNameArray[tableNumber] = [];
-  currentPks = schemaConversionObj.SpSchema[src_table_name[tableNumber]].Pks;
   updatedColsData = {
     'UpdateCols': {
     }
   }
   jQuery(tableId).each(function (index) {
     if (index > 1) {
-      tableName = src_table_name[tableNumber];
-      tableColumnNumber = parseInt(jQuery(this).find('.srcColumn').attr('id').match(/\d+/), 10);
-      srcColumnName = jQuery(this).find('.srcColumn').html().trim()
-      spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
-      newColumnName = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value;
-      originalColumnName = schemaConversionObj.ToSpanner[src_table_name[tableNumber]].Cols[srcColumnName];
+      tableName = srcTableName[tableNumber];
+      let tableColumnNumber = parseInt(jQuery(this).find('.srcColumn').attr('id').match(/\d+/), 10);
+      let srcColumnName = jQuery(this).find('.srcColumn').html().trim()
+      let spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
+      let newColumnName = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value;
+      let originalColumnName = schemaConversionObj.ToSpanner[srcTableName[tableNumber]].Cols[srcColumnName];
       updatedColsData.UpdateCols[originalColumnName] = {};
       updatedColsData.UpdateCols[originalColumnName]['Removed'] = false;
       if (newColumnName === originalColumnName) {
@@ -1126,13 +906,9 @@ const saveSpannerChanges = (event, spPlaceholder) => {
       }
       updatedColsData.UpdateCols[originalColumnName]['NotNull'] = '';
       updatedColsData.UpdateCols[originalColumnName]['PK'] = '';
-
-      saveSpannerColumnName();
-
+      saveSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, originalColumnName, newColumnName);
       updatedColsData.UpdateCols[originalColumnName]['ToType'] = document.getElementById('dataType' + tableNumber + tableColumnNumber + tableColumnNumber).value;
-      
-      saveSpannerConstraints();
-
+      saveSpannerConstraints(tableNumber, tableColumnNumber, originalColumnName);
       if (!(jQuery(this).find("input[type=checkbox]").is(":checked"))) {
         updatedColsData.UpdateCols[originalColumnName]['Removed'] = true;
       }
@@ -1161,8 +937,9 @@ const saveSpannerChanges = (event, spPlaceholder) => {
       if (res.ok) {
         res.json().then(async function (response) {
           localStorage.setItem('conversionReportContent', JSON.stringify(response));
-          await ddlSummaryAndConversionApiCall();
-          await getInterleaveInfo();
+          ddlSummaryAndConversionApiCall().then(function () {
+            getInterleaveInfo();
+          });
           const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
           document.getElementById('app').innerHTML = component.render();
           showSchemaConversionReportContent();
@@ -1180,13 +957,23 @@ const saveSpannerChanges = (event, spPlaceholder) => {
 /**
  * Function to save column name for spanner table
  *
+ * @param {HTMLElement} saveColumn html element for column name
+ * @param {number} tableNumber table number
+ * @param {number} tableColumnNumber table column number
+ * @param {string} originalColumnName 
+ * @param {string} newColumnName
+ * 
  * @return {null}
  */
-const saveSpannerColumnName = () => {
+const saveSpannerColumnName = (saveColumn, tableNumber, tableColumnNumber, originalColumnName, newColumnName) => {
+  let currentPks = schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks;
+  let pksSpLength = pksSp[tableNumber].length;
+  let currentPksLength = currentPks.length;
+  let foundOriginally;
   if (document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).classList.contains('keyActive')) {
     // checking if this key is newly added or removed
     foundOriginally = false;
-    for (var z = 0; z < pksSp[tableNumber].length; z++) {
+    for (var z = 0; z < pksSpLength; z++) {
       if (originalColumnName === pksSp[tableNumber][z].Col) {
         foundOriginally = true;
         break;
@@ -1196,12 +983,12 @@ const saveSpannerColumnName = () => {
       updatedColsData.UpdateCols[originalColumnName]['PK'] = 'ADDED';
     }
 
-    for (var z = 0; z < currentPks.length; z++) {
+    for (var z = 0; z < currentPksLength; z++) {
       if (currentPks[z].Col === newColumnName) {
         currSeqId = currentPks[z].seqId;
       }
     }
-    spannerCellsList[0].innerHTML = `
+    saveColumn.innerHTML = `
                         <span class="column left" data-toggle="tooltip" data-placement="bottom" title="primary key : ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}" style="cursor:pointer">
                           <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
                         </span>
@@ -1214,7 +1001,7 @@ const saveSpannerColumnName = () => {
 
     // checking if this key is newly added or removed
     foundOriginally = false;
-    for (var z = 0; z < pksSp[tableNumber].length; z++) {
+    for (var z = 0; z < pksSpLength; z++) {
       if (originalColumnName === pksSp[tableNumber][z].Col) {
         foundOriginally = true;
         updatedColsData.UpdateCols[originalColumnName]['PK'] = 'REMOVED';
@@ -1228,10 +1015,14 @@ const saveSpannerColumnName = () => {
 /**
  * Function to save constraints for spanner table
  *
+ * @param {number} tableNumber table number
+ * @param {number} tableColumnNumber table column number
+ * 
  * @return {null}
  */
-const saveSpannerConstraints = () => {
-  constraintIndex = String(tableNumber) + String(tableColumnNumber);
+const saveSpannerConstraints = (tableNumber, tableColumnNumber, originalColumnName) => {
+  let constraintIndex = String(tableNumber) + String(tableColumnNumber);
+  let notNullFound = '';
   constraintIndex = parseInt(constraintIndex);
 
   if (notNullConstraint[constraintIndex] === 'Not Null') {
@@ -1256,42 +1047,23 @@ const saveSpannerConstraints = () => {
  * @return {null}
  */
 const createSummaryForEachTable = (index, summary) => {
-  summaryCard = document.createElement('div');
-  summaryCard.className = 'summaryCard';
+  let summaryContentForTable = '';
+  summaryContentForTable = `<div class='summaryCard'>
+                              <div class='summaryCardHeader' role='tab'>
+                                <h5 class='mb-0'>
+                                  <a href='#viewSummary${index}' data-toggle='collapse' class='summaryFont'>View Summary</a>
+                                </h5>
+                              </div>
 
-  summaryCardHeader = document.createElement("div")
-  summaryCardHeader.className = 'summaryCardHeader';
-  summaryCardHeader.role = 'tab';
-
-  summaryCardHeading = document.createElement("h5")
-  summaryCardHeading.className = 'mb-0';
-
-  summaryCardLink = document.createElement("a")
-  summaryCardLink.innerHTML = `View Summary`;
-  summaryCardLink.className = 'summaryFont';
-  summaryCardLink.setAttribute("data-toggle", "collapse");
-  summaryCardLink.setAttribute("href", "#viewSummary" + index);
-
-  summaryCardHeading.appendChild(summaryCardLink);
-  summaryCardHeader.appendChild(summaryCardHeading);
-  summaryCard.appendChild(summaryCardHeader);
-
-  summaryCollapse = document.createElement("div")
-  summaryCollapse.setAttribute("id", 'viewSummary' + index);
-  summaryCollapse.className = "collapse summaryCollapse";
-
-  summaryCollapseCard = document.createElement("div");
-  summaryCollapseCard.className = "mdc-card mdc-card-content summaryBorder";
-  summaryCollapseCard.setAttribute('border', '0px');
-
-  summaryContent = document.createElement('div');
-  summaryContent.className = 'mdc-card summary-content';
-  summaryContent.innerHTML = summary[Object.keys(summary)[index]].split('\n').join('<br />');
-  summaryCollapseCard.appendChild(summaryContent);
-
-  summaryCollapse.appendChild(summaryCollapseCard);
-  summaryCard.appendChild(summaryCollapse);
-  tableAccContent.appendChild(summaryCard);
+                              <div id='viewSummary${index}' class='collapse summaryCollapse'>
+                                <div class='mdc-card mdc-card-content summaryBorder' style='border: 0px;'>
+                                  <div class='mdc-card summary-content'>
+                                    ${summary[Object.keys(summary)[index]].split('\n').join('<br />')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>`;
+  return summaryContentForTable;
 }
 
 /**
@@ -1301,86 +1073,33 @@ const createSummaryForEachTable = (index, summary) => {
  * @return {null}
  */
 const createSummaryFromJson = (result) => {
-  jQuery("#download-report").click(function () {
-    downloadFilePaths = JSON.parse(localStorage.getItem('downloadFilePaths'));
-    reportFilePath = downloadFilePaths.Report;
-    reportFileName = reportFilePath.split('/')[reportFilePath.split('/').length - 1];
-    filePath = './' + reportFileName;
-    readTextFile(filePath, function (text) {
-      jQuery("<a />", {
-        "download": reportFileName + '.txt',
-        "href": "data:application/json;charset=utf-8," + encodeURIComponent(text),
-      }).appendTo("body")
-        .click(function () {
-          jQuery(this).remove()
-        })[0].click();
-    })
-  });
-
-  summary = result;
-  summaryLength = Object.keys(summary).length;
-
-  summaryAccordion = document.getElementById('summary-accordion');
-  summaryUl = document.createElement('ul');
-
-  expand_button = document.createElement("button");
-  expand_button.setAttribute('id', 'summaryExpandButton');
-  expand_button.innerHTML = "Expand All";
-  expand_button.className = "expand";
-  expand_button.addEventListener('click', function () {
-    if (jQuery(this).html() === 'Expand All') {
-      jQuery(this).html('Collapse All');
-      jQuery('.summaryCollapse').collapse('show');
-    }
-    else {
-      jQuery(this).html('Expand All');
-      jQuery('.summaryCollapse').collapse('hide');
-    }
-  })
-  summaryAccordion.appendChild(expand_button);
-
+  let summary = result;
+  let summaryLength = Object.keys(summary).length;
+  let summaryAccordion = document.getElementById('summary-accordion');
+  let summaryUl = document.createElement('ul');
+  let summaryContent = '';
+  conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
   for (var i = 0; i < summaryLength; i++) {
-    li = document.createElement('area');
+    summaryContent += `<section>
+                          <div class='card'>
+                            <div class='card-header ddl-card-header ddlBorderBottom ${panelBorderClass(conversionRateResp[srcTableName[i]])}' role='tab'>
+                              <h5 class='mb-0'>
+                                <a data-toggle='collapse' href='#${Object.keys(summary)[i]}-summary'>
+                                  Table: ${Object.keys(summary)[i]} <i class="fas fa-angle-down rotate-icon"></i>
+                                </a>
+                              </h5>
+                            </div>
 
-    // panel creation for each table
-    summaryTabCard = document.createElement("div");
-    summaryTabCard.className = "card";
-
-    summaryTabCardHeader = document.createElement("div");
-    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
-    summaryTabCardHeader.className = 'card-header ddl-card-header ddlBorderBottom' + panelBorderClass(conversionRateResp[src_table_name[i]]);
-    summaryTabCardHeader.role = 'tab';
-
-    summaryTabHeading = document.createElement("h5");
-    summaryTabHeading.className = 'mb-0';
-
-    summaryTabLink = document.createElement("a");
-    summaryTabLink.innerHTML = `Table: ${Object.keys(summary)[i]} <i class="fas fa-angle-down rotate-icon" />`;
-    summaryTabLink.setAttribute("data-toggle", "collapse");
-    summaryTabLink.setAttribute("href", "#" + Object.keys(summary)[i] + '-summary');
-
-    summaryTabHeading.appendChild(summaryTabLink);
-    summaryTabCardHeader.appendChild(summaryTabHeading);
-    summaryTabCard.appendChild(summaryTabCardHeader);
-
-    summaryTabCollapse = document.createElement("div")
-    summaryTabCollapse.setAttribute("id", Object.keys(summary)[i] + '-summary')
-    summaryTabCollapse.className = "collapse summaryCollapse";
-
-    summaryTabCardContent = document.createElement("div");
-    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
-    summaryTabCardContent.className = "mdc-card mdc-card-content ddl-border table-card-border" + mdcCardBorder(conversionRateResp[src_table_name[i]]);
-
-    summaryTabCard2 = document.createElement('div');
-    summaryTabCard2.className = 'mdc-card summary-content';
-    summaryTabCard2.innerHTML = summary[Object.keys(summary)[i]].split('\n').join('<br />');
-    summaryTabCardContent.appendChild(summaryTabCard2);
-
-    summaryTabCollapse.appendChild(summaryTabCardContent);
-    summaryTabCard.appendChild(summaryTabCollapse);
-
-    li.appendChild(summaryTabCard);
-    summaryUl.appendChild(li);
+                            <div id='${Object.keys(summary)[i]}-summary' class='collapse summaryCollapse'>
+                              <div class='mdc-card mdc-card-content ddl-border table-card-border ${mdcCardBorder(conversionRateResp[srcTableName[i]])}'>
+                                <div class='mdc-card summary-content'>
+                                  ${summary[Object.keys(summary)[i]].split('\n').join('<br />')}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                       </section>`
+    summaryUl.innerHTML = summaryContent;
   }
   summaryAccordion.appendChild(summaryUl);
 }
@@ -1392,84 +1111,36 @@ const createSummaryFromJson = (result) => {
  * @return {null}
  */
 const createDdlFromJson = (result) => {
-  jQuery("#download-ddl").click(function () {
-    jQuery("<a />", {
-      "download": "ddl.json",
-      "href": "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result, null, 4)),
-    }).appendTo("body")
-      .click(function () {
-        jQuery(this).remove()
-      })[0].click()
-  });
-
-  ddl = result;
-  ddl_length = Object.keys(ddl).length;
-  ddl_accordion = document.getElementById('ddl-accordion');
-
-  expand_button = document.createElement("button");
-  expand_button.setAttribute('id', 'ddlExpandButton');
-  expand_button.innerHTML = "Expand All";
-  expand_button.className = "expand";
-  expand_button.addEventListener('click', function () {
-    if (jQuery(this).html() === 'Expand All') {
-      jQuery(this).html('Collapse All');
-      jQuery('.ddlCollapse').collapse('show');
-    }
-    else {
-      jQuery(this).html('Expand All');
-      jQuery('.ddlCollapse').collapse('hide');
-    }
-  })
-  ddl_accordion.appendChild(expand_button);
-  ddlUl = document.createElement('ul');
-
-  for (var i = 0; i < ddl_length; i++) {
-    li = document.createElement('area');
-
-    // panel creation for each table
-    ddlCard = document.createElement("div");
-    ddlCard.className = "card";
-
-    ddlCardHeader = document.createElement("div");
-    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
-    ddlCardHeader.className = 'card-header ddl-card-header ddlBorderBottom' + panelBorderClass(conversionRateResp[src_table_name[i]]);
-    ddlCardHeader.role = 'tab';
-
-    ddlCardHeading = document.createElement("h5")
-    ddlCardHeading.className = 'mb-0';
-
-    ddlCardLink = document.createElement("a");
-    ddlCardLink.innerHTML = `Table: ${Object.keys(ddl)[i]} <i class="fas fa-angle-down rotate-icon" />`;
-    ddlCardLink.setAttribute("data-toggle", "collapse");
-    ddlCardLink.setAttribute("href", "#" + Object.keys(ddl)[i] + '-ddl');
-
-    ddlCardHeading.appendChild(ddlCardLink);
-    ddlCardHeader.appendChild(ddlCardHeading);
-    ddlCard.appendChild(ddlCardHeader);
-
-    ddlCardCollapse = document.createElement("div");
-    ddlCardCollapse.setAttribute("id", Object.keys(ddl)[i] + '-ddl');
-    ddlCardCollapse.className = "collapse ddlCollapse";
-
-    ddlCardContent = document.createElement("div");
-    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
-    ddlCardContent.className = "mdc-card mdc-card-content ddl-border table-card-border" + mdcCardBorder(conversionRateResp[src_table_name[i]]);
-    createIndex = (ddl[Object.keys(ddl)[i]]).search('CREATE TABLE');
-    createEndIndex = createIndex + 12;
+  let ddl = result;
+  let ddlLength = Object.keys(ddl).length;
+  let ddlAccordion = document.getElementById('ddl-accordion');
+  let ddlUl = document.createElement('ul');
+  let ddlContent = '';
+  conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
+  for (var i = 0; i < ddlLength; i++) {
+    let createIndex = (ddl[Object.keys(ddl)[i]]).search('CREATE TABLE');
+    let createEndIndex = createIndex + 12;
     ddl[Object.keys(ddl)[i]] = ddl[Object.keys(ddl)[i]].substring(0, createIndex) + ddl[Object.keys(ddl)[i]].substring(createIndex, createEndIndex).fontcolor('#4285f4').bold() + ddl[Object.keys(ddl)[i]].substring(createEndIndex);
+    ddlContent += `<section>
+                    <div class='card'>
+                      <div class='card-header ddl-card-header ddlBorderBottom ${panelBorderClass(conversionRateResp[srcTableName[i]])}' role='tab'>
+                        <h5 class='mb-0'>
+                          <a href='#${Object.keys(ddl)[i]}-ddl' data-toggle='collapse'>Table: ${Object.keys(ddl)[i]} <i class="fas fa-angle-down rotate-icon"></i></a>
+                        </h5>
+                      </div>
 
-    ddlCardContent2 = document.createElement('div');
-    ddlCardContent2.className = 'mdc-card ddl-content';
-    ddlCardContent2.innerHTML = `<pre><code>${ddl[Object.keys(ddl)[i]].split('\n').join(`<span class='sql-c'></span>`)}</code></pre>`
-    ddlCardContent.appendChild(ddlCardContent2);
-
-    ddlCardCollapse.appendChild(ddlCardContent)
-    ddlCard.appendChild(ddlCardCollapse)
-
-    li.appendChild(ddlCard);
-    ddlUl.appendChild(li)
+                      <div id='${Object.keys(ddl)[i]}-ddl' class='collapse ddlCollapse'>
+                        <div class='mdc-card mdc-card-content ddl-border table-card-border ${mdcCardBorder(conversionRateResp[srcTableName[i]])}'>
+                          <div class='mdc-card ddl-content'>
+                            <pre><code>${ddl[Object.keys(ddl)[i]].split('\n').join(`<span class='sql-c'></span>`)}</code></pre>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>`
+    ddlUl.innerHTML = ddlContent;
   }
-  ddl_accordion.appendChild(ddlUl);
+  ddlAccordion.appendChild(ddlUl);
 }
 
 /**
@@ -1499,7 +1170,6 @@ const showSchemaAssessment = async(windowEvent) => {
   sourceTableFlag = localStorage.getItem('sourceDbName');
   jQuery('#connectModalSuccess').modal("hide");
   jQuery('#connectToDbModal').modal("hide");
-  jQuery('#globalDataTypeModal').modal("hide");
   const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
   document.getElementById('app').innerHTML = component.render();
   showSchemaConversionReportContent();
@@ -1675,7 +1345,7 @@ const storeDumpFileValues = (dbType, filePath) => {
     localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   localStorage.setItem('globalDumpFilePath', filePath);
-  onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'), window.event.type);
+  onLoadDatabase(localStorage.getItem('globalDbType'), localStorage.getItem('globalDumpFilePath'));
 }
 
 /**
@@ -1685,7 +1355,7 @@ const storeDumpFileValues = (dbType, filePath) => {
  * @param {string} dumpFilePath path entered for the dump file
  * @return {null}
  */
-const onLoadDatabase = async(dbType, dumpFilePath, windowEvent) => {
+const onLoadDatabase = async(dbType, dumpFilePath) => {
   showSpinner();
   reportData = await fetch(apiUrl + '/convert/dump', {
     method: 'POST',
@@ -1728,11 +1398,12 @@ const onLoadDatabase = async(dbType, dumpFilePath, windowEvent) => {
  * @return {null}
  */
 const getInterleaveInfo = async() => {
-  schemaObj = JSON.parse(localStorage.getItem('conversionReportContent'));
-  tablesNumber = Object.keys(schemaObj.SpSchema).length;
+  let schemaObj = JSON.parse(localStorage.getItem('conversionReportContent'));
+  let tablesNumber = Object.keys(schemaObj.SpSchema).length;
+  let interleaveApiCallResp = [];
   for (var i = 0; i < tablesNumber; i++) {
-    tableName = Object.keys(schemaObj.ToSpanner)[i];
-    interleaveApiCall = await fetch(apiUrl + '/checkinterleave/table?table=' + tableName)
+    let tableName = Object.keys(schemaObj.ToSpanner)[i];
+    let interleaveApiCall = await fetch(apiUrl + '/checkinterleave/table?table=' + tableName)
     .then(async function (response) {
       if (response.ok) {
         return response;
@@ -1804,12 +1475,12 @@ const onconnect = (dbType, dbHost, dbPort, dbUser, dbName, dbPassword) => {
  * @return {null}
  */
 const onImport = async() => {
-  await getConversionRate();
+  getConversionRate();
   await ddlSummaryAndConversionApiCall();
   await getInterleaveInfo();
-  jQuery('#importSchemaModal').modal('hide');
   const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
   document.getElementById('app').innerHTML = component.render();
+  jQuery('#importSchemaModal').modal('hide');
   showSchemaConversionReportContent();
 }
 
@@ -1933,7 +1604,7 @@ const readTextFile = (file, callback) => {
  * @return {null}
  */
 const setSessionTableContent = () => {
-  sessionArray = JSON.parse(sessionStorage.getItem('sessionStorage'));
+  let sessionArray = JSON.parse(sessionStorage.getItem('sessionStorage'));
   if (sessionArray === null) {
     document.getElementById('session-table-content').innerHTML = `<tr>
       <td colspan='5' class='center session-image'><img src='Icons/Icons/Group 2154.svg' alt='nothing to show'></td>
@@ -1943,47 +1614,38 @@ const setSessionTableContent = () => {
     </tr>`
   }
   else {
+    let sessionArrayLength = sessionArray.length;
     let sessionTableContentEle = document.getElementById('session-table-content');
-    for (var x = 0; x < sessionArray.length; x++) {
-      session = sessionArray[x];
-      driver = session.driver;
-      path = session.path;
-      sessionName = session.fileName;
-      sessionDate = session.createdAt.substr(0, session.createdAt.indexOf("T"));
-      sessionTime = session.createdAt.substr(session.createdAt.indexOf("T") + 1);
-      sessionTableTr = document.createElement('tr');
-      sessionTableTr.className = 'd-flex';
-
-      td1 = document.createElement('td');
-      td1.className = 'col-2 session-table-td2';
-      td1.innerHTML = sessionName;
-
-      td2 = document.createElement('td');
-      td2.className = 'col-4 session-table-td2';
-      td2.innerHTML = sessionDate;
-
-      td3 = document.createElement('td');
-      td3.className = 'col-2 session-table-td2';
-      td3.innerHTML = sessionTime;
-
-      td4 = document.createElement('td');
-      td4.setAttribute('id', x);
-      td4.className = 'col-4 session-table-td2 session-action';
-      td4.innerHTML = `<a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;'>Resume Session</a>`;
-
-      td4.addEventListener('click', function () {
-        var index = jQuery(this).attr('id');
-        storeResumeSessionId(sessionArray[index].driver, sessionArray[index].path, sessionArray[index].fileName, sessionArray[index].sourceDbType);
-      });
-
-      sessionTableTr.appendChild(td1);
-      sessionTableTr.appendChild(td2);
-      sessionTableTr.appendChild(td3);
-      sessionTableTr.appendChild(td4);
-
-      sessionTableContentEle.appendChild(sessionTableTr);
+    let sessionTableContent = '';
+    for (var x = 0; x < sessionArrayLength; x++) {
+      let session = sessionArray[x];
+      // let driver = session.driver;
+      // let path = session.path;
+      let sessionName = session.fileName;
+      let sessionDate = session.createdAt.substr(0, session.createdAt.indexOf("T"));
+      let sessionTime = session.createdAt.substr(session.createdAt.indexOf("T") + 1);
+      sessionTableContent += `<tr class='d-flex'>
+                                <td class='col-2 session-table-td2'>${sessionName}</td>
+                                <td class='col-4 session-table-td2'>${sessionDate}</td>
+                                <td class='col-2 session-table-td2'>${sessionTime}</td>
+                                <td class='col-4 session-table-td2 session-action' id=${x}>
+                                  <a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='resumeSessionHandler(${x}, ${JSON.stringify(sessionArray)})'>Resume Session</a>
+                                </td>
+                              </tr>`;
+      sessionTableContentEle.innerHTML = sessionTableContent;
     }
   }
+}
+
+/**
+ * Function to handle resume session click event
+ *
+ * @param {number} index session index in the array
+ * @param {array} sessionArray array of objects containing session information
+ * @return {null}
+ */
+const resumeSessionHandler = (index, sessionArray) => {
+  storeResumeSessionId(sessionArray[index].driver, sessionArray[index].path, sessionArray[index].fileName, sessionArray[index].sourceDbType);
 }
 
 const sourceSchema = (val) => {
@@ -1995,15 +1657,32 @@ const sourceSchema = (val) => {
   }
 }
 
+const getPathAndEvent = (params) => {
+  if (params.path === '/schema-report-connect-to-db' && params.event === 'hashchange') {
+    showSchemaAssessment(window.event.type);
+  }
+  else if ( (params.path === '/schema-report-connect-to-db' || params.path === '/schema-report-load-db-dump') && params.event === 'load') {
+    conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
+    createSourceAndSpannerTables(JSON.parse(localStorage.getItem('conversionReportContent')));
+    createDdlFromJson(JSON.parse(localStorage.getItem('ddlStatementsContent')));
+    createSummaryFromJson(JSON.parse(localStorage.getItem('summaryReportContent')));
+  }
+  else if (params.path === '/schema-report-import-db') {
+    onImport();
+  }
+  else if (params.path === '/schema-report-resume-session') {
+    resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'), localStorage.getItem('sourceDb'), window.event.type);
+  }
+}
+
 /**
  * Function to render home screen html and initiate home screen tasks
  *
- * @param {any} params 
  * @return {null}
  */
 const homeScreen = () => {
   initHomeScreenTasks();
-  return homeScreenHtml()
+  return homeScreenHtml();
 }
 
 /**
@@ -2013,25 +1692,25 @@ const homeScreen = () => {
  */
 const homeScreenHtml = () => {
   return (`
-   <header class="main-header">
-   <nav class="navbar navbar-static-top">
-     <img src="Icons/Icons/google-spanner-logo.png" class="logo">
-   </nav>
+  <header class="main-header">
+    <nav class="navbar navbar-static-top">
+      <img src="Icons/Icons/google-spanner-logo.png" class="logo">
+    </nav>
 
-   <nav class="navbar navbar-static-top">
-     <div class="header-topic"><a href='#/' class="active">Home</a></div>
-   </nav>
+    <nav class="navbar navbar-static-top">
+      <div class="header-topic"><a href='#/' class="active">Home</a></div>
+    </nav>
 
-   <nav class="navbar navbar-static-top">
-     <div class="header-topic"><a href="#" class="inactive" style="text-decoration: none;">Schema Conversion</a>
-     </div>
-   </nav>
+    <nav class="navbar navbar-static-top">
+      <div class="header-topic"><a href="#" class="inactive" style="text-decoration: none;">Schema Conversion</a>
+      </div>
+    </nav>
 
-   <nav class="navbar navbar-static-top">
-     <div class="header-topic"><a href="#/instructions" class="inactive" style="text-decoration: none;">Instructions</a></div>
-   </nav>
-
- </header>
+    <nav class="navbar navbar-static-top">
+      <div class="header-topic"><a href="#/instructions" class="inactive" style="text-decoration: none;">Instructions</a></div>
+    </nav>
+  </header>
+                                                        
 
  <div class="main-content">
 
@@ -2226,8 +1905,8 @@ const homeScreenHtml = () => {
 
          <div class="form-group">
          <label class="modal-label" for="schemaFile">Schema File</label><br>
-         <input class="form-control" aria-describedby="" id="upload" type="file"/>
-         <a href="" id="upload_link">Upload File</a>​
+         <input class="form-control" aria-describedby="" id="upload" type="file" onchange='filenameChangeHandler(event)'/>
+         <a href="" id="upload_link" onclick='uploadFileHandler(event)'>Upload File</a>​
          </div>
 
          </form>

@@ -1,6 +1,8 @@
 // variables initialisation
 const RED = '#F44336';
 const apiUrl = '';
+var sourceTableFlag;
+var conversionRateResp = {}, srcTable, spTable, spTableCols;
 
 /**
  * Function to fetch panel border color based on conversion status

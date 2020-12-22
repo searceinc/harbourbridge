@@ -7,7 +7,7 @@ const renderInstructionsHtml = (params) => {
           </nav>
         
           <nav class="navbar navbar-static-top">
-            <div class="header-topic" style="margin-right: 30px;"><a href='/frontend/' style="text-decoration: none; color: #5E5752;">Home</a></div>
+            <div class="header-topic" style="margin-right: 30px;"><a href='#/' style="text-decoration: none; color: #5E5752;">Home</a></div>
           </nav>
         
           <nav class="navbar navbar-static-top">

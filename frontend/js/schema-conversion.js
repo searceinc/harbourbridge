@@ -67,7 +67,6 @@ const initTasks = () => {
 /**
  * Function for calling initTasks and html functions for edit schema screen
  *
- * @param {any} params
  * @return {Function}
  */
 const schemaReport = () => {
@@ -89,7 +88,7 @@ const searchTable = (tabId) => {
   searchInputFilter = searchInput.value.toUpperCase();
   list = document.getElementById(tableListArea);
   list.style.display = '';
-  listElem = list.getElementsByTagName('area');
+  listElem = list.getElementsByTagName('section');
   tableListLength = Object.keys(schemaConversionObj.SpSchema).length;
   for (i = 0; i < Object.keys(schemaConversionObj.SpSchema).length; i++) {
     tableVal = Object.keys(schemaConversionObj.SpSchema)[i];
@@ -145,9 +144,124 @@ const setGlobalDataType = () => {
         await ddlSummaryAndConversionApiCall();
         const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
         document.getElementById('app').innerHTML = component.render();
-        showSchemaConversionReportContent(null);
+        showSchemaConversionReportContent();
       });
     })
+}
+
+/**
+ * Function to download schema report
+ *
+ * @return {null}
+ */
+const downloadSchema = () => {
+  let downloadFilePaths = JSON.parse(localStorage.getItem('downloadFilePaths'));
+  let schemaFilePath = downloadFilePaths.Schema;
+  let schemaFileName = schemaFilePath.split('/')[schemaFilePath.split('/').length - 1];
+  let filePath = './' + schemaFileName;
+  readTextFile(filePath, function (text) {
+    jQuery("<a />", {
+      "download": schemaFileName + ".txt",
+      "href": "data:application/json;charset=utf-8," + encodeURIComponent(text),
+    }).appendTo("body")
+    .click(function () {
+      jQuery(this).remove()
+    })[0].click()
+  });
+}
+
+/**
+ * Function to download ddl statements
+ *
+ * @return {null}
+ */
+const downloadDdl = () => {
+  jQuery("<a />", {
+    "download": "ddl.json",
+    "href": "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(JSON.parse(localStorage.getItem('ddlStatementsContent')), null, 4)),
+  }).appendTo("body")
+    .click(function () {
+      jQuery(this).remove()
+    })[0].click();
+}
+
+/**
+ * Function to download summary report
+ *
+ * @return {null}
+ */
+const downloadReport = () => {
+  let downloadFilePaths = JSON.parse(localStorage.getItem('downloadFilePaths'));
+  let reportFilePath = downloadFilePaths.Report;
+  let reportFileName = reportFilePath.split('/')[reportFilePath.split('/').length - 1];
+  let filePath = './' + reportFileName;
+  readTextFile(filePath, function (text) {
+    jQuery("<a />", {
+      "download": reportFileName + '.txt',
+      "href": "data:application/json;charset=utf-8," + encodeURIComponent(text),
+    }).appendTo("body")
+    .click(function () {
+      jQuery(this).remove()
+    })[0].click();
+  })
+}
+
+/**
+ * Function to handle click event on expand all button of report tab
+ *
+ * @return {null}
+ */
+const reportExpandHandler = (event) => {
+  if (event[0].innerText === 'Expand All') {
+    event[0].innerText = 'Collapse All';
+    jQuery('.reportCollapse').collapse('show');
+  }
+  else {
+    event[0].innerText = 'Expand All';
+    jQuery('.reportCollapse').collapse('hide');
+  }
+}
+
+/**
+ * Function to handle click event on expand all button of ddl tab
+ *
+ * @return {null}
+ */
+const ddlExpandHandler = (event) => {
+  if (event[0].innerText === 'Expand All') {
+    event[0].innerText = 'Collapse All';
+    jQuery('.ddlCollapse').collapse('show');
+  }
+  else {
+    event[0].innerText = 'Expand All';
+    jQuery('.ddlCollapse').collapse('hide');
+  }
+}
+
+/**
+ * Function to handle click event on expand all button of summary tab
+ *
+ * @return {null}
+ */
+const summaryExpandHandler = (event) => {
+  if (event[0].innerText === 'Expand All') {
+    event[0].innerText = 'Collapse All';
+    jQuery('.summaryCollapse').collapse('show');
+  }
+  else {
+    event[0].innerText = 'Expand All';
+    jQuery('.summaryCollapse').collapse('hide');
+  }
+}
+
+/**
+ * Function to handle click event on edit global data type button of report tab
+ *
+ * @return {null}
+ */
+const globalEditHandler = () => {
+  createEditDataTypeTable();
+  jQuery('#globalDataTypeModal').modal();
 }
 
 /**
@@ -164,7 +278,7 @@ const renderSchemaReportHtml = () => {
           </nav>
         
           <nav class="navbar navbar-static-top">
-            <div class="header-topic" style="margin-right: 30px;"><a href='/frontend/' style="text-decoration: none; color: #5E5752;">Home</a></div>
+            <div class="header-topic" style="margin-right: 30px;"><a href='#/' style="text-decoration: none; color: #5E5752;">Home</a></div>
           </nav>
         
           <nav class="navbar navbar-static-top">
@@ -188,9 +302,9 @@ const renderSchemaReportHtml = () => {
 
             <div>
                 <h4 class="report-header">Recommended Schema Conversion Report 
-                  <button id="download-schema" class="download-button">Download Schema File</button>
-                  <button id="download-ddl" style='display: none;' class="download-button">Download SQL Schema</button>
-                  <button id="download-report" style='display: none;' class="download-button">Download Report</button>
+                  <button id="download-schema" class="download-button" onclick='downloadSchema()'>Download Schema File</button>
+                  <button id="download-ddl" style='display: none;' class="download-button" onclick='downloadDdl()'>Download SQL Schema</button>
+                  <button id="download-report" style='display: none;' class="download-button" onclick='downloadReport()'>Download Report</button>
                 </h4>
             </div>
             <div class="report-tabs">
@@ -230,11 +344,6 @@ const renderSchemaReportHtml = () => {
                   aria-label="Search" onkeyup='searchTable("summarySearchInput")'>
               </form>
 
-              <!-- <span class="info-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'><i class="large material-icons">info</i></span>
-                <span class="legend-icon statusTooltip" data-title='Excellent &nbsp;&nbsp; Good &nbsp;&nbsp; Poor' data-placement='bottom' style='cursor: pointer;'>
-                  Status Legend
-                </span> -->
-
               <section class="cus-tip">
                 <span  class="cus-a info-icon statusTooltip"><i class="large material-icons">info</i><span class="legend-icon statusTooltip" style='cursor: pointer;display: inline-block;vertical-align: super;'>Status&nbsp;&nbsp;Legend</span></span>
                 <div class="legend-hover">
@@ -263,20 +372,21 @@ const renderSchemaReportHtml = () => {
 
 
                   <div class="accordion md-accordion" id="accordion" role="tablist" aria-multiselectable="true">
-                    
+                    <button class='expand' id='reportExpandButton' onclick='reportExpandHandler(jQuery(this))'>Expand All</button>
+                    <button class='expand right-align' id='editButton' onclick='globalEditHandler()'>Edit Global Data Type</button>
                   </div>
 
                 </div>
 
                 <div id="ddl" class="tab-pane fade">
                     <div class="panel-group" id="ddl-accordion">
-                      
+                      <button class='expand' id='ddlExpandButton' onclick='ddlExpandHandler(jQuery(this))'>Expand All</button>
                     </div> 
                 </div>
 
                 <div id="summary" class="tab-pane fade">
                     <div class="panel-group" id="summary-accordion">
-                      
+                      <button class='expand' id='summaryExpandButton' onclick='summaryExpandHandler(jQuery(this))'>Expand All</button>
                     </div> 
                 </div>
 
@@ -311,7 +421,7 @@ const renderSchemaReportHtml = () => {
           </div>
       
         </div>    
-    `)
+    `);
 
 }
 
