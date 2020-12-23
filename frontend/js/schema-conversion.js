@@ -14,6 +14,7 @@ var tableListArea = 'accordion';
  */
 const initTasks = () => {
   jQuery(document).ready(() => {
+    setActiceSelectedMenu('schemaScreen');
     jQuery('.reportCollapse').on('show.bs.collapse', function() {
       jQuery(this).closest('.card').find('.rotate-icon').toggleClass('down');
       reportAccCount = reportAccCount + 1;
@@ -80,17 +81,24 @@ const schemaReport = () => {
  * @return {null}
  */
 const searchTable = (tabId) => {
-  var searchInput, searchInputFilter, i, tableVal, list, listElem, flag, elem;
+  let searchInput, searchInputFilter, tableVal, list, listElem, elem;
+  let flag = false;
   elem = document.getElementById('tabBg');
-  elem.appendChild(notFoundTxt);
-  flag = false
+  if (elem) {
+    elem.appendChild(notFoundTxt);
+  }
+  notFoundTxt.style.display = 'none';
   searchInput = document.getElementById(tabId);
-  searchInputFilter = searchInput.value.toUpperCase();
+  if (searchInput) {
+    searchInputFilter = searchInput.value.toUpperCase();
+  }
   list = document.getElementById(tableListArea);
-  list.style.display = '';
+  if (list) {
+    list.style.display = ''; 
+  }
   listElem = list.getElementsByTagName('section');
   tableListLength = Object.keys(schemaConversionObj.SpSchema).length;
-  for (i = 0; i < Object.keys(schemaConversionObj.SpSchema).length; i++) {
+  for (var i = 0; i < Object.keys(schemaConversionObj.SpSchema).length; i++) {
     tableVal = Object.keys(schemaConversionObj.SpSchema)[i];
     if (tableVal.toUpperCase().indexOf(searchInputFilter) > -1) {
       listElem[i].style.display = '';
@@ -272,26 +280,6 @@ const globalEditHandler = () => {
 const renderSchemaReportHtml = () => {
   currentLocation = "#" + location.hash.slice(1).toLowerCase() || '/';
   return (`
-        <header class="main-header">
-          <nav class="navbar navbar-static-top">
-            <img src="Icons/Icons/google-spanner-logo.png" class="logo">
-          </nav>
-        
-          <nav class="navbar navbar-static-top">
-            <div class="header-topic" style="margin-right: 30px;"><a href='#/' style="text-decoration: none; color: #5E5752;">Home</a></div>
-          </nav>
-        
-          <nav class="navbar navbar-static-top">
-            <div class="header-topic" style="margin-right: 30px; text-decoration: none; color: #4285f4;"><a href=${currentLocation}>Schema Conversion</a>
-            </div>
-          </nav>
-        
-          <nav class="navbar navbar-static-top">
-            <div class="header-topic"><a href="#/instructions" style="text-decoration: none; color: #5E5752;">Instructions</a></div>
-          </nav>
-        
-        </header>
-
         <div id="snackbar"></div>
 
         <div class='spinner-backdrop' id='toggle-spinner' style="display:none">

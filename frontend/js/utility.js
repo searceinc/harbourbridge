@@ -2,7 +2,18 @@
 const RED = '#F44336';
 const apiUrl = '';
 var sourceTableFlag;
-var conversionRateResp = {}, srcTable, spTable, spTableCols;
+var srcTable, spTable, spTableCols;
+
+/**
+ * Function to set style for selected menu
+ *
+ * @param {string} selectedMenuId id of selected menu
+ * @return {null}
+ */
+const setActiceSelectedMenu = (selectedMenuId) => {
+  jQuery("[name='headerMenu']:not('#"+selectedMenuId+"')").addClass('inactive');
+  jQuery('#'+selectedMenuId).removeClass('inactive');
+}
 
 /**
  * Function to fetch panel border color based on conversion status

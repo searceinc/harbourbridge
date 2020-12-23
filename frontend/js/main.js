@@ -1,5 +1,3 @@
-var conversionRateResp = {};
-
 /**
  * Function to initiate home screen tasks like validating form input fields
  *
@@ -7,7 +5,7 @@ var conversionRateResp = {};
  */
 const initHomeScreenTasks = () => {
   jQuery(document).ready(function () {
-    setSessionTableContent();
+    setActiceSelectedMenu('homeScreen');
     jQuery('#loadDbForm > div > input').keyup(function () {
       var empty = false;
       jQuery('#loadDbForm > div > input').each(function () {
@@ -64,6 +62,8 @@ const filenameChangeHandler = () => {
   reader.onload = function (event) {
     let importSchemaObj = JSON.parse(event.target.result);
     localStorage.setItem('conversionReportContent', JSON.stringify(importSchemaObj));
+    localStorage.setItem('importFileName', fileName);
+    localStorage.setItem('importFilePath', 'frontend/');
   }
   reader.readAsText(event.target.files[0]);
 }
@@ -123,7 +123,9 @@ const createEditDataTypeTable = () => {
                               ${tableContent}
                             </tbody>
                          </table>`;
-  globalDataTypeDiv.innerHTML = globalDataTypeTable;
+  if (globalDataTypeDiv) {
+    globalDataTypeDiv.innerHTML = globalDataTypeTable;
+  }
   tooltipHandler();
 }
 
@@ -159,7 +161,10 @@ const dataTypeUpdate = (id) => {
     }
   }
   selectHTML += optionHTML + `</select>`;
-  document.getElementById('dataTypeVal' + idNum).innerHTML = selectHTML;
+  let dataTypeValEle = document.getElementById('dataTypeVal' + idNum);
+  if (dataTypeValEle) {
+    document.getElementById('dataTypeVal' + idNum).innerHTML = selectHTML;
+  }
   tooltipHandler();
 }
 
@@ -175,6 +180,7 @@ const createSourceAndSpannerTables = async(obj) => {
   let mySelect, spannerColumnsContent, columnNameContent, dataTypeContent, constraintsContent, notNullFound, constraintId, srcConstraintHtml;
   let initialPkSeqId = [], constraintTabCell = [], primaryTabCell = [], spPlaceholder = [], srcPlaceholder = [], countSp = [], countSrc = [];
   let tableContent = '';
+  let conversionRateResp = {};
   let constraintCount = 0;
   let accordion = document.getElementById("accordion");
   let srcTableNum = Object.keys(schemaConversionObj.SrcSchema).length;
@@ -432,7 +438,9 @@ const createSourceAndSpannerTables = async(obj) => {
                       </section>`;
     reportUl.innerHTML += tableContent;
   }
-  accordion.appendChild(reportUl);
+  if (accordion) {
+    accordion.appendChild(reportUl);
+  }
   constraintCount--;
   while (constraintCount >= 0) {
     mySelect = new vanillaSelectBox('#srcConstraint' + constraintCount, {
@@ -633,10 +641,11 @@ const editSpannerHandler = (event) => {
                     </span>`)
       jQuery(tableCheckboxGroup).prop('checked', true);
       let spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
-
-      editSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, tableId);
-      editSpannerDataType(spannerCellsList[1], tableNumber, tableColumnNumber);
-      editSpannerConstraint(spannerCellsList[2], tableNumber, tableColumnNumber);
+      if (spannerCellsList) {
+        editSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, tableId);
+        editSpannerDataType(spannerCellsList[1], tableNumber, tableColumnNumber);
+        editSpannerConstraint(spannerCellsList[2], tableNumber, tableColumnNumber);
+      }
       tableColumnNumber++;
     }
   });
@@ -720,6 +729,7 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber, table
  */
 const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
   let maxSeqId = 0;
+  let keyIdEle = document.getElementById(keyId);
   let pkArrayLength = pkArray[tableNumber].length;
   let pkFoundFlag = false;
   for (var z = 0; z < pkArrayLength; z++) {
@@ -742,7 +752,9 @@ const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
     pkArray[tableNumber].push({ 'Col': columnName, 'seqId': pkSeqId[tableNumber] });
   }
   schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks = pkArray[tableNumber];
-  document.getElementById(keyId).innerHTML = `<sub>${pkSeqId[tableNumber]}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
+  if (keyIdEle) {
+    keyIdEle.innerHTML = `<sub>${pkSeqId[tableNumber]}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
+  }
 }
 
 /**
@@ -797,7 +809,11 @@ const removePrimaryKeyFromSeq = (tableNumber, tableId) => {
  */
 const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
   let spannerCellValue = editColumn.innerHTML;
-  let srcCellValue = document.getElementById('srcDataType' + tableNumber + tableColumnNumber).innerHTML;
+  let srcCellValue;
+  let srcCellValueEle = document.getElementById('srcDataType' + tableNumber + tableColumnNumber);
+  if (srcCellValueEle) {
+    srcCellValue = srcCellValueEle.innerHTML;
+  }
   let dataTypeArray = null;
   let dataType = '';
   let globalDataTypesLength = Object.keys(globalDataTypes).length;
@@ -856,13 +872,15 @@ const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
   });
   jQuery('#spConstraint' + tableNumber + tableColumnNumber).on('change', function () {
     let idNum = parseInt(jQuery(this).attr('id').match(/\d+/g), 10);
-    constraintId = jQuery(this).attr('id');
     let constraints = document.getElementById(constraintId);
+    constraintId = jQuery(this).attr('id');
     notNullConstraint[idNum] = '';
-    let constraintsLength = constraints.length;
-    for (var c = 0; c < constraintsLength; c++) {
-      if (constraints.options[c].selected) {
-        notNullConstraint[idNum] = 'Not Null';
+    if (constraints) {
+      let constraintsLength = constraints.length;
+      for (var c = 0; c < constraintsLength; c++) {
+        if (constraints.options[c].selected) {
+          notNullConstraint[idNum] = 'Not Null';
+        }
       }
     }
   });
@@ -891,10 +909,14 @@ const saveSpannerChanges = (event, spPlaceholder) => {
   jQuery(tableId).each(function (index) {
     if (index > 1) {
       tableName = srcTableName[tableNumber];
+      let newColumnName;
       let tableColumnNumber = parseInt(jQuery(this).find('.srcColumn').attr('id').match(/\d+/), 10);
       let srcColumnName = jQuery(this).find('.srcColumn').html().trim()
       let spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
-      let newColumnName = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value;
+      let newColumnNameEle = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber);
+      if (newColumnNameEle) {
+        newColumnName = newColumnNameEle.value;
+      }
       let originalColumnName = schemaConversionObj.ToSpanner[srcTableName[tableNumber]].Cols[srcColumnName];
       updatedColsData.UpdateCols[originalColumnName] = {};
       updatedColsData.UpdateCols[originalColumnName]['Removed'] = false;
@@ -941,7 +963,9 @@ const saveSpannerChanges = (event, spPlaceholder) => {
             getInterleaveInfo();
           });
           const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
-          document.getElementById('app').innerHTML = component.render();
+          if (document.getElementById('app')) {
+            document.getElementById('app').innerHTML = component.render();
+          }
           showSchemaConversionReportContent();
         });
       }
@@ -1078,6 +1102,7 @@ const createSummaryFromJson = (result) => {
   let summaryAccordion = document.getElementById('summary-accordion');
   let summaryUl = document.createElement('ul');
   let summaryContent = '';
+  let conversionRateResp = {};
   conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
   for (var i = 0; i < summaryLength; i++) {
     summaryContent += `<section>
@@ -1101,7 +1126,9 @@ const createSummaryFromJson = (result) => {
                        </section>`
     summaryUl.innerHTML = summaryContent;
   }
-  summaryAccordion.appendChild(summaryUl);
+  if (summaryAccordion) {
+    summaryAccordion.appendChild(summaryUl);
+  }
 }
 
 /**
@@ -1116,6 +1143,7 @@ const createDdlFromJson = (result) => {
   let ddlAccordion = document.getElementById('ddl-accordion');
   let ddlUl = document.createElement('ul');
   let ddlContent = '';
+  let conversionRateResp = {};
   conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
   for (var i = 0; i < ddlLength; i++) {
     let createIndex = (ddl[Object.keys(ddl)[i]]).search('CREATE TABLE');
@@ -1140,7 +1168,9 @@ const createDdlFromJson = (result) => {
                   </section>`
     ddlUl.innerHTML = ddlContent;
   }
-  ddlAccordion.appendChild(ddlUl);
+  if (ddlAccordion) {
+    ddlAccordion.appendChild(ddlUl);
+  }
 }
 
 /**
@@ -1170,8 +1200,11 @@ const showSchemaAssessment = async(windowEvent) => {
   sourceTableFlag = localStorage.getItem('sourceDbName');
   jQuery('#connectModalSuccess').modal("hide");
   jQuery('#connectToDbModal').modal("hide");
+  jQuery('#globalDataTypeModal').modal("hide");
   const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
-  document.getElementById('app').innerHTML = component.render();
+  if (document.getElementById('app')) {
+    document.getElementById('app').innerHTML = component.render();
+  }
   showSchemaConversionReportContent();
   if (windowEvent == 'hashchange') {
     sessionRetrieval(sourceTableFlag);
@@ -1185,6 +1218,7 @@ const showSchemaAssessment = async(windowEvent) => {
  * @return {null}
  */
 const getConversionRate = async() => {
+  let conversionRateResp = {};
   conversionRate = await fetch(apiUrl + '/conversion')
   .then(function (response) {
     if (response.ok) {
@@ -1207,6 +1241,7 @@ const getConversionRate = async() => {
  * @return {null}
  */
 const ddlSummaryAndConversionApiCall = async() => {
+  let conversionRateResp = {};
   fetch(apiUrl + '/ddl')
   .then(async function (response) {
     if (response.ok) {
@@ -1386,7 +1421,9 @@ const onLoadDatabase = async(dbType, dumpFilePath) => {
   await getInterleaveInfo();
   sourceTableFlag = localStorage.getItem('sourceDbName');
   const { component = ErrorComponent } = findComponentByPath('/schema-report-load-db-dump', routes) || {};
-  document.getElementById('app').innerHTML = component.render();
+  if (document.getElementById('app')) {
+    document.getElementById('app').innerHTML = component.render();
+  }
   showSchemaConversionReportContent();
   sessionRetrieval(sourceTableFlag);
   showSnackbar('schema converted successfully !!', ' greenBg');
@@ -1403,7 +1440,7 @@ const getInterleaveInfo = async() => {
   let interleaveApiCallResp = [];
   for (var i = 0; i < tablesNumber; i++) {
     let tableName = Object.keys(schemaObj.ToSpanner)[i];
-    let interleaveApiCall = await fetch(apiUrl + '/checkinterleave/table?table=' + tableName)
+    interleaveApiCall = await fetch(apiUrl + '/checkinterleave/table?table=' + tableName)
     .then(async function (response) {
       if (response.ok) {
         return response;
@@ -1475,12 +1512,38 @@ const onconnect = (dbType, dbHost, dbPort, dbUser, dbName, dbPassword) => {
  * @return {null}
  */
 const onImport = async() => {
-  getConversionRate();
+  let driver = '';
+  let srcDb = localStorage.getItem('sourceDbName');
+  if (srcDb === 'MySQL') {
+    driver = 'mysqldump';
+  }
+  else if (srcDb === 'Postgres') {
+    driver = 'pg_dump';
+  }
+  let path = localStorage.getItem('importFilePath');
+  let fileName = localStorage.getItem('importFileName');
+  await fetch(apiUrl + '/session/resume', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      "driver": driver,
+      "path": path,
+      "fileName": fileName
+    })
+  })
+  .then(function(res) {
+    console.log(res);
+  });
   await ddlSummaryAndConversionApiCall();
   await getInterleaveInfo();
-  const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
-  document.getElementById('app').innerHTML = component.render();
   jQuery('#importSchemaModal').modal('hide');
+  const { component = ErrorComponent } = findComponentByPath('/schema-report-import-db', routes) || {};
+  if (document.getElementById('app')) {
+    document.getElementById('app').innerHTML = component.render();
+  }
   showSchemaConversionReportContent();
 }
 
@@ -1573,7 +1636,9 @@ const resumeSession = async(driver, path, fileName, sourceDb, windowEvent) => {
   await getInterleaveInfo();
   jQuery('#importSchemaModal').modal('hide');
   const { component = ErrorComponent } = findComponentByPath('/schema-report-resume-session', routes) || {};
-  document.getElementById('app').innerHTML = component.render();
+  if (document.getElementById('app')) {
+    document.getElementById('app').innerHTML = component.render();
+  }
   showSchemaConversionReportContent();
   if (windowEvent === 'hashchange') {
     showSnackbar('schema resumed successfully', ' greenBg');
@@ -1587,7 +1652,7 @@ const resumeSession = async(driver, path, fileName, sourceDb, windowEvent) => {
  * @return {null}
  */
 const readTextFile = (file, callback) => {
-  var rawFile = new XMLHttpRequest();
+  let rawFile = new XMLHttpRequest();
   rawFile.overrideMimeType("application/json");
   rawFile.open("GET", file, true);
   rawFile.onreadystatechange = function () {
@@ -1605,35 +1670,34 @@ const readTextFile = (file, callback) => {
  */
 const setSessionTableContent = () => {
   let sessionArray = JSON.parse(sessionStorage.getItem('sessionStorage'));
+  let sessionContent = '';
   if (sessionArray === null) {
-    document.getElementById('session-table-content').innerHTML = `<tr>
-      <td colspan='5' class='center session-image'><img src='Icons/Icons/Group 2154.svg' alt='nothing to show'></td>
-    </tr>
-    <tr>
-      <td colspan='5' class='center simple-grey-text'>No active session available! <br> Please connect a database to initiate a new session.</td>
-    </tr>`
+    if (document.getElementById('session-table-content')) {
+      sessionContent = `<tr>
+                          <td colspan='5' class='center session-image'><img src='Icons/Icons/Group 2154.svg' alt='nothing to show'></td>
+                        </tr>
+                        <tr>
+                          <td colspan='5' class='center simple-grey-text'>No active session available! <br> Please connect a database to initiate a new session.</td>
+                        </tr>`;
+    }
   }
   else {
     let sessionArrayLength = sessionArray.length;
-    let sessionTableContentEle = document.getElementById('session-table-content');
-    let sessionTableContent = '';
     for (var x = 0; x < sessionArrayLength; x++) {
       let session = sessionArray[x];
-      // let driver = session.driver;
-      // let path = session.path;
       let sessionName = session.fileName;
       let sessionDate = session.createdAt.substr(0, session.createdAt.indexOf("T"));
       let sessionTime = session.createdAt.substr(session.createdAt.indexOf("T") + 1);
-      sessionTableContent += `<tr class='d-flex'>
-                                <td class='col-2 session-table-td2'>${sessionName}</td>
-                                <td class='col-4 session-table-td2'>${sessionDate}</td>
-                                <td class='col-2 session-table-td2'>${sessionTime}</td>
-                                <td class='col-4 session-table-td2 session-action' id=${x}>
-                                  <a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='resumeSessionHandler(${x}, ${JSON.stringify(sessionArray)})'>Resume Session</a>
-                                </td>
-                              </tr>`;
-      sessionTableContentEle.innerHTML = sessionTableContent;
+      sessionContent += `<tr class='d-flex'>
+                          <td class='col-2 session-table-td2'>${sessionName}</td>
+                          <td class='col-4 session-table-td2'>${sessionDate}</td>
+                          <td class='col-2 session-table-td2'>${sessionTime}</td>
+                          <td class='col-4 session-table-td2 session-action' id=${x}>
+                            <a href='#/schema-report-resume-session' style='cursor: pointer; text-decoration: none;' onclick='resumeSessionHandler(${x}, ${JSON.stringify(sessionArray)})'>Resume Session</a>
+                          </td>
+                        </tr>`;
     }
+    return sessionContent;
   }
 }
 
@@ -1648,12 +1712,20 @@ const resumeSessionHandler = (index, sessionArray) => {
   storeResumeSessionId(sessionArray[index].driver, sessionArray[index].path, sessionArray[index].fileName, sessionArray[index].sourceDbType);
 }
 
-const sourceSchema = (val) => {
+/**
+ * Function to check source schema while importing any file
+ *
+ * @param {string} val source db value (mysql or postgres)
+ * @return {null}
+ */
+const importSourceSchema = (val) => {
   if (val === 'mysql') {
     sourceTableFlag = 'MySQL';
+    localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   else if (val === 'postgres') {
     sourceTableFlag = 'Postgres';
+    localStorage.setItem('sourceDbName', sourceTableFlag);
   }
 }
 
@@ -1692,283 +1764,238 @@ const homeScreen = () => {
  */
 const homeScreenHtml = () => {
   return (`
-  <header class="main-header">
-    <nav class="navbar navbar-static-top">
-      <img src="Icons/Icons/google-spanner-logo.png" class="logo">
-    </nav>
-
-    <nav class="navbar navbar-static-top">
-      <div class="header-topic"><a href='#/' class="active">Home</a></div>
-    </nav>
-
-    <nav class="navbar navbar-static-top">
-      <div class="header-topic"><a href="#" class="inactive" style="text-decoration: none;">Schema Conversion</a>
-      </div>
-    </nav>
-
-    <nav class="navbar navbar-static-top">
-      <div class="header-topic"><a href="#/instructions" class="inactive" style="text-decoration: none;">Instructions</a></div>
-    </nav>
-  </header>
-                                                        
-
- <div class="main-content">
-
-   <h5 class="welcome-heading">
-     Welcome To HarbourBridge
-   </h5>
-
-   <h5 class="connect-heading">
-     Connect or import your database
-   </h5>
-
-   <div class="card-section">
-     <div class="card-alignment">
-       <div class="card-1-alignment">
-         <div class="mdc-card connect-db-icon pointer" data-toggle="modal" data-target="#connectToDbModal" data-backdrop="static" data-keyboard="false">
-           <img src="Icons/Icons/Group 2048.svg" width="64" height="64"  style="margin:auto" alt="connect to db">
-         </div>
-         <div class="connect-text pointer" data-toggle="modal" data-target="#connectToDbModal" data-backdrop="static" data-keyboard="false">
-            Connect to Database
-         </div>
-       </div>
-
-
-       <div class="card-2-alignment">
-         <div class="mdc-card connect-db-icon pointer" data-toggle="modal" data-target="#loadDatabaseDumpModal" data-backdrop="static" data-keyboard="false">
-           <img src="Icons/Icons/Group 2049.svg" width="64" height="64" style="margin:auto"  alt="load database image">
-         </div>
-         <div class="load-text pointer" data-toggle="modal" data-target="#loadDatabaseDumpModal" data-backdrop="static" data-keyboard="false">
-            Load Database Dump
+  <div class="main-content">
+    <h5 class="welcome-heading">
+      Welcome To HarbourBridge
+    </h5>
+    <h5 class="connect-heading">
+      Connect or import your database
+    </h5>
+    <div class="card-section">
+      <div class="card-alignment">
+        <div class="card-1-alignment">
+          <div class="mdc-card connect-db-icon pointer" data-toggle="modal" data-target="#connectToDbModal" data-backdrop="static" data-keyboard="false">
+            <img src="Icons/Icons/Group 2048.svg" width="64" height="64"  style="margin:auto" alt="connect to db">
           </div>
-       </div>
+          <div class="connect-text pointer" data-toggle="modal" data-target="#connectToDbModal" data-backdrop="static" data-keyboard="false">
+              Connect to Database
+          </div>
+        </div>
 
-       <div class="card-3-alignment">
-         <div class="mdc-card connect-db-icon pointer" data-toggle="modal" data-target="#importSchemaModal" data-backdrop="static" data-keyboard="false">
-           <img src="Icons/Icons/Group 2047.svg" width="64" height="64" style="margin:auto"  alt="import schema image">
-         </div>
-         <div class="import-text pointer" data-toggle="modal" data-target="#importSchemaModal" data-backdrop="static" data-keyboard="false">
-            Import Schema File
-         </div>
-       </div>
-     </div>
-   </div>
+        <div class="card-2-alignment">
+          <div class="mdc-card connect-db-icon pointer" data-toggle="modal" data-target="#loadDatabaseDumpModal" data-backdrop="static" data-keyboard="false">
+            <img src="Icons/Icons/Group 2049.svg" width="64" height="64" style="margin:auto"  alt="load database image">
+          </div>
+          <div class="load-text pointer" data-toggle="modal" data-target="#loadDatabaseDumpModal" data-backdrop="static" data-keyboard="false">
+              Load Database Dump
+            </div>
+        </div>
 
-   <div id="snackbar"></div>
-
-   <div class='spinner-backdrop' id='toggle-spinner' style="display:none">
-    <div id="spinner"></div>
-   </div>
-
-   <h4 class="session-heading">Conversion history</h4>
-
-   <table class="table session-table" style="width: 95%;">
-    <thead>
-      <tr class="d-flex">
-        <th class='col-2 session-table-th2'>Session Name</th>
-        <th class='col-4 session-table-th2'>Date</th>
-        <th class='col-2 session-table-th2'>Time</th>
-        <th class='col-4 session-table-th2'>Action Item</th>
-        </tr>
-    </thead>
-    <tbody id='session-table-content'>
-      
-    </tbody>
-  </table>
-
- </div>
-
- <!-- Connect to Db Modal -->
- <div class="modal" id="connectToDbModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header content-center">
-        <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connect to Database</h5>
-        <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
+        <div class="card-3-alignment">
+          <div class="mdc-card connect-db-icon pointer" data-toggle="modal" data-target="#importSchemaModal" data-backdrop="static" data-keyboard="false">
+            <img src="Icons/Icons/Group 2047.svg" width="64" height="64" style="margin:auto"  alt="import schema image">
+          </div>
+          <div class="import-text pointer" data-toggle="modal" data-target="#importSchemaModal" data-backdrop="static" data-keyboard="false">
+              Import Schema File
+          </div>
+        </div>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="dbType" class="">Database Type</label>
-          <select class="form-control db-select-input" id="dbType" name="dbType" onchange="toggleDbType()">
-             <option value="" style="display: none;"></option>
-             <option class="db-option" value="mysql">MySQL</option>
-             <option class="db-option" value="postgres">Postgres</option>
-             <option class='db-option' value='dynamodb'>dynamoDB</option>
-          </select>
+    </div>
+
+    <div id="snackbar"></div>
+    <div class='spinner-backdrop' id='toggle-spinner' style="display:none">
+      <div id="spinner"></div>
+    </div>
+    <h4 class="session-heading">Conversion history</h4>
+    <table class="table session-table" style="width: 95%;">
+      <thead>
+        <tr class="d-flex">
+          <th class='col-2 session-table-th2'>Session Name</th>
+          <th class='col-4 session-table-th2'>Date</th>
+          <th class='col-2 session-table-th2'>Time</th>
+          <th class='col-4 session-table-th2'>Action Item</th>
+          </tr>
+      </thead>
+      <tbody id='session-table-content'>
+        ${setSessionTableContent()}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Connect to Db Modal -->
+  <div class="modal" id="connectToDbModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header content-center">
+          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connect to Database</h5>
+          <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
         </div>
-        <div id="sqlFields" style="display: none;">
-             <form id="connectForm">
-              <div class="form-group">
-                <label class="modal-label" for="dbHost">Database Host</label>
-                <input type="text" class="form-control db-input" aria-describedby="" name="dbHost" id="dbHost" autocomplete="off" onfocusout="validateInput(document.getElementById('dbHost'), 'dbHostError')"/>
-                <span class='formError' id='dbHostError'></span><br>
-              </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="dbType" class="">Database Type</label>
+            <select class="form-control db-select-input" id="dbType" name="dbType" onchange="toggleDbType()">
+              <option value="" style="display: none;"></option>
+              <option class="db-option" value="mysql">MySQL</option>
+              <option class="db-option" value="postgres">Postgres</option>
+              <option class='db-option' value='dynamodb'>dynamoDB</option>
+            </select>
+          </div>
+          <div id="sqlFields" style="display: none;">
+              <form id="connectForm">
+                <div class="form-group">
+                  <label class="modal-label" for="dbHost">Database Host</label>
+                  <input type="text" class="form-control db-input" aria-describedby="" name="dbHost" id="dbHost" autocomplete="off" onfocusout="validateInput(document.getElementById('dbHost'), 'dbHostError')"/>
+                  <span class='formError' id='dbHostError'></span><br>
+                </div>
 
-              <div class="form-group">
-                <label class="modal-label" for="dbPort">Database Port</label>
-                <input class="form-control db-input" aria-describedby="" type="text" name="dbPort" id="dbPort" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPort'), 'dbPortError')"/>
-                <span class='formError' id='dbPortError'></span><br>
-              </div>
+                <div class="form-group">
+                  <label class="modal-label" for="dbPort">Database Port</label>
+                  <input class="form-control db-input" aria-describedby="" type="text" name="dbPort" id="dbPort" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPort'), 'dbPortError')"/>
+                  <span class='formError' id='dbPortError'></span><br>
+                </div>
 
-              <div class="form-group">
-                <label class="modal-label" for="dbUser">Database User</label>
-                <input class="form-control db-input" aria-describedby="" type="text" name="dbUser" id="dbUser" autocomplete="off" onfocusout="validateInput(document.getElementById('dbUser'), 'dbUserError')"/>
-                <span class='formError' id='dbUserError'></span><br>
-              </div>
+                <div class="form-group">
+                  <label class="modal-label" for="dbUser">Database User</label>
+                  <input class="form-control db-input" aria-describedby="" type="text" name="dbUser" id="dbUser" autocomplete="off" onfocusout="validateInput(document.getElementById('dbUser'), 'dbUserError')"/>
+                  <span class='formError' id='dbUserError'></span><br>
+                </div>
 
-              <div class="form-group">
-                <label class="modal-label" for="dbName">Database Name</label>
-                <input class="form-control db-input" aria-describedby="" type="text" name="dbName" id="dbName" autocomplete="off" onfocusout="validateInput(document.getElementById('dbName'), 'dbNameError')"/>
-                <span class='formError' id='dbNameError'></span><br>
-              </div>
+                <div class="form-group">
+                  <label class="modal-label" for="dbName">Database Name</label>
+                  <input class="form-control db-input" aria-describedby="" type="text" name="dbName" id="dbName" autocomplete="off" onfocusout="validateInput(document.getElementById('dbName'), 'dbNameError')"/>
+                  <span class='formError' id='dbNameError'></span><br>
+                </div>
 
-              <div class="form-group">
-                <label class="modal-label" for="dbPassword">Database Password</label>
-                <input class="form-control db-input" aria-describedby="" type="password" name="dbPassword" id="dbPassword" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPassword'), 'dbPassError')"/>
-                <span class='formError' id='dbPassError'></span><br>
-              </div>
-            </form>
-           </div>
-        </div>
-      <div id="sqlFieldsButtons" style="display: none;">
-        <div class="modal-footer">
-           <input type="submit" disabled="disabled" value="Connect" id="connectButton" class="connectButton" 
-           onclick="onconnect( document.getElementById('dbType').value, document.getElementById('dbHost').value, document.getElementById('dbPort').value, document.getElementById('dbUser').value, document.getElementById('dbName').value, document.getElementById('dbPassword').value)" />
+                <div class="form-group">
+                  <label class="modal-label" for="dbPassword">Database Password</label>
+                  <input class="form-control db-input" aria-describedby="" type="password" name="dbPassword" id="dbPassword" autocomplete="off" onfocusout="validateInput(document.getElementById('dbPassword'), 'dbPassError')"/>
+                  <span class='formError' id='dbPassError'></span><br>
+                </div>
+              </form>
+            </div>
+          </div>
+        <div id="sqlFieldsButtons" style="display: none;">
+          <div class="modal-footer">
+            <input type="submit" disabled="disabled" value="Connect" id="connectButton" class="connectButton" 
+            onclick="onconnect( document.getElementById('dbType').value, document.getElementById('dbHost').value, document.getElementById('dbPort').value, document.getElementById('dbUser').value, document.getElementById('dbName').value, document.getElementById('dbPassword').value)" />
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
 
- <!-- Load Database Dump Modal -->
- <div class="modal loadDatabaseDumpModal" id="loadDatabaseDumpModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-   <div class="modal-dialog modal-dialog-centered" role="document">
+  <!-- Load Database Dump Modal -->
+  <div class="modal loadDatabaseDumpModal" id="loadDatabaseDumpModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
 
-     <!-- Modal content-->
-     <div class="modal-content">
-       <div class="modal-header content-center">
-         <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Load Database Dump</h5>
-         <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
-       </div>
-       <div class="modal-body">
-        <!-- <form id="loadDbForm"> -->
-         <div class="form-group">
-          <label class="" for="loadDbType">Database Type</label>
-            <select class="form-control load-db-input" id="loadDbType" name="loadDbType">
-              <option value="" style="display: none;"></option>
-              <option class="db-option" value="mysql">MySQL</option>
-              <option class="db-option" value="postgres">Postgres</option>
-            </select>
-         </div>
-
-         <form id="loadDbForm">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header content-center">
+          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Load Database Dump</h5>
+          <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
+        </div>
+        <div class="modal-body">
+          <!-- <form id="loadDbForm"> -->
           <div class="form-group">
-            <label class="modal-label" for="dumpFilePath">Path of the Dump File</label>
-            <input class="form-control load-db-input" aria-describedby="" type="text" name="dumpFilePath" id="dumpFilePath" autocomplete="off" onfocusout="validateInput(document.getElementById('dumpFilePath'), 'filePathError')"/>
-            <span class='formError' id='filePathError'></span>
+            <label class="" for="loadDbType">Database Type</label>
+              <select class="form-control load-db-input" id="loadDbType" name="loadDbType">
+                <option value="" style="display: none;"></option>
+                <option class="db-option" value="mysql">MySQL</option>
+                <option class="db-option" value="postgres">Postgres</option>
+              </select>
           </div>
-          <input type="text" style="display: none;">
-        </form>
 
-       </div>
-       <div class="modal-footer">
-         <input type="submit" disabled='disabled' value='Confirm' id='loadConnectButton' class='connectButton' onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)'/>
-       </div>
-     </div>
+          <form id="loadDbForm">
+            <div class="form-group">
+              <label class="modal-label" for="dumpFilePath">Path of the Dump File</label>
+              <input class="form-control load-db-input" aria-describedby="" type="text" name="dumpFilePath" id="dumpFilePath" autocomplete="off" onfocusout="validateInput(document.getElementById('dumpFilePath'), 'filePathError')"/>
+              <span class='formError' id='filePathError'></span>
+            </div>
+            <input type="text" style="display: none;">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <input type="submit" disabled='disabled' value='Confirm' id='loadConnectButton' class='connectButton' onclick='storeDumpFileValues(document.getElementById("loadDbType").value, document.getElementById("dumpFilePath").value)'/>
+        </div>
+      </div>
+    </div>
+  </div>
 
-   </div>
- </div>
+  <!-- Import Schema Modal -->
+  <div class="modal importSchemaModal" id="importSchemaModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header content-center">
+          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Import Schema File</h5>
+          <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
+        </div>
+        <div class="modal-body">
 
- <!-- Import Schema Modal -->
- <div class="modal importSchemaModal" id="importSchemaModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-   <div class="modal-dialog modal-dialog-centered" role="document">
+          <form id="importForm" class="importForm">
+          <div class="form-group">
+          <label class="modal-label" for="importDbType">Database Type</label>
+          <select class="form-control import-db-input" id="importDbType" name="importDbType" >
+            <option value="" style="display: none;"></option>
+            <option class="db-option" value="mysql">MySQL</option>
+            <option class="db-option" value="postgres">Postgres</option>
+          </select>
+          </div>
 
-     <!-- Modal content-->
-
-     <div class="modal-content">
-       <div class="modal-header content-center">
-         <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Import Schema File</h5>
-         <i class="large material-icons close" data-dismiss="modal" onclick="clearModal()">cancel</i>
-       </div>
-       <div class="modal-body">
-
-         <form id="importForm" class="importForm">
-         <div class="form-group">
-         <label class="modal-label" for="importDbType">Database Type</label>
-         <select class="form-control import-db-input" id="importDbType" name="importDbType" >
-           <option value="" style="display: none;"></option>
-           <option class="db-option" value="mysql">MySQL</option>
-           <option class="db-option" value="postgres">Postgres</option>
-         </select>
-         </div>
-
-         <div class="form-group">
-         <label class="modal-label" for="schemaFile">Schema File</label><br>
-         <input class="form-control" aria-describedby="" id="upload" type="file" onchange='filenameChangeHandler(event)'/>
-         <a href="" id="upload_link" onclick='uploadFileHandler(event)'>Upload File</a>​
-         </div>
-
-         </form>
-
-       </div>
-       <div class="modal-footer">
-         <a href='#/schema-report-import-db'><input type='submit' disabled='disabled' id='importButton' class='connectButton' value='Confirm' onclick='sourceSchema(document.getElementById("importDbType").value)'/></a>
-       </div>
-     </div>
-
-   </div>
- </div>
+          <div class="form-group">
+              <label class="modal-label" for="schemaFile">Schema File</label><br>
+              <input class="form-control" aria-describedby="" id="upload" type="file" onchange='filenameChangeHandler(event)'/>
+              <a href="" id="upload_link" onclick='uploadFileHandler(event)'>Upload File</a>​
+          </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <a href='#/schema-report-import-db'><input type='submit' disabled='disabled' id='importButton' class='connectButton' value='Confirm' onclick='importSourceSchema(document.getElementById("importDbType").value)'/></a>
+        </div>
+      </div>
+    </div>
+  </div>
  
- <div class="modal" id="connectModalSuccess" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-   <div class="modal-dialog modal-dialog-centered" role="document">
+  <div class="modal" id="connectModalSuccess" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header content-center">
+          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Successful</h5>
+          <i class="large material-icons close" data-dismiss="modal" onclick='clearModal()'>cancel</i>
+        </div>
+        <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
+          <div><i class="large material-icons connectionSuccess">check_circle</i></div>
+          <div>Please click on convert button to proceed with schema conversion</div>
+        </div>
+        <div class="modal-footer">
+          <a href='#/schema-report-connect-to-db'><button id="convert-button" class="connectButton" type="button">Convert</button></a>
+          <button class="buttonload" id="convertLoaderButton" style="display: none;">
+              <i class="fa fa-circle-o-notch fa-spin"></i>converting
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-     <!-- Modal content-->
-
-     <div class="modal-content">
-       <div class="modal-header content-center">
-         
-         <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Successful</h5>
-         <i class="large material-icons close" data-dismiss="modal" onclick='clearModal()'>cancel</i>
-         
-       </div>
-       <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
-
-        <div><i class="large material-icons connectionSuccess">check_circle</i></div>
-        <div>Please click on convert button to proceed with schema conversion</div>
-        
-       </div>
-       <div class="modal-footer">
-         <a href='#/schema-report-connect-to-db'><button id="convert-button" class="connectButton" type="button">Convert</button></a>
-         <button class="buttonload" id="convertLoaderButton" style="display: none;">
-            <i class="fa fa-circle-o-notch fa-spin"></i>converting
-        </button>
-       </div>
-     </div>
-
-   </div>
- </div>
-
- <div class="modal" id="connectModalFailure" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-   <div class="modal-dialog modal-dialog-centered" role="document">
-
-     <!-- Modal content-->
-
-     <div class="modal-content">
-       <div class="modal-header content-center">
-         <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Failure</h5>
-         <i class="large material-icons close" data-dismiss="modal" onclick='clearModal()'>cancel</i>
-       </div>
-       <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
-          <div><i class="large material-icons connectionFailure">cancel</i></div>
-          <div>Please check database configuration details and try again !!</div>
-       </div>
-       <div class="modal-footer">
-         <button data-dismiss="modal" onclick='clearModal()' class="connectButton" type="button">Ok</button>
-       </div>
-     </div>
-
-   </div>
- </div>
-     `)
+  <div class="modal" id="connectModalFailure" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header content-center">
+          <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Connection Failure</h5>
+          <i class="large material-icons close" data-dismiss="modal" onclick='clearModal()'>cancel</i>
+        </div>
+        <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
+            <div><i class="large material-icons connectionFailure">cancel</i></div>
+            <div>Please check database configuration details and try again !!</div>
+        </div>
+        <div class="modal-footer">
+          <button data-dismiss="modal" onclick='clearModal()' class="connectButton" type="button">Ok</button>
+        </div>
+      </div>
+    </div>
+  </div>`
+  )
 }

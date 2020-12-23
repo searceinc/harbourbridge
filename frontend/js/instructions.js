@@ -1,26 +1,7 @@
 const renderInstructionsHtml = (params) => {
+  setActiceSelectedMenu('instructions');
   return (
     `
-        <header class="main-header">
-          <nav class="navbar navbar-static-top">
-            <img src="Icons/Icons/google-spanner-logo.png" class="logo">
-          </nav>
-        
-          <nav class="navbar navbar-static-top">
-            <div class="header-topic" style="margin-right: 30px;"><a href='#/' style="text-decoration: none; color: #5E5752;">Home</a></div>
-          </nav>
-        
-          <nav class="navbar navbar-static-top">
-            <div class="header-topic" style="margin-right: 30px;"><a href="#/instructions" style="text-decoration: none; color: #5E5752;">Schema Conversion</a>
-            </div>
-          </nav>
-        
-          <nav class="navbar navbar-static-top">
-            <div class="header-topic"><a href="#/instructions" style="text-decoration: none; color: #4285f4;">Instructions</a></div>
-          </nav>
-        
-        </header>
-
         <div class='spinner-backdrop' id='toggle-spinner' style="display:none">
           <div id="spinner"></div>
         </div>
