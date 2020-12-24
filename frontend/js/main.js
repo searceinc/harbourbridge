@@ -5,7 +5,7 @@
  */
 const initHomeScreenTasks = () => {
   jQuery(document).ready(function () {
-    setActiceSelectedMenu('homeScreen');
+    setActiveSelectedMenu('homeScreen');
     jQuery('#loadDbForm > div > input').keyup(function () {
       var empty = false;
       jQuery('#loadDbForm > div > input').each(function () {
@@ -69,25 +69,26 @@ const filenameChangeHandler = () => {
 }
 
 /**
- * Function to create table from con json structure
+ * Function to create table from json structure
  *
  * @param {json} obj Json object contaning source and spanner table information
  * @return {null}
  */
 const createSourceAndSpannerTables = async(obj) => {
-  schemaConversionObj = obj;
-  notNullFoundFlag = [], initialColNameArray = [], srcTableName = [], pkSeqId = [], notNullConstraint = [], pkArray = [], pksSp = [], notPrimary = [], keyColumnMap = [];
-  let mySelect, spannerColumnsContent, columnNameContent, dataTypeContent, constraintsContent, notNullFound, constraintId, srcConstraintHtml;
-  let initialPkSeqId = [], constraintTabCell = [], primaryTabCell = [], spPlaceholder = [], srcPlaceholder = [], countSp = [], countSrc = [];
+  schemaConversionObj = obj, srcTableName = [], notNullConstraint = [];
+  let spannerColumnsContent, columnNameContent, dataTypeContent, constraintsContent, notNullFound, constraintId, srcConstraintHtml;
+  let pksSp = [], notPrimary = [], keyColumnMap = [], initialColNameArray = [], notNullFoundFlag = [], pkSeqId = [], pkArray = [], initialPkSeqId = [], constraintTabCell = [], primaryTabCell = [], spPlaceholder = [], srcPlaceholder = [], countSp = [], countSrc = [];
   let tableContent = '';
+  let sourceTableFlag = '';
   let conversionRateResp = {};
   let constraintCount = 0;
   let accordion = document.getElementById("accordion");
   let srcTableNum = Object.keys(schemaConversionObj.SrcSchema).length;
   let spTable_num = Object.keys(schemaConversionObj.SpSchema).length;
+  let reportUl = document.createElement('ul');
+  reportUl.setAttribute('id', 'reportUl');
   getFilePaths();
-
-  fetch(apiUrl + '/typemap', {
+  fetch('/typemap', {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -108,9 +109,6 @@ const createSourceAndSpannerTables = async(obj) => {
     showSnackbar(err, ' redBg');
   });
 
-  let reportUl = document.createElement('ul');
-  reportUl.setAttribute('id', 'reportUl');
-
   for (var x = 0; x < srcTableNum; x++) {
     initialPkSeqId[x] = [];
     initialColNameArray[x] = [];
@@ -126,13 +124,12 @@ const createSourceAndSpannerTables = async(obj) => {
     pksSp[x] = [];
   }
 
-  interleaveApiCallResp = JSON.parse(localStorage.getItem('interleaveInfo'));
   conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
   for (var i = 0; i < srcTableNum; i++) {
-    srcTable = schemaConversionObj.SrcSchema[Object.keys(schemaConversionObj.ToSpanner)[i]];
+    let srcTable = schemaConversionObj.SrcSchema[Object.keys(schemaConversionObj.ToSpanner)[i]];
     srcTableName[i] = Object.keys(schemaConversionObj.ToSpanner)[i];
-    spTable = schemaConversionObj.SpSchema[srcTableName[i]];
-    spTableCols = spTable.ColNames;
+    let spTable = schemaConversionObj.SpSchema[srcTableName[i]];
+    let spTableCols = spTable.ColNames;
     pkArray[i] = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[i]].Pks;
     pkSeqId[i] = 1;
     let pkArrayLength = pkArray[i].length;
@@ -297,7 +294,7 @@ const createSourceAndSpannerTables = async(obj) => {
                               <span class='source-icon right-align hide-content'>
                                 <i class='large material-icons' style='font-size: 18px;'></i>
                               </span>
-                              <button class='right-align edit-button hide-content' id='editSpanner${i}' onclick='editAndSaveButtonHandler(jQuery(this), ${JSON.stringify(spPlaceholder)})'>
+                              <button class='right-align edit-button hide-content' id='editSpanner${i}' onclick='editAndSaveButtonHandler(jQuery(this), ${JSON.stringify(spPlaceholder)}, ${JSON.stringify(pkArray[i])}, ${pkSeqId[i]}, ${JSON.stringify(notNullFoundFlag[i])}, ${JSON.stringify(initialColNameArray[i])}, ${JSON.stringify(keyColumnMap[i])}, ${JSON.stringify(notPrimary[i])}, ${JSON.stringify(pksSp[i])})'>
                                 Edit Spanner Schema
                               </button>
                             </h5>
@@ -343,7 +340,7 @@ const createSourceAndSpannerTables = async(obj) => {
   }
   constraintCount--;
   while (constraintCount >= 0) {
-    mySelect = new vanillaSelectBox('#srcConstraint' + constraintCount, {
+    new vanillaSelectBox('#srcConstraint' + constraintCount, {
       placeHolder: srcPlaceholder[constraintCount] + " constraints selected",
       maxWidth: 500,
       maxHeight: 300
@@ -357,12 +354,12 @@ const createSourceAndSpannerTables = async(obj) => {
   }
 
   for (var i = 0; i < spTable_num; i++) {
-    spTable = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[i]]
-    spTableCols = spTable.ColNames;
+    let spTable = schemaConversionObj.SpSchema[Object.keys(schemaConversionObj.SpSchema)[i]]
+    let spTableCols = spTable.ColNames;
     let spTableColsLength = spTableCols.length;
     for (var j = 0; j < spTableColsLength; j++) {
       if (document.getElementById('spConstraint' + i + j) != null) {
-        mySelect = new vanillaSelectBox('#spConstraint' + i + j, {
+        new vanillaSelectBox('#spConstraint' + i + j, {
           placeHolder: spPlaceholder[i][j] + " constraints selected",
           maxWidth: 500,
           maxHeight: 300
@@ -378,14 +375,21 @@ const createSourceAndSpannerTables = async(obj) => {
  *
  * @param {HTMLElement} event click event
  * @param {array} spPlaceholder array to store number of selected constraints in spanner constraint cell
+ * @param {array} tablePkArray array to store primary keys of a table
+ * @param {number} pkSeqId sequence number of primary key
+ * @param {array} columnsNotNullConstraint array to store not null constraint value for all columns of a particular table
+ * @param {array} tableOriginalColNames array to store original column names of a particular table
+ * @param {array} keyColumnMap array to store primary key and column as a map of a particular table
+ * @param {array} notPrimaryArray array to store whether column of a particular table is PK or not
+ * @param {array} pkSpArray
  * @return {null}
  */
-const editAndSaveButtonHandler = (event, spPlaceholder) => {
+const editAndSaveButtonHandler = (event, spPlaceholder, tablePkArray, pkSeqId, columnsNotNullConstraint, tableOriginalColNames, keyColumnMap, notPrimaryArray, pkSpArray) => {
   if (event[0].innerText === "Edit Spanner Schema") {
-    editSpannerHandler(event);
+    editSpannerHandler(event, tablePkArray, pkSeqId, columnsNotNullConstraint, tableOriginalColNames, keyColumnMap, notPrimaryArray);
   }
   else if (event[0].innerText === "Save Changes") {
-    saveSpannerChanges(event, spPlaceholder);
+    saveSpannerChanges(event, spPlaceholder, tableOriginalColNames, notPrimaryArray, pkSpArray);
   }
 }
 
@@ -397,7 +401,7 @@ const editAndSaveButtonHandler = (event, spPlaceholder) => {
  * @return {null}
  */
 const foreignKeyHandler = (index, foreignKeys) => {
-  if (spTable.Fks == null) {
+  if (foreignKeys == null) {
     return '';
   }
   let fkContentForTable = '';
@@ -460,13 +464,13 @@ const foreignKeyHandler = (index, foreignKeys) => {
  */
 const saveInterleaveHandler = (index) => {
   const radioValues = document.querySelectorAll('input[name="fks"]');
-            let selectedValue;
-            for (const x of radioValues) {
-                if (x.checked) {
-                    selectedValue = x.value;
-                    break;
-                }
-            }
+  let selectedValue;
+  for (const x of radioValues) {
+      if (x.checked) {
+          selectedValue = x.value;
+          break;
+      }
+  }
   if (selectedValue == 'interleave') {
     console.log(index);
     console.log(interleaveApiCallResp[index]);
@@ -486,9 +490,15 @@ const saveInterleaveHandler = (index) => {
  * Function to handle spanner table editing
  *
  * @param {event} event event generated by clicking edit spanner button
+ * @param {array} tablePkArray array to store primary keys of a table
+ * @param {number} pkSeqId sequence number of primary key
+ * @param {array} columnsNotNullConstraint array to store not null constraint value for all columns of a particular table
+ * @param {array} tableOriginalColNames array to store original column names of a particular table
+ * @param {array} keyColumnMap array to store primary key and column as a map of a particular table
+ * @param {array} notPrimaryArray array to store whether column of a particular table is PK or not
  * @return {null}
  */
-const editSpannerHandler = (event) => {
+const editSpannerHandler = (event, tablePkArray, pkSeqId, columnsNotNullConstraint, tableOriginalColNames, keyColumnMap, notPrimaryArray) => {
   let uncheckCount = [];
   if (event.html() === 'Edit Spanner Schema') {
     jQuery(event[0]).removeAttr('data-toggle');
@@ -542,9 +552,9 @@ const editSpannerHandler = (event) => {
       jQuery(tableCheckboxGroup).prop('checked', true);
       let spannerCellsList = document.getElementsByClassName('spannerTabCell' + tableNumber + tableColumnNumber);
       if (spannerCellsList) {
-        editSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, tableId);
+        editSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, tableId, tablePkArray, pkSeqId, tableOriginalColNames, keyColumnMap, notPrimaryArray);
         editSpannerDataType(spannerCellsList[1], tableNumber, tableColumnNumber);
-        editSpannerConstraint(spannerCellsList[2], tableNumber, tableColumnNumber);
+        editSpannerConstraint(spannerCellsList[2], tableNumber, tableColumnNumber, columnsNotNullConstraint);
       }
       tableColumnNumber++;
     }
@@ -574,48 +584,53 @@ const editSpannerHandler = (event) => {
  * @param {number} tableNumber
  * @param {number} tableColumnNumber
  * @param {string} tableId
+ * @param {array} tablePkArray array to store primary keys of a table
+ * @param {number} pkSeqId sequence number of primary key
+ * @param {array} tableOriginalColNames array to store original column names of a particular table
+ * @param {array} keyColumnMap array to store primary key and column as a map of a particular table
+ * @param {array} notPrimaryArray array to store whether column of a particular table is PK or not
  * @return {null}
  */
-const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber, tableId) => {
+const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber, tableId, tablePkArray, pkSeqId, tableOriginalColNames, keyColumnMap, notPrimaryArray) => {
   let columnNameVal = document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML;
-  currSeqId = '';
-  let pkArrayLength = pkArray[tableNumber].length;
-  initialColNameArray[tableNumber].push(columnNameVal);
+  let currSeqId = '';
+  let pkArrayLength = tablePkArray.length;
+  tableOriginalColNames.push(columnNameVal);
   for (var x = 0; x < pkArrayLength; x++) {
-    if (pkArray[tableNumber][x].Col === columnNameVal.trim()) {
-      currSeqId = pkArray[tableNumber][x].seqId;
+    if (tablePkArray[x].Col === columnNameVal.trim()) {
+      currSeqId = tablePkArray[x].seqId;
     }
   }
-  if (notPrimary[tableNumber][tableColumnNumber] === true) {
+  if (notPrimaryArray[tableColumnNumber] === true) {
     editColumn.innerHTML = `<span class="column left keyNotActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
-                                      <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>
-                                    </span>
-                                    <span class="column right form-group">
-                                      <input id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' type="text" value=${columnNameVal} class="form-control spanner-input" autocomplete='off'>
-                                    </span>`
+                              <img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>
+                            </span>
+                            <span class="column right form-group">
+                              <input id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' type="text" value=${columnNameVal} class="form-control spanner-input" autocomplete='off'>
+                            </span>`
   }
   else {
     editColumn.innerHTML = `<span class="column left keyActive keyMargin keyClick" id='keyIcon${tableNumber}${tableColumnNumber}${tableColumnNumber}'>
-                                      <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
-                                    </span>
-                                    <span class="column right form-group">
-                                      <input id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' type="text" value=${columnNameVal} class="form-control spanner-input" autocomplete='off'>
-                                    </span>`
+                              <sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>
+                            </span>
+                            <span class="column right form-group">
+                              <input id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' type="text" value=${columnNameVal} class="form-control spanner-input" autocomplete='off'>
+                            </span>`
   }
   jQuery('#keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).click(function () {
     jQuery(this).toggleClass('keyActive keyNotActive');
     let keyId = jQuery(this).attr('id');
-    let keyColumnMapLength = keyColumnMap[tableNumber].length;
+    let keyColumnMapLength = keyColumnMap.length;
     for (var z = 0; z < keyColumnMapLength; z++) {
-      if (keyId === keyColumnMap[tableNumber][z].keyIconId) {
-        columnName = keyColumnMap[tableNumber][z].columnName;
+      if (keyId === keyColumnMap[z].keyIconId) {
+        columnName = keyColumnMap[z].columnName;
       }
     }
     if (document.getElementById(keyId).classList.contains('keyActive')) {
-      getNewSeqNumForPrimaryKey(keyId, tableNumber);
+      getNewSeqNumForPrimaryKey(keyId, tableNumber, tablePkArray, pkSeqId);
     }
     else {
-      removePrimaryKeyFromSeq(tableNumber, tableId);
+      removePrimaryKeyFromSeq(tableNumber, tableId, tablePkArray, tableOriginalColNames, notPrimaryArray);
     }
   });
 }
@@ -625,22 +640,24 @@ const editSpannerColumnName = (editColumn, tableNumber, tableColumnNumber, table
  *
  * @param {html id} keyId
  * @param {number} tableNumber specifies table number in json object
+ * @param {array} tablePkArray array to store primary keys of a table
+ * @param {number} pkSeqId sequence number of primary key
  * @return {null}
  */
-const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
+const getNewSeqNumForPrimaryKey = (keyId, tableNumber, tablePkArray, pkSeqId) => {
   let maxSeqId = 0;
   let keyIdEle = document.getElementById(keyId);
-  let pkArrayLength = pkArray[tableNumber].length;
+  let pkArrayLength = tablePkArray.length;
   let pkFoundFlag = false;
   for (var z = 0; z < pkArrayLength; z++) {
-    if (pkArray[tableNumber][z].seqId > maxSeqId) {
-      maxSeqId = pkArray[tableNumber][z].seqId;
+    if (tablePkArray[z].seqId > maxSeqId) {
+      maxSeqId = tablePkArray[z].seqId;
     }
   }
   maxSeqId = maxSeqId + 1;
-  pkSeqId[tableNumber] = maxSeqId;
+  pkSeqId = maxSeqId;
   for (var z = 0; z < pkArrayLength; z++) {
-    if (columnName != pkArray[tableNumber][z].Col) {
+    if (columnName != tablePkArray[z].Col) {
       pkFoundFlag = false;
     }
     else {
@@ -649,11 +666,11 @@ const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
     }
   }
   if (pkFoundFlag === false) {
-    pkArray[tableNumber].push({ 'Col': columnName, 'seqId': pkSeqId[tableNumber] });
+    tablePkArray.push({ 'Col': columnName, 'seqId': pkSeqId });
   }
-  schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks = pkArray[tableNumber];
+  schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks = tablePkArray;
   if (keyIdEle) {
-    keyIdEle.innerHTML = `<sub>${pkSeqId[tableNumber]}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
+    keyIdEle.innerHTML = `<sub>${pkSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
   }
 }
 
@@ -662,36 +679,39 @@ const getNewSeqNumForPrimaryKey = (keyId, tableNumber) => {
  *
  * @param {number} tableNumber
  * @param {string} tableId
+ * @param {array} tablePkArray array to store primary keys of a table
+ * @param {array} tableOriginalColNames array to store original column names of a particular table
+ * @param {array} notPrimaryArray array to store whether column of a particular table is PK or not
  * @return {null}
  */
-const removePrimaryKeyFromSeq = (tableNumber, tableId) => {
-  let pkArrayLength = pkArray[tableNumber].length;
+const removePrimaryKeyFromSeq = (tableNumber, tableId, tablePkArray, tableOriginalColNames, notPrimaryArray) => {
+  let pkArrayLength = tablePkArray.length;
   let tableColumnNumber = 0;
   for (var z = 0; z < pkArrayLength; z++) {
-    if (columnName === pkArray[tableNumber][z].Col) {
-      pkArray[tableNumber].splice(z, 1);
+    if (columnName === tablePkArray[z].Col) {
+      tablePkArray.splice(z, 1);
       break;
     }
   }
-  pkArrayLength = pkArray[tableNumber].length;
+  pkArrayLength = tablePkArray.length;
   for (var x = z; x < pkArrayLength; x++) {
-    pkArray[tableNumber][x].seqId = pkArray[tableNumber][x].seqId - 1;
+    tablePkArray[x].seqId = tablePkArray[x].seqId - 1;
   }
-  schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks = pkArray[tableNumber];
+  schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks = tablePkArray;
   jQuery(tableId).each(function (index) {
     if (index > 1) {
-      notPrimary[tableNumber][tableColumnNumber] = true;
+      notPrimaryArray[tableColumnNumber] = true;
       let currSeqId = '';
       for (var x = 0; x < pkArrayLength; x++) {
-        if (pkArray[tableNumber][x].Col === initialColNameArray[tableNumber][tableColumnNumber].trim()) {
-          currSeqId = pkArray[tableNumber][x].seqId;
-          notPrimary[tableNumber][tableColumnNumber] = false;
+        if (tablePkArray[x].Col === tableOriginalColNames[tableColumnNumber].trim()) {
+          currSeqId = tablePkArray[x].seqId;
+          notPrimaryArray[tableColumnNumber] = false;
         }
       }
-      if (notPrimary[tableNumber][tableColumnNumber] === true) {
+      if (notPrimaryArray[tableColumnNumber] === true) {
         document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML = `<img src='./Icons/Icons/ic_vpn_key_24px-inactive.svg'>`;
       }
-      if (notPrimary[tableNumber][tableColumnNumber] === false) {
+      if (notPrimaryArray[tableColumnNumber] === false) {
         document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).innerHTML = `<sub>${currSeqId}</sub><img src='./Icons/Icons/ic_vpn_key_24px.svg'>`;
       }
       tableColumnNumber++;
@@ -745,16 +765,16 @@ const editSpannerDataType = (editColumn, tableNumber, tableColumnNumber) => {
  * @param {html Element} editColumn
  * @param {number} tableNumber
  * @param {number} tableColumnNumber
+ * @param {array} columnsNotNullConstraint array to store not null constraint value for all columns of a particular table
  * @return {null}
  */
-const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
-  let mySelect;
+const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber, columnsNotNullConstraint) => {
   let notNullFound = '';
   let constraintId = 'spConstraint' + tableNumber + tableColumnNumber;
-  if (notNullFoundFlag[tableNumber][tableColumnNumber] === true) {
+  if (columnsNotNullConstraint[tableColumnNumber] === true) {
     notNullFound = "<option class='active' selected>Not Null</option>";
   }
-  else if (notNullFoundFlag[tableNumber][tableColumnNumber] === false) {
+  else if (columnsNotNullConstraint[tableColumnNumber] === false) {
     notNullFound = "<option>Not Null</option>";
   }
   else {
@@ -765,7 +785,7 @@ const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
     + "</select>";
   editColumn.innerHTML = constraintHtml;
   editColumn.setAttribute('class', 'sp-column acc-table-td spannerTabCell' + tableNumber + tableColumnNumber);
-  mySelect = new vanillaSelectBox("#spConstraint" + tableNumber + tableColumnNumber, {
+  new vanillaSelectBox("#spConstraint" + tableNumber + tableColumnNumber, {
     placeHolder: "Select Constraints",
     maxWidth: 500,
     maxHeight: 300
@@ -790,10 +810,13 @@ const editSpannerConstraint = (editColumn, tableNumber, tableColumnNumber) => {
  * Function to save changes of spanner table
  *
  * @param {event} event event generated by clicking edit spanner button
+ * @param {array} spPlaceholder array to store number of selected constraints in spanner constraint cell
+ * @param {array} tableOriginalColNames array to store original column names of a particular table
+ * @param {array} notPrimaryArray array to store whether column of a particular table is PK or not
+ * @param {array} pkSpArray
  * @return {null}
  */
-const saveSpannerChanges = (event, spPlaceholder) => {
-  let mySelect;
+const saveSpannerChanges = (event, spPlaceholder, tableOriginalColNames, notPrimaryArray, pkSpArray) => {
   if (event.html() === 'Save Changes') {
     showSnackbar('changes saved successfully !!', ' greenBg');
   }
@@ -801,7 +824,7 @@ const saveSpannerChanges = (event, spPlaceholder) => {
 
   let tableNumber = parseInt(event.attr('id').match(/\d+/), 10);
   let tableId = '#src-sp-table' + tableNumber + ' tr';
-  initialColNameArray[tableNumber] = [];
+  tableOriginalColNames = [];
   updatedColsData = {
     'UpdateCols': {
     }
@@ -828,13 +851,13 @@ const saveSpannerChanges = (event, spPlaceholder) => {
       }
       updatedColsData.UpdateCols[originalColumnName]['NotNull'] = '';
       updatedColsData.UpdateCols[originalColumnName]['PK'] = '';
-      saveSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, originalColumnName, newColumnName);
+      saveSpannerColumnName(spannerCellsList[0], tableNumber, tableColumnNumber, originalColumnName, newColumnName, notPrimaryArray, pkSpArray);
       updatedColsData.UpdateCols[originalColumnName]['ToType'] = document.getElementById('dataType' + tableNumber + tableColumnNumber + tableColumnNumber).value;
       saveSpannerConstraints(tableNumber, tableColumnNumber, originalColumnName);
       if (!(jQuery(this).find("input[type=checkbox]").is(":checked"))) {
         updatedColsData.UpdateCols[originalColumnName]['Removed'] = true;
       }
-      mySelect = new vanillaSelectBox('#spConstraint' + tableNumber + tableColumnNumber, {
+      new vanillaSelectBox('#spConstraint' + tableNumber + tableColumnNumber, {
         placeHolder: spPlaceholder[tableNumber][tableColumnNumber] + " constraints selected",
         maxWidth: 500,
         maxHeight: 300
@@ -847,7 +870,7 @@ const saveSpannerChanges = (event, spPlaceholder) => {
   });
   tooltipHandler();
 
-  fetch(apiUrl + '/typemap/table?table=' + tableName, {
+  fetch('/typemap/table?table=' + tableName, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -855,27 +878,24 @@ const saveSpannerChanges = (event, spPlaceholder) => {
     },
     body: JSON.stringify(updatedColsData)
   })
-    .then(function (res) {
-      if (res.ok) {
-        res.json().then(async function (response) {
-          localStorage.setItem('conversionReportContent', JSON.stringify(response));
-          ddlSummaryAndConversionApiCall().then(function () {
-            getInterleaveInfo();
-          });
-          const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
-          if (document.getElementById('app')) {
-            document.getElementById('app').innerHTML = component.render();
-          }
-          showSchemaConversionReportContent();
-        });
-      }
-      else {
-        return Promise.reject(res);
-      }
-    })
-    .catch(function (err) {
-      showSnackbar(err, ' redBg');
-    })
+  .then(function (res) {
+    if (res.ok) {
+      res.json().then(async function (response) {
+        localStorage.setItem('conversionReportContent', JSON.stringify(response));
+        await ddlSummaryAndConversionApiCall();
+        await getInterleaveInfo();
+        const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
+        document.getElementById('app').innerHTML = component.render();
+        showSchemaConversionReportContent();
+      });
+    }
+    else {
+      return Promise.reject(res);
+    }
+  })
+  .catch(function (err) {
+    showSnackbar(err, ' redBg');
+  });
 }
 
 /**
@@ -886,25 +906,28 @@ const saveSpannerChanges = (event, spPlaceholder) => {
  * @param {number} tableColumnNumber table column number
  * @param {string} originalColumnName 
  * @param {string} newColumnName
+ * @param {array} notPrimaryArray array to store whether column of a particular table is PK or not
+ * @param {array} pkSpArray
  * 
  * @return {null}
  */
-const saveSpannerColumnName = (saveColumn, tableNumber, tableColumnNumber, originalColumnName, newColumnName) => {
+const saveSpannerColumnName = (saveColumn, tableNumber, tableColumnNumber, originalColumnName, newColumnName, notPrimaryArray, pkSpArray) => {
   let currentPks = schemaConversionObj.SpSchema[srcTableName[tableNumber]].Pks;
-  let pksSpLength = pksSp[tableNumber].length;
+  let pksSpLength = pkSpArray.length;
   let currentPksLength = currentPks.length;
   let foundOriginally;
+  let currSeqId = '';
   if (document.getElementById('keyIcon' + tableNumber + tableColumnNumber + tableColumnNumber).classList.contains('keyActive')) {
     // checking if this key is newly added or removed
     foundOriginally = false;
     for (var z = 0; z < pksSpLength; z++) {
-      if (originalColumnName === pksSp[tableNumber][z].Col) {
+      if (originalColumnName === pkSpArray[z].Col) {
         foundOriginally = true;
         break;
       }
     }
     if (foundOriginally === false) {
-      updatedColsData.UpdateCols[originalColumnName]['PK'] = 'ADDED';
+      updatedColsData.UpdateCols[originalColumnName]['PK'] = 'ADDED'; 
     }
 
     for (var z = 0; z < currentPksLength; z++) {
@@ -919,21 +942,21 @@ const saveSpannerColumnName = (saveColumn, tableNumber, tableColumnNumber, origi
                         <span class="column right" data-toggle="tooltip" data-placement="bottom" title="primary key : ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}" id='columnNameText${tableNumber}${tableColumnNumber}${tableColumnNumber}' style="cursor:pointer">
                           ${document.getElementById('columnNameText' + tableNumber + tableColumnNumber + tableColumnNumber).value}
                         </span>`;
-    notPrimary[tableNumber][tableColumnNumber] = false;
+    notPrimaryArray[tableColumnNumber] = false;
   }
   else {
 
     // checking if this key is newly added or removed
     foundOriginally = false;
     for (var z = 0; z < pksSpLength; z++) {
-      if (originalColumnName === pksSp[tableNumber][z].Col) {
+      if (originalColumnName === pkSpArray[z].Col) {
         foundOriginally = true;
         updatedColsData.UpdateCols[originalColumnName]['PK'] = 'REMOVED';
         break;
       }
     }
   }
-  notPrimary[tableNumber][tableColumnNumber] = true;
+  notPrimaryArray[tableColumnNumber] = true;
 }
 
 /**
@@ -941,6 +964,7 @@ const saveSpannerColumnName = (saveColumn, tableNumber, tableColumnNumber, origi
  *
  * @param {number} tableNumber table number
  * @param {number} tableColumnNumber table column number
+ * @param {string} originalColumnName
  * 
  * @return {null}
  */
@@ -982,7 +1006,7 @@ const createSummaryForEachTable = (index, summary) => {
                               <div id='viewSummary${index}' class='collapse summaryCollapse'>
                                 <div class='mdc-card mdc-card-content summaryBorder' style='border: 0px;'>
                                   <div class='mdc-card summary-content'>
-                                    ${summary[Object.keys(summary)[index]].split('\n').join('<br />')}
+                                    ${summary[srcTableName[index]].split('\n').join('<br />')}
                                   </div>
                                 </div>
                               </div>
@@ -1018,7 +1042,7 @@ const createSummaryFromJson = (result) => {
                             <div id='${Object.keys(summary)[i]}-summary' class='collapse summaryCollapse'>
                               <div class='mdc-card mdc-card-content ddl-border table-card-border ${mdcCardBorder(conversionRateResp[srcTableName[i]])}'>
                                 <div class='mdc-card summary-content'>
-                                  ${summary[Object.keys(summary)[i]].split('\n').join('<br />')}
+                                  ${summary[srcTableName[i]].split('\n').join('<br />')}
                                 </div>
                               </div>
                             </div>
@@ -1060,7 +1084,7 @@ const createDdlFromJson = (result) => {
                       <div id='${Object.keys(ddl)[i]}-ddl' class='collapse ddlCollapse'>
                         <div class='mdc-card mdc-card-content ddl-border table-card-border ${mdcCardBorder(conversionRateResp[srcTableName[i]])}'>
                           <div class='mdc-card ddl-content'>
-                            <pre><code>${ddl[Object.keys(ddl)[i]].split('\n').join(`<span class='sql-c'></span>`)}</code></pre>
+                            <pre><code>${ddl[srcTableName[i]].split('\n').join(`<span class='sql-c'></span>`)}</code></pre>
                           </div>
                         </div>
                       </div>
@@ -1080,8 +1104,9 @@ const createDdlFromJson = (result) => {
  * @return {null}
  */
 const showSchemaAssessment = async(windowEvent) => {
+  let reportDataResp, reportData, sourceTableFlag;
   showSpinner();
-  reportData = await fetch(apiUrl + '/convert/infoschema')
+  reportData = await fetch('/convert/infoschema')
   .then(function (response) {
     if (response.ok) {
       return response;
@@ -1099,8 +1124,6 @@ const showSchemaAssessment = async(windowEvent) => {
   await getInterleaveInfo();
   sourceTableFlag = localStorage.getItem('sourceDbName');
   jQuery('#connectModalSuccess').modal("hide");
-  jQuery('#connectToDbModal').modal("hide");
-  jQuery('#globalDataTypeModal').modal("hide");
   const { component = ErrorComponent } = findComponentByPath('/schema-report-connect-to-db', routes) || {};
   if (document.getElementById('app')) {
     document.getElementById('app').innerHTML = component.render();
@@ -1118,8 +1141,8 @@ const showSchemaAssessment = async(windowEvent) => {
  * @return {null}
  */
 const getConversionRate = async() => {
-  let conversionRateResp = {};
-  conversionRate = await fetch(apiUrl + '/conversion')
+  let conversionRateResp, conversionRate;
+  conversionRate = await fetch('/conversion')
   .then(function (response) {
     if (response.ok) {
       return response;
@@ -1141,26 +1164,23 @@ const getConversionRate = async() => {
  * @return {null}
  */
 const ddlSummaryAndConversionApiCall = async() => {
-  let conversionRateResp = {};
-  fetch(apiUrl + '/ddl')
+  let conversionRateResp, ddlDataResp, summaryDataResp;
+  fetch('/ddl')
   .then(async function (response) {
     if (response.ok) {
-      ddlData=response;
-      ddlDataResp = await ddlData.json();
+      ddlDataResp = await response.json();
       localStorage.setItem('ddlStatementsContent', JSON.stringify(ddlDataResp));
 
-      fetch(apiUrl + '/summary')
+      fetch('/summary')
       .then(async function (response) {
         if (response.ok) {
-          summaryData=response;
-          summaryDataResp = await summaryData.json();
+          summaryDataResp = await response.json();
           localStorage.setItem('summaryReportContent', JSON.stringify(summaryDataResp));
 
-          fetch(apiUrl + '/conversion')
+          fetch('/conversion')
           .then(async function (response) {
             if (response.ok) {
-              conversionRate=response;
-              conversionRateResp = await conversionRate.json();
+              conversionRateResp = await response.json();
               localStorage.setItem('tableBorderColor', JSON.stringify(conversionRateResp));
             }
             else {
@@ -1193,7 +1213,6 @@ const ddlSummaryAndConversionApiCall = async() => {
 /**
  * Function to call create tables function for edit schema screen
  *
- * @param {event} windowEvent hashchange or load event
  * @return {null}
  */
 const showSchemaConversionReportContent = () => {
@@ -1208,11 +1227,11 @@ const showSchemaConversionReportContent = () => {
  * @return {null}
  */
 const getFilePaths = () => {
-  fetch(apiUrl + '/filepaths')
+  let filePathsResp;
+  fetch('/filepaths')
   .then(async function (response) {
     if (response.ok) {
-      filePaths =  response;
-      filePathsResp = await filePaths.json();
+      filePathsResp = await response.json();
       localStorage.setItem('downloadFilePaths', JSON.stringify(filePathsResp));
     }
     else {
@@ -1231,7 +1250,8 @@ const getFilePaths = () => {
  * @return {null}
  */
 const sessionRetrieval = (dbType) => {
-  fetch(apiUrl + '/session', {
+  let sessionStorageArr;
+  fetch('/session', {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -1240,7 +1260,7 @@ const sessionRetrieval = (dbType) => {
   })
   .then(async function (res) {
     if (res.ok) {
-      sessionInfoResp = await res.json();
+      let sessionInfoResp = await res.json();
       sessionStorageArr = JSON.parse(sessionStorage.getItem('sessionStorage'));
       sessionInfoResp.sourceDbType = dbType;
       if (sessionStorageArr === null) {
@@ -1269,6 +1289,7 @@ const sessionRetrieval = (dbType) => {
  * @return {null}
  */
 const storeDumpFileValues = (dbType, filePath) => {
+  let sourceTableFlag = '';
   if (dbType === 'mysql') {
     localStorage.setItem('globalDbType', dbType + 'dump');
     sourceTableFlag = 'MySQL';
@@ -1291,8 +1312,9 @@ const storeDumpFileValues = (dbType, filePath) => {
  * @return {null}
  */
 const onLoadDatabase = async(dbType, dumpFilePath) => {
+  let reportData, sourceTableFlag, reportDataResp;
   showSpinner();
-  reportData = await fetch(apiUrl + '/convert/dump', {
+  reportData = await fetch('/convert/dump', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -1340,7 +1362,7 @@ const getInterleaveInfo = async() => {
   let interleaveApiCallResp = [];
   for (var i = 0; i < tablesNumber; i++) {
     let tableName = Object.keys(schemaObj.ToSpanner)[i];
-    interleaveApiCall = await fetch(apiUrl + '/checkinterleave/table?table=' + tableName)
+    interleaveApiCall = await fetch('/checkinterleave/table?table=' + tableName)
     .then(async function (response) {
       if (response.ok) {
         return response;
@@ -1369,8 +1391,9 @@ const getInterleaveInfo = async() => {
  * @return {null}
  */
 const onconnect = (dbType, dbHost, dbPort, dbUser, dbName, dbPassword) => {
+  let sourceTableFlag = '';
   showSpinner();
-  fetch(apiUrl + '/connect', {
+  fetch('/connect', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -1422,7 +1445,7 @@ const onImport = async() => {
   }
   let path = localStorage.getItem('importFilePath');
   let fileName = localStorage.getItem('importFileName');
-  await fetch(apiUrl + '/session/resume', {
+  await fetch('/session/resume', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -1474,13 +1497,14 @@ const storeResumeSessionId = (driver, path, fileName, sourceDb) => {
  * @return {null}
  */
 const resumeSession = async(driver, path, fileName, sourceDb, windowEvent) => {
-  filePath = './' + fileName;
+  let filePath = './' + fileName;
+  let sourceTableFlag = '';
   readTextFile(filePath, function (text) {
     var data = JSON.parse(text);
     localStorage.setItem('conversionReportContent', JSON.stringify(data));
     sourceTableFlag = sourceDb;
   });
-  fetch(apiUrl + '/session/resume', {
+  await fetch('/session/resume', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -1494,35 +1518,7 @@ const resumeSession = async(driver, path, fileName, sourceDb, windowEvent) => {
   })
   .then(function (response) {
     if (response.ok) {
-      fetch(apiUrl + '/ddl')
-      .then(async function (response) {
-        if (response.ok) {
-          ddlData=response;
-          ddlDataResp = await ddlData.json();
-          localStorage.setItem('ddlStatementsContent', JSON.stringify(ddlDataResp));
-
-          fetch(apiUrl + '/summary')
-          .then(async function (response) {
-            if (response.ok) {
-              summaryData=response;
-              summaryDataResp = await summaryData.json();
-              localStorage.setItem('summaryReportContent', JSON.stringify(summaryDataResp));
-            }
-            else {
-              return Promise.reject(response);
-            }
-            })
-            .catch(function (err) {
-              showSnackbar(err, ' redBg');
-            });
-          }
-          else {
-            return Promise.reject(response);
-          }
-          })
-          .catch(function (err) {
-            showSnackbar(err, ' redBg');
-          });
+      console.log(response);
     }
     else {
       Promise.reject(response);
@@ -1531,8 +1527,7 @@ const resumeSession = async(driver, path, fileName, sourceDb, windowEvent) => {
   .catch(function (err) {
     showSnackbar(err, ' redBg');
   });
-  // await ddlSummaryAndConversionApiCall();
-  await getConversionRate();
+  await ddlSummaryAndConversionApiCall();
   await getInterleaveInfo();
   jQuery('#importSchemaModal').modal('hide');
   const { component = ErrorComponent } = findComponentByPath('/schema-report-resume-session', routes) || {};
@@ -1572,14 +1567,12 @@ const setSessionTableContent = () => {
   let sessionArray = JSON.parse(sessionStorage.getItem('sessionStorage'));
   let sessionContent = '';
   if (sessionArray === null) {
-    if (document.getElementById('session-table-content')) {
       sessionContent = `<tr>
                           <td colspan='5' class='center session-image'><img src='Icons/Icons/Group 2154.svg' alt='nothing to show'></td>
                         </tr>
                         <tr>
                           <td colspan='5' class='center simple-grey-text'>No active session available! <br> Please connect a database to initiate a new session.</td>
                         </tr>`;
-    }
   }
   else {
     let sessionArrayLength = sessionArray.length;
@@ -1597,8 +1590,8 @@ const setSessionTableContent = () => {
                           </td>
                         </tr>`;
     }
-    return sessionContent;
   }
+  return sessionContent;
 }
 
 /**
@@ -1619,6 +1612,7 @@ const resumeSessionHandler = (index, sessionArray) => {
  * @return {null}
  */
 const importSourceSchema = (val) => {
+  let sourceTableFlag = '';
   if (val === 'mysql') {
     sourceTableFlag = 'MySQL';
     localStorage.setItem('sourceDbName', sourceTableFlag);
@@ -1629,6 +1623,12 @@ const importSourceSchema = (val) => {
   }
 }
 
+/**
+ * Function to get paths and events generated from window
+ *
+ * @param {object} params object containing path and event as keys
+ * @return {null}
+ */
 const getPathAndEvent = (params) => {
   if (params.path === '/schema-report-connect-to-db' && params.event === 'hashchange') {
     showSchemaAssessment(window.event.type);
@@ -1707,6 +1707,7 @@ const homeScreenHtml = () => {
       <div id="spinner"></div>
     </div>
     <h4 class="session-heading">Conversion history</h4>
+
     <table class="table session-table" style="width: 95%;">
       <thead>
         <tr class="d-flex">
@@ -1714,7 +1715,7 @@ const homeScreenHtml = () => {
           <th class='col-4 session-table-th2'>Date</th>
           <th class='col-2 session-table-th2'>Time</th>
           <th class='col-4 session-table-th2'>Action Item</th>
-          </tr>
+        </tr>
       </thead>
       <tbody id='session-table-content'>
         ${setSessionTableContent()}

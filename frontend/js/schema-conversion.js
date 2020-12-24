@@ -1,3 +1,4 @@
+// variable declarations
 var notFoundTxt = document.createElement('h5');
 notFoundTxt.innerHTML = `No Match Found`;
 notFoundTxt.className = 'noText';
@@ -14,7 +15,7 @@ var tableListArea = 'accordion';
  */
 const initTasks = () => {
   jQuery(document).ready(() => {
-    setActiceSelectedMenu('schemaScreen');
+    setActiveSelectedMenu('schemaScreen');
     jQuery('.reportCollapse').on('show.bs.collapse', function() {
       jQuery(this).closest('.card').find('.rotate-icon').toggleClass('down');
       reportAccCount = reportAccCount + 1;
@@ -123,7 +124,7 @@ const searchTable = (tabId) => {
  */
 const setGlobalDataType = () => {
   var dataTypeJson = {};
-  var tableLen = jQuery('#globalDataType tr').length;
+  var tableLen = jQuery('#globalDataTypeTable tr').length;
   for (var i = 1; i < tableLen; i++) {
     var row = document.getElementById('dataTypeRow' + i);
     var cells = row.getElementsByTagName('td');
@@ -138,7 +139,7 @@ const setGlobalDataType = () => {
       }
     }
   }
-  fetch(apiUrl + '/typemap/global', {
+  fetch('/typemap/global', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -289,31 +290,30 @@ const createEditDataTypeTable = () => {
       if (j === 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]] !== null) {
         tableContent += `<td class='src-td' id='dataTypeKey${(i + 1)}'>${Object.keys(globalDataTypeList)[i]}</td>`;
       }
-      else if (j === 1) {
+      else if (j === 1 && globalDataTypeList[Object.keys(globalDataTypeList)[i]] !== null) {
         tableContent += `<td id='dataTypeVal${(i + 1)}'>`
         let selectHTML = '';
         let selectId = 'dataTypeOption' + (i + 1);
         let optionsLength = globalDataTypeList[Object.keys(globalDataTypeList)[i]].length;
-        selectHTML = `<div style='display: flex;'>
-                        <i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>
-                        <select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${selectId} style='border: 0px !important;'>
-                      </div>`;
+        selectHTML = `<div style='display: flex;'>`;
+        if (globalDataTypeList[Object.keys(globalDataTypeList)[i]][0].Brief !== "") {
+          selectHTML += `<i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][0].Brief}'>warning</i>`;
+        }
+        else {
+          selectHTML += `<i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>`
+        }
+        selectHTML += `<select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${selectId} style='border: 0px !important;'>`
         for (var k = 0; k < optionsLength; k++) {
-          if (k === 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].Brief !== "") {
-            selectHTML = `<div style='display: flex;'>
-                            <i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].Brief}'>warning</i>
-                            <select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${selectId} style='border: 0px !important; font-family: FontAwesome;'>
-                          </div>`;
-          }
           selectHTML += `<option value='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T}'>${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T} </option>`;
         }
-        selectHTML += `</select>`;
+        selectHTML += `</select></div>`;
         tableContent += selectHTML + `</td>`;
       }
     }
+    tableContent += `</tr>`;
   }
 
-  globalDataTypeTable = `<table class='data-type-table' id='globalDataType'>
+  globalDataTypeTable = `<table class='data-type-table' id='globalDataTypeTable'>
                             <tbody>
                               <tr>
                                 <th>Source</th>
@@ -322,8 +322,8 @@ const createEditDataTypeTable = () => {
                               ${tableContent}
                             </tbody>
                          </table>`;
+  document.getElementById('globalDataType').innerHTML = globalDataTypeTable;
   tooltipHandler();
-  return globalDataTypeTable;
 }
 
 /**
@@ -489,7 +489,7 @@ const renderSchemaReportHtml = () => {
             <div class="modal-body" style='margin: auto; margin-top: 20px;'>
       
               <div class="dataMappingCard" id='globalDataType'>
-                ${createEditDataTypeTable()}
+                
               </div>
               
             </div>

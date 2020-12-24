@@ -1,5 +1,5 @@
 const renderInstructionsHtml = (params) => {
-  setActiceSelectedMenu('instructions');
+  setActiveSelectedMenu('instructions');
   return (
     `
         <div class='spinner-backdrop' id='toggle-spinner' style="display:none">

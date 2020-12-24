@@ -1,8 +1,5 @@
 // variables initialisation
 const RED = '#F44336';
-const apiUrl = '';
-var sourceTableFlag;
-var srcTable, spTable, spTableCols;
 
 /**
  * Function to set style for selected menu
@@ -10,7 +7,7 @@ var srcTable, spTable, spTableCols;
  * @param {string} selectedMenuId id of selected menu
  * @return {null}
  */
-const setActiceSelectedMenu = (selectedMenuId) => {
+const setActiveSelectedMenu = (selectedMenuId) => {
   jQuery("[name='headerMenu']:not('#"+selectedMenuId+"')").addClass('inactive');
   jQuery('#'+selectedMenuId).removeClass('inactive');
 }
@@ -112,29 +109,33 @@ const validateInput = (inputField, errorId) => {
  * @return {null}
  */
 const toggleDbType = () => {
-  var val = document.getElementById("dbType")
+  let val = document.getElementById("dbType");
+  let sourceTableFlag = '';
   if (val.value === "") {
-    document.getElementById("sqlFields").style.display = "none"
-    document.getElementById("sqlFieldsButtons").style.display = "none"
+    document.getElementById("sqlFields").style.display = "none";
+    document.getElementById("sqlFieldsButtons").style.display = "none";
   }
   else if (val.value === "mysql") {
     jQuery('.formError').html('');
     jQuery('.db-input').val('');
-    document.getElementById("sqlFields").style.display = "block"
-    document.getElementById("sqlFieldsButtons").style.display = "block"
-    sourceTableFlag = 'MySQL'
+    document.getElementById("sqlFields").style.display = "block";
+    document.getElementById("sqlFieldsButtons").style.display = "block";
+    sourceTableFlag = 'MySQL';
+    localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   else if (val.value === "postgres") {
     jQuery('.formError').html('');
     jQuery('.db-input').val('');
-    document.getElementById("sqlFields").style.display = "block"
-    document.getElementById("sqlFieldsButtons").style.display = "block"
-    sourceTableFlag = 'Postgres'
+    document.getElementById("sqlFields").style.display = "block";
+    document.getElementById("sqlFieldsButtons").style.display = "block";
+    sourceTableFlag = 'Postgres';
+    localStorage.setItem('sourceDbName', sourceTableFlag);
   }
   else if (val.value === 'dynamodb') {
     document.getElementById("sqlFields").style.display = "none";
     document.getElementById("sqlFieldsButtons").style.display = "none";
     sourceTableFlag = 'dynamoDB';
+    localStorage.setItem('sourceDbName', sourceTableFlag);
   }
 }
 
