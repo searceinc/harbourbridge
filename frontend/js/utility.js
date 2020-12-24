@@ -1,5 +1,6 @@
 // variables initialisation
 const RED = '#F44336';
+var schemaConversionObj, srcTableName = [], notNullConstraint = [];
 
 /**
  * Function to set style for selected menu

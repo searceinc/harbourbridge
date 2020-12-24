@@ -75,7 +75,7 @@ const filenameChangeHandler = () => {
  * @return {null}
  */
 const createSourceAndSpannerTables = async(obj) => {
-  schemaConversionObj = obj, srcTableName = [], notNullConstraint = [];
+  schemaConversionObj = obj;
   let spannerColumnsContent, columnNameContent, dataTypeContent, constraintsContent, notNullFound, constraintId, srcConstraintHtml;
   let pksSp = [], notPrimary = [], keyColumnMap = [], initialColNameArray = [], notNullFoundFlag = [], pkSeqId = [], pkArray = [], initialPkSeqId = [], constraintTabCell = [], primaryTabCell = [], spPlaceholder = [], srcPlaceholder = [], countSp = [], countSrc = [];
   let tableContent = '';
@@ -1629,7 +1629,7 @@ const importSourceSchema = (val) => {
  * @param {object} params object containing path and event as keys
  * @return {null}
  */
-const getPathAndEvent = (params) => {
+const getComponent = (params) => {
   if (params.path === '/schema-report-connect-to-db' && params.event === 'hashchange') {
     showSchemaAssessment(window.event.type);
   }
@@ -1645,6 +1645,10 @@ const getPathAndEvent = (params) => {
   else if (params.path === '/schema-report-resume-session') {
     resumeSession(localStorage.getItem('driver'), localStorage.getItem('path'), localStorage.getItem('fileName'), localStorage.getItem('sourceDb'), window.event.type);
   }
+  else {
+    return false;
+  }
+  return true;
 }
 
 /**

@@ -287,27 +287,30 @@ const createEditDataTypeTable = () => {
   for (var i = 0; i < dataTypeListLength; i++) {
     tableContent += `<tr id='dataTypeRow${(i + 1)}'>`;
     for (var j = 0; j < 2; j++) {
-      if (j === 0 && globalDataTypeList[Object.keys(globalDataTypeList)[i]] !== null) {
-        tableContent += `<td class='src-td' id='dataTypeKey${(i + 1)}'>${Object.keys(globalDataTypeList)[i]}</td>`;
-      }
-      else if (j === 1 && globalDataTypeList[Object.keys(globalDataTypeList)[i]] !== null) {
-        tableContent += `<td id='dataTypeVal${(i + 1)}'>`
-        let selectHTML = '';
-        let selectId = 'dataTypeOption' + (i + 1);
-        let optionsLength = globalDataTypeList[Object.keys(globalDataTypeList)[i]].length;
-        selectHTML = `<div style='display: flex;'>`;
-        if (globalDataTypeList[Object.keys(globalDataTypeList)[i]][0].Brief !== "") {
-          selectHTML += `<i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][0].Brief}'>warning</i>`;
+      if (globalDataTypeList[Object.keys(globalDataTypeList)[i]] !== null)
+      {
+        if (j === 0) {
+          tableContent += `<td class='src-td' id='dataTypeKey${(i + 1)}'>${Object.keys(globalDataTypeList)[i]}</td>`;
         }
-        else {
-          selectHTML += `<i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>`
+        else if (j === 1) {
+          tableContent += `<td id='dataTypeVal${(i + 1)}'>`
+          let selectHTML = '';
+          let selectId = 'dataTypeOption' + (i + 1);
+          let optionsLength = globalDataTypeList[Object.keys(globalDataTypeList)[i]].length;
+          selectHTML = `<div style='display: flex;'>`;
+          if (globalDataTypeList[Object.keys(globalDataTypeList)[i]][0].Brief !== "") {
+            selectHTML += `<i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][0].Brief}'>warning</i>`;
+          }
+          else {
+            selectHTML += `<i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>`
+          }
+          selectHTML += `<select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${selectId} style='border: 0px !important;'>`
+          for (var k = 0; k < optionsLength; k++) {
+            selectHTML += `<option value='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T}'>${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T} </option>`;
+          }
+          selectHTML += `</select></div>`;
+          tableContent += selectHTML + `</td>`;
         }
-        selectHTML += `<select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${selectId} style='border: 0px !important;'>`
-        for (var k = 0; k < optionsLength; k++) {
-          selectHTML += `<option value='${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T}'>${globalDataTypeList[Object.keys(globalDataTypeList)[i]][k].T} </option>`;
-        }
-        selectHTML += `</select></div>`;
-        tableContent += selectHTML + `</td>`;
       }
     }
     tableContent += `</tr>`;
@@ -336,19 +339,15 @@ const dataTypeUpdate = (id, globalDataTypeList) => {
   let idNum = parseInt(id.match(/\d+/), 10);
   let dataTypeOptionArray = globalDataTypeList[document.getElementById('dataTypeKey' + idNum).innerHTML];
   let optionHTML = '';
+  let selectHTML = '';
+  let optionFound;
+  let warningFound;
   let length = dataTypeOptionArray.length;
-  let selectHTML = `<div style='display: flex;'>
-                  <i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>
-                  <select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${id} style='border: 0px !important;'>
-                </div>`;
+  warningFound = `<i class="large material-icons warning" style='cursor: pointer; visibility: hidden;'>warning</i>`;
   for (var x = 0; x < length; x++) {
-    let optionFound = dataTypeOptionArray[x].T === document.getElementById(id).value;
+    optionFound = dataTypeOptionArray[x].T === document.getElementById(id).value;
     if (dataTypeOptionArray[x].T === document.getElementById(id).value && dataTypeOptionArray[x].Brief !== "") {
-
-      selectHTML = `<div style='display: flex;'>
-                      <i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${dataTypeOptionArray[x].Brief}'>warning</i>
-                      <select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${id} style='border: 0px !important;'>
-                    </div>`;
+      warningFound = `<i class="large material-icons warning" style='cursor: pointer;' data-toggle='tooltip' data-placement='bottom' title='${dataTypeOptionArray[x].Brief}'>warning</i>`;
     }
     if (optionFound === true) {
       optionHTML += `<option selected='selected' value='${dataTypeOptionArray[x].T}'>${dataTypeOptionArray[x].T} </option>`;
@@ -357,7 +356,8 @@ const dataTypeUpdate = (id, globalDataTypeList) => {
       optionHTML += `<option value='${dataTypeOptionArray[x].T}'>${dataTypeOptionArray[x].T} </option>`;
     }
   }
-  selectHTML += optionHTML + `</select>`;
+  selectHTML = `<div style='display: flex;'>` + warningFound + `<select onchange='dataTypeUpdate(id, ${JSON.stringify(globalDataTypeList)})' class='form-control tableSelect' id=${id} style='border: 0px !important;'>`;
+  selectHTML += optionHTML + `</select></div>`;
   let dataTypeValEle = document.getElementById('dataTypeVal' + idNum);
   if (dataTypeValEle) {
     document.getElementById('dataTypeVal' + idNum).innerHTML = selectHTML;

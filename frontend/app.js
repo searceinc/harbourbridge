@@ -44,8 +44,10 @@ const findComponentByPath = (path, routes) => routes.find(r => r.path.match(new 
 const router = () => {
   const path = parseLocation();
   const { component = ErrorComponent } = findComponentByPath(path, routes) || {};
-  document.getElementById('app').innerHTML = component.render();
-  getPathAndEvent({'path': path, 'event': window.event.type});
+  getComponentFlag = getComponent({'path': path, 'event': window.event.type});
+  if (!getComponentFlag) {
+    document.getElementById('app').innerHTML = component.render();
+  }
 };
 
 window.addEventListener('hashchange', router);
