@@ -51,10 +51,22 @@ import (
 // 6) Update schema conv after setting global datatypes and return conv. (setTypeMap)
 // 7) Add rateConversion() in schema conversion, ddl and report APIs.
 // 8) Add an overview in summary report API
+var mysqlTypeMap = make(map[string][]typeIssue)
+var postgresTypeMap = make(map[string][]typeIssue)
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to Harbourbridge!")
 	w.WriteHeader(http.StatusOK)
+}
+
+// Driver config is used for direct database connection.
+type DriverConfig struct {
+	Driver   string `json:"Driver"`
+	Host     string `json:"Host"`
+	Port     string `json:"Port"`
+	Database string `json:"Database"`
+	User     string `json:"User"`
+	Password string `json:"Password"`
 }
 
 func databaseConnection(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +96,7 @@ func databaseConnection(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("SQL connection error : %v", err), http.StatusInternalServerError)
 		return
 	}
-	// Open doesn't open a connection. Validate DSN data:
+	// Open doesn't open a connection. Validate database connection.
 	err = sourceDB.Ping()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Connection Error: %v. Check Configuration again.", err), http.StatusInternalServerError)
@@ -121,6 +133,12 @@ func convertSchemaSQL(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(conv)
 }
 
+// Dump config is used for dump file approach.
+type DumpConfig struct {
+	Driver   string `json:"Driver"`
+	FilePath string `json:"Path"`
+}
+
 func convertSchemaDump(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -149,6 +167,7 @@ func convertSchemaDump(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(conv)
 }
 
+// TODO: Add Index key statements.
 func getDDL(w http.ResponseWriter, r *http.Request) {
 	c := ddl.Config{Comments: true, ProtectIds: false}
 	var tables []string
@@ -164,71 +183,10 @@ func getDDL(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(ddl)
 }
 
-func getSession(w http.ResponseWriter, r *http.Request) {
-	now := time.Now()
-	dbName, err := conversion.GetDatabaseName(app.driver, now)
-	if err != nil {
-		fmt.Printf("\nCan't get database name: %v\n", err)
-		panic(fmt.Errorf("can't get database name"))
-	}
-	sessionFile := ".session.json"
-	filePath := "frontend/"
-	out := os.Stdout
-	f, err := os.Create(filePath + dbName + sessionFile)
-	if err != nil {
-		fmt.Fprintf(out, "Can't create session file %s: %v\n", dbName+sessionFile, err)
-		return
-	}
-	// Session file will basically contain 'conv' struct in JSON format.
-	// It contains all the information for schema and data conversion state.
-	convJSON, err := json.MarshalIndent(app.conv, "", " ")
-	if err != nil {
-		fmt.Fprintf(out, "Can't encode session state to JSON: %v\n", err)
-		return
-	}
-	if _, err := f.Write(convJSON); err != nil {
-		fmt.Fprintf(out, "Can't write out session file: %v\n", err)
-		return
-	}
-	session := Session{Driver: app.driver, FilePath: filePath, FileName: dbName + sessionFile, CreatedAt: now}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(session)
-}
-
-func resumeSession(w http.ResponseWriter, r *http.Request) {
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), http.StatusInternalServerError)
-		return
-	}
-	var s Session
-	err = json.Unmarshal(reqBody, &s)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Request Body parse error : %v", err), http.StatusBadRequest)
-		return
-	}
-	f, err := os.Open(s.FilePath + s.FileName)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to open the session file: %v", err), http.StatusNotFound)
-		return
-	}
-	defer f.Close()
-	sessionJSON, _ := ioutil.ReadAll(f)
-	json.Unmarshal(sessionJSON, &app.conv)
-	app.driver = s.Driver
-	w.WriteHeader(http.StatusOK)
-}
-
 func getSummary(w http.ResponseWriter, r *http.Request) {
 	reports := internal.AnalyzeTables(app.conv, nil)
 	summary := make(map[string]string)
 	for _, t := range reports {
-		// h := fmt.Sprintf("Table %s", t.SrcTable)
-		// if t.SrcTable != t.SpTable {
-		// 	h = h + fmt.Sprintf(" (mapped to Spanner table %s)", t.SpTable)
-		// }
-		//w.WriteString(rateConversion(t.rows, t.badRows, t.cols, t.warnings, t.syntheticPKey != "", false))
-		//w.WriteString("\n")
 		var body string
 		for _, x := range t.Body {
 			body = body + x.Heading + "\n"
@@ -338,7 +296,7 @@ func getTypeMap(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), http.StatusBadRequest)
 		return
 	}
-	// return a list of type-mapping for only the data-types
+	// Return a list of type-mapping for only the data-types
 	// that are used in source schema.
 	typeMap := make(map[string][]typeIssue)
 	for _, srcTable := range app.conv.SrcSchema {
@@ -379,9 +337,9 @@ func setTypeMapGlobal(w http.ResponseWriter, r *http.Request) {
 					var issues []internal.SchemaIssue
 					switch app.driver {
 					case "mysql", "mysqldump":
-						ty, issues = toSpannerTypeMySQL(app.conv, srcCol.Type.Name, tv, srcCol.Type.Mods)
+						ty, issues = toSpannerTypeMySQL(srcCol.Type.Name, tv, srcCol.Type.Mods)
 					case "pg_dump", "postgres":
-						ty, issues = toSpannerTypePostgres(app.conv, srcCol.Type.Name, tv, srcCol.Type.Mods)
+						ty, issues = toSpannerTypePostgres(srcCol.Type.Name, tv, srcCol.Type.Mods)
 					default:
 						http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), http.StatusBadRequest)
 						return
@@ -514,9 +472,9 @@ func updateType(newType, table, newColName, srcTableName string, w http.Response
 	var issues []internal.SchemaIssue
 	switch app.driver {
 	case "mysql", "mysqldump":
-		ty, issues = toSpannerTypeMySQL(app.conv, srcCol.Type.Name, newType, srcCol.Type.Mods)
+		ty, issues = toSpannerTypeMySQL(srcCol.Type.Name, newType, srcCol.Type.Mods)
 	case "pg_dump", "postgres":
-		ty, issues = toSpannerTypePostgres(app.conv, srcCol.Type.Name, newType, srcCol.Type.Mods)
+		ty, issues = toSpannerTypePostgres(srcCol.Type.Name, newType, srcCol.Type.Mods)
 	default:
 		http.Error(w, fmt.Sprintf("Driver : '%s' is not supported", app.driver), http.StatusBadRequest)
 		return
@@ -553,12 +511,29 @@ func updateNotNull(notNullChange, table, newColName string) {
 		spColDef.NotNull = false
 		sp.ColDefs[newColName] = spColDef
 	default:
-		//we skip this
+		// We skip this.
 	}
 	app.conv.SpSchema[table] = sp
 }
 
-func setTypeMapTableLevel(w http.ResponseWriter, r *http.Request) {
+// Actions to be performed on a column.
+// (1) Removed: true/false
+// (2) Rename: New name or empty string
+// (3) PK: "ADDED", "REMOVED" or ""
+// (4) NotNull: "ADDED", "REMOVED" or ""
+// (5) ToType: New type or empty string
+type updateCol struct {
+	Removed bool   `json:"Removed"`
+	Rename  string `json:"Rename"`
+	PK      string `json:"PK"`
+	NotNull string `json:"NotNull"`
+	ToType  string `json:"ToType"`
+}
+type updateTable struct {
+	UpdateCols map[string]updateCol `json:"UpdateCols"`
+}
+
+func updateTableSchema(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), http.StatusInternalServerError)
@@ -679,31 +654,24 @@ type TableInterleaveStatus struct {
 	Comment  string
 }
 
-func checkPrimaryKeyPrefix(table string, refTable string, tableInterleaveIssues *TableInterleaveStatus) {
+func checkPrimaryKeyPrefix(table string, refTable string, fk ddl.Foreignkey, tableInterleaveIssues *TableInterleaveStatus) bool {
 	childPks := app.conv.SpSchema[table].Pks
 	parentPks := app.conv.SpSchema[refTable].Pks
-	var referedCols []string
-	for _, fk := range app.conv.SpSchema[table].Fks {
-		for _, col := range fk.ReferColumns {
-			referedCols = append(referedCols, col)
-		}
-	}
 	if len(childPks) >= len(parentPks) {
 		for i, pk := range parentPks {
-			if pk.Col != referedCols[i] || pk.Col != childPks[i].Col {
-				tableInterleaveIssues.Possible = false
-				tableInterleaveIssues.Comment = "prefix key doesn't match"
-				break
+			if i >= len(fk.ReferColumns) || pk.Col != fk.ReferColumns[i] || pk.Col != childPks[i].Col || fk.Columns[i] != fk.ReferColumns[i] {
+				return false
 			}
 		}
 	} else {
-		tableInterleaveIssues.Possible = false
-		tableInterleaveIssues.Comment = "prefix key doesn't match"
+		return false
 	}
-
+	return true
+}
+func removeFk(slice []ddl.Foreignkey, s int) []ddl.Foreignkey {
+	return append(slice[:s], slice[s+1:]...)
 }
 
-// Work in progress
 func checkForInterleavedTables(w http.ResponseWriter, r *http.Request) {
 	table := r.FormValue("table")
 	if app.conv == nil || app.driver == "" {
@@ -714,32 +682,30 @@ func checkForInterleavedTables(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Table name is empty"), http.StatusBadRequest)
 	}
 	tableInterleaveIssues := &TableInterleaveStatus{Possible: true}
-	tablesUsed := make(map[string]bool)
-	var refTable string
-	for _, fk := range app.conv.SpSchema[table].Fks {
-		tablesUsed[fk.ReferTable] = true
-		refTable = fk.ReferTable
-	}
-	if len(tablesUsed) != 1 {
-		tableInterleaveIssues.Possible = false
-		tableInterleaveIssues.Comment = "multiple or no parent"
-	}
 	if _, found := app.conv.SyntheticPKeys[table]; found {
 		tableInterleaveIssues.Possible = false
-		tableInterleaveIssues.Comment = "has synthetic pk"
-	}
-	if _, found := app.conv.SyntheticPKeys[refTable]; found {
-		tableInterleaveIssues.Possible = false
-		tableInterleaveIssues.Comment = "parent has synthetic pk"
+		tableInterleaveIssues.Comment = "Has synthetic pk"
 	}
 	if tableInterleaveIssues.Possible == true {
-		checkPrimaryKeyPrefix(table, refTable, tableInterleaveIssues)
-	}
-	if tableInterleaveIssues.Possible == true {
-		tableInterleaveIssues.Parent = refTable
-		sp := app.conv.SpSchema[table]
-		sp.Parent = refTable
-		app.conv.SpSchema[table] = sp
+		for i, fk := range app.conv.SpSchema[table].Fks {
+			refTable := fk.ReferTable
+			if _, found := app.conv.SyntheticPKeys[refTable]; found {
+				continue
+			}
+			ok := checkPrimaryKeyPrefix(table, refTable, fk, tableInterleaveIssues)
+			if ok == true {
+				tableInterleaveIssues.Parent = refTable
+				sp := app.conv.SpSchema[table]
+				sp.Parent = refTable
+				sp.Fks = removeFk(sp.Fks, i)
+				app.conv.SpSchema[table] = sp
+				break
+			}
+		}
+		if tableInterleaveIssues.Parent == "" {
+			tableInterleaveIssues.Possible = false
+			tableInterleaveIssues.Comment = "No valid prefix"
+		}
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(tableInterleaveIssues)
@@ -753,6 +719,50 @@ type App struct {
 }
 
 var app App
+
+// Type and issue.
+type typeIssue struct {
+	T     string
+	Brief string
+}
+
+func addTypeToList(convertedType string, spType string, issues []internal.SchemaIssue, l []typeIssue) []typeIssue {
+	if convertedType == spType {
+		if len(issues) > 0 {
+			var briefs []string
+			for _, issue := range issues {
+				briefs = append(briefs, internal.IssueDB[issue].Brief)
+			}
+			l = append(l, typeIssue{T: spType, Brief: fmt.Sprintf(strings.Join(briefs, ", "))})
+		} else {
+			l = append(l, typeIssue{T: spType})
+		}
+	}
+	return l
+}
+func init() {
+	// Initialize mysqlTypeMap.
+	for _, srcType := range []string{"bool", "boolean", "varchar", "char", "text", "tinytext", "mediumtext", "longtext", "set", "enum", "json", "bit", "binary", "varbinary", "blob", "tinyblob", "mediumblob", "longblob", "tinyint", "smallint", "mediumint", "int", "integer", "bigint", "double", "float", "numeric", "decimal", "date", "datetime", "timestamp", "time", "year"} {
+		var l []typeIssue
+		for _, spType := range []string{ddl.Bool, ddl.Bytes, ddl.Date, ddl.Float64, ddl.Int64, ddl.String, ddl.Timestamp, ddl.Numeric} {
+			ty, issues := toSpannerTypeMySQL(srcType, spType, []int64{})
+			l = addTypeToList(ty.Name, spType, issues, l)
+		}
+		if srcType == "tinyint" {
+			l = append(l, typeIssue{T: ddl.Bool})
+		}
+		mysqlTypeMap[srcType] = l
+	}
+	// Initialize postgresTypeMap.
+	for _, srcType := range []string{"bool", "boolean", "bigserial", "bpchar", "character", "bytea", "date", "float8", "double precision", "float4", "real", "int8", "bigint", "int4", "integer", "int2", "smallint", "numeric", "serial", "text", "timestamptz", "timestamp with time zone", "timestamp", "timestamp without time zone", "varchar", "character varying"} {
+		var l []typeIssue
+		for _, spType := range []string{ddl.Bool, ddl.Bytes, ddl.Date, ddl.Float64, ddl.Int64, ddl.String, ddl.Timestamp, ddl.Numeric} {
+			ty, issues := toSpannerTypePostgres(srcType, spType, []int64{})
+			l = addTypeToList(ty.Name, spType, issues, l)
+		}
+		postgresTypeMap[srcType] = l
+	}
+}
 
 func WebApp() {
 	fmt.Println("-------------------")

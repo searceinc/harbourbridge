@@ -168,9 +168,10 @@ func (conv *Conv) SetDataMode() {
 	conv.mode = dataOnly
 }
 
-// GetDDL Schema returns the Spanner schema that has been constructed so far.
-// We sort DDL in alphabetical order, but we maintain the order of interleaved
-// relation by passing tables through a queue
+// GetDDL Schema returns the current Spanner schema.
+// We return DDL in alphabetical order with one exception: interleaved tables are
+// potentially out of order since they must appear after the definition of their
+// parent table.
 func (conv *Conv) GetDDL(c ddl.Config) []string {
 	var tables []string
 	for t := range conv.SpSchema {
@@ -201,7 +202,7 @@ func (conv *Conv) GetDDL(c ddl.Config) []string {
 		}
 	}
 
-	// Append foreign key constraints to DDL if table is not interleaved.
+	// Append foreign key constraints to DDL.
 	// We always use alter table statements for foreign key constraints.
 	// The alternative of putting foreign key constraints in-line as part of create
 	// table statements is tricky because of table order (need to define tables
@@ -209,9 +210,6 @@ func (conv *Conv) GetDDL(c ddl.Config) []string {
 	// of circular foreign keys definitions. We opt for simplicity.
 	if c.ForeignKeys {
 		for _, t := range tables {
-			if conv.SpSchema[t].Parent != "" {
-				continue
-			}
 			for _, fk := range conv.SpSchema[t].Fks {
 				ddl = append(ddl, fk.PrintForeignKeyAlterTable(c, t))
 			}
