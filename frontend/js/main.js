@@ -340,11 +340,13 @@ const createSourceAndSpannerTables = async(obj) => {
   }
   constraintCount--;
   while (constraintCount >= 0) {
-    new vanillaSelectBox('#srcConstraint' + constraintCount, {
-      placeHolder: srcPlaceholder[constraintCount] + " constraints selected",
-      maxWidth: 500,
-      maxHeight: 300
-    });
+    if (document.getElementById('srcConstraint' + constraintCount) != null) {
+      new vanillaSelectBox('#srcConstraint' + constraintCount, {
+        placeHolder: srcPlaceholder[constraintCount] + " constraints selected",
+        maxWidth: 500,
+        maxHeight: 300
+      });
+    }
     constraintCount--;
   }
 
@@ -1634,6 +1636,8 @@ const getComponent = (params) => {
     showSchemaAssessment(window.event.type);
   }
   else if ( (params.path === '/schema-report-connect-to-db' || params.path === '/schema-report-load-db-dump') && params.event === 'load') {
+    const { component = ErrorComponent } = findComponentByPath(location.hash.slice(1).toLowerCase() || '/', routes) || {};
+    document.getElementById('app').innerHTML = component.render();
     conversionRateResp = JSON.parse(localStorage.getItem('tableBorderColor'));
     createSourceAndSpannerTables(JSON.parse(localStorage.getItem('conversionReportContent')));
     createDdlFromJson(JSON.parse(localStorage.getItem('ddlStatementsContent')));
