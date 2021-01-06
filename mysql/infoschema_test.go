@@ -123,6 +123,10 @@ func TestProcessInfoSchemaMYSQL(t *testing.T) {
 			args:  []driver.Value{"test", "product"},
 			cols:  []string{"REFERENCED_TABLE_NAME", "COLUMN_NAME", "REFERENCED_COLUMN_NAME", "CONSTRAINT_NAME"},
 		}, {
+			query: "SELECT (.+) FROM INFORMATION_SCHEMA.STATISTICS (.+)",
+			args:  []driver.Value{"test", "product"},
+			cols:  []string{"INDEX_NAME", "COLUMN_NAME", "SEQ_IN_INDEX", "COLLATION", "NON_UNIQUE"},
+		}, {
 			query: "SELECT (.+) FROM information_schema.COLUMNS (.+)",
 			args:  []driver.Value{"test", "test"},
 			cols:  []string{"column_name", "data_type", "column_type", "is_nullable", "column_default", "character_maximum_length", "numeric_precision", "numeric_scale", "extra"},
@@ -181,6 +185,10 @@ func TestProcessInfoSchemaMYSQL(t *testing.T) {
 			query: "SELECT (.+) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS (.+)",
 			args:  []driver.Value{"test", "test_ref"},
 			cols:  []string{"REFERENCED_TABLE_NAME", "COLUMN_NAME", "REFERENCED_COLUMN_NAME", "CONSTRAINT_NAME"},
+		}, {
+			query: "SELECT (.+) FROM INFORMATION_SCHEMA.STATISTICS (.+)",
+			args:  []driver.Value{"test", "test_ref"},
+			cols:  []string{"INDEX_NAME", "COLUMN_NAME", "SEQ_IN_INDEX", "COLLATION", "NON_UNIQUE"},
 		},
 	}
 	db := mkMockDB(t, ms)

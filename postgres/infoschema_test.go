@@ -124,6 +124,11 @@ func TestProcessInfoSchema(t *testing.T) {
 			args:  []driver.Value{"public", "product"},
 			cols:  []string{"TABLE_SCHEMA", "TABLE_NAME", "COLUMN_NAME", "REF_COLUMN_NAME", "CONSTRAINT_NAME"},
 		}, {
+			query: "SELECT (.+) FROM pg_index (.+)",
+			args:  []driver.Value{"public", "product"},
+			cols:  []string{"index_name", "column_name", "column_position", "is_unique", "order"},
+		},
+		{
 			query: "SELECT (.+) FROM information_schema.COLUMNS (.+)",
 			args:  []driver.Value{"public", "test"},
 			cols:  []string{"column_name", "data_type", "data_type", "is_nullable", "column_default", "character_maximum_length", "numeric_precision", "numeric_scale"},
@@ -184,6 +189,10 @@ func TestProcessInfoSchema(t *testing.T) {
 			query: "SELECT (.+) FROM PG_CLASS (.+) JOIN PG_NAMESPACE (.+) JOIN PG_CONSTRAINT (.+)",
 			args:  []driver.Value{"public", "test_ref"},
 			cols:  []string{"TABLE_SCHEMA", "TABLE_NAME", "COLUMN_NAME", "REF_COLUMN_NAME", "CONSTRAINT_NAME"},
+		}, {
+			query: "SELECT (.+) FROM pg_index (.+)",
+			args:  []driver.Value{"public", "test_ref"},
+			cols:  []string{"index_name", "column_name", "column_position", "is_unique", "order"},
 		},
 	}
 	db := mkMockDB(t, ms)
