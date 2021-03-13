@@ -449,6 +449,7 @@ type TableInterleaveStatus struct {
 func setParentTable(w http.ResponseWriter, r *http.Request) {
 	table := r.FormValue("table")
 	update := r.FormValue("update") == "true"
+	tableInterleaveIssues := parentTableHelper(table, update)
 	if sessionState.conv == nil || sessionState.driver == "" {
 		http.Error(w, fmt.Sprintf("Schema is not converted or Driver is not configured properly. Please retry converting the database to Spanner."), http.StatusNotFound)
 		return
@@ -463,7 +464,7 @@ func setParentTable(w http.ResponseWriter, r *http.Request) {
 	if update {
 		json.NewEncoder(w).Encode(sessionState.conv)
 	} else {
-		json.NewEncoder(w).Encode(map[string]interface{}{"Possible": false, "Parent": "", "Comment": "No valid prefix"})
+		json.NewEncoder(w).Encode(tableInterleaveIssues)
 	}
 }
 
@@ -535,7 +536,6 @@ func renameForeignKeys(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Body Read Error : %v", err), http.StatusInternalServerError)
 	}
-
 	if sessionState.conv == nil || sessionState.driver == "" {
 		http.Error(w, fmt.Sprintf("Schema is not converted or Driver is not configured properly. Please retry converting the database to Spanner."), http.StatusNotFound)
 		return
