@@ -9,8 +9,8 @@ var schemaConversionObj, srcTableName = [], notNullConstraint = [], notPrimary =
  * @return {null}
  */
 const setActiveSelectedMenu = (selectedMenuId) => {
-  jQuery("[name='headerMenu']:not('#"+selectedMenuId+"')").addClass('inactive');
-  jQuery('#'+selectedMenuId).removeClass('inactive');
+  jQuery("[name='headerMenu']:not('#" + selectedMenuId + "')").addClass('inactive');
+  jQuery('#' + selectedMenuId).removeClass('inactive');
 }
 
 const checkActiveSession = () => {
@@ -77,11 +77,13 @@ const mdcCardBorder = (color) => {
  */
 const showSnackbar = (message, bgClass) => {
   var snackbar = document.getElementById("snackbar");
-  snackbar.className = "show" + bgClass;
-  snackbar.innerHTML = message;
-  setTimeout(function () {
-    snackbar.className = snackbar.className.replace("show", "");
-  }, 3000);
+  if (snackbar) {
+    snackbar.className = "show" + bgClass;
+    snackbar.innerHTML = message;
+    setTimeout(function () {
+      snackbar.className = snackbar.className.replace("show", "");
+    }, 3000);
+  }
 }
 
 /**
@@ -224,6 +226,8 @@ const showSpinner = () => {
  */
 const hideSpinner = () => {
   toggle_spinner = document.getElementById("toggle-spinner");
-  toggle_spinner.style.display = "none";
-  toggle_spinner.className = toggle_spinner.className.replace("show", "");
+  if (toggle_spinner) {
+    toggle_spinner.style.display = "none";
+    toggle_spinner.className = toggle_spinner.className.replace("show", "");
+  }
 }
