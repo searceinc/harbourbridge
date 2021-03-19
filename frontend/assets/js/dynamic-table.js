@@ -1,5 +1,8 @@
-$(document).ready(function () {
+import Search from '../../app/components/Search.js';
+import {getGlobalDataTypeList , initSchemaScreenTasks , reportExpandHandler , searchTable } from '../../app/view/schema-conversion/schema-conversion.js'
+import TabBar from './../../app/components/TabBar.js'
 
+$(document).ready(function () {
     jQuery('#createIndexForm > div > input').keyup(function () {
         let empty = false;
         jQuery('#createIndexForm > div > input').each(function () {
@@ -15,8 +18,16 @@ $(document).ready(function () {
         }
     });
 
+    TabBar('#vvv')
+    const sam = ()=> {
+        if(2 > 1) {} 
+        alert('sam')
+    }
+
+    console.log(sam);
+    Search('#search-component' , searchTable)
     setActiveSelectedMenu('schemaScreen');
-    $(".modal-backdrop").hide();
+    $(".modal-backdrop").hide()
 
     const createDdlFromJson = (result) => {
         let ddl = result;
@@ -174,7 +185,7 @@ $(document).ready(function () {
                 $convTableContent.find('.column.right.srcColumn').attr('id', 'srcColumn' + k);
 
                 $convTableContent.find('.sp-column.acc-table-td.spannerColName').addClass('spannerTabCell' + i + k);
-                pkFlag = false;
+              let pkFlag = false;
                 for (var x = 0; x < pksSpLength; x++) {
                     if (pksSp[i][x].Col === currentColumnSp) {
                         pkFlag = true;
@@ -204,8 +215,8 @@ $(document).ready(function () {
                     $convTableContent.find('.column.right.spannerColNameSpan').html(currentColumnSp);
                 }
                 primaryTabCell[i][k] = $convTableContent;
-                keyIconValue = 'keyIcon' + i + k + k;
-                keyColumnObj = { 'keyIconId': keyIconValue, 'columnName': currentColumnSp };
+                let keyIconValue = 'keyIcon' + i + k + k;
+              let keyColumnObj = { 'keyIconId': keyIconValue, 'columnName': currentColumnSp };
 
                 $convTableContent.find('.acc-table-td.srcDataType').attr('id', 'srcDataType' + i + k);
                 $convTableContent.find('.acc-table-td.srcDataType').html(srcTable.ColDefs[currentColumnSrc].Type.Name);

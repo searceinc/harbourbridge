@@ -5,13 +5,13 @@
     </div>
     <div>
         <h4 class="report-header">Recommended Schema Conversion Report
-            <button id="download-schema" class="download-button" onclick='downloadSession()'>Download Session
+            <button id="download-schema" class="download-button" onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.downloadSession())">Download Session
                 File</button>
         </h4>
     </div>
     <div class="report-tabs">
-        <ul class="nav nav-tabs md-tabs" role="tablist">
-            <li class="nav-item">
+        <ul class="nav nav-tabs md-tabs" role="tablist" id="vvv">
+            <!-- <li class="nav-item">
                 <a class="nav-link active" id="reportTab" data-toggle="tab" href="#report" role="tab"
                     aria-controls="report" onclick="findTab(this.id)" aria-selected="true">Conversion Report</a>
             </li>
@@ -22,11 +22,14 @@
             <li class="nav-item">
                 <a class="nav-link" id="summaryTab" data-toggle="tab" href="#summary" role="tab" aria-controls="summary"
                     onclick="findTab(this.id)" aria-selected="false">Summary Report</a>
-            </li>
+            </li> -->
         </ul>
     </div>
     <div class="status-icons">
-        <form class="form-inline d-flex justify-content-center md-form form-sm mt-0 search-form" id='reportSearchForm'>
+        <span id="search-component">
+            
+        </span>
+        <!-- <form class="form-inline d-flex justify-content-center md-form form-sm mt-0 search-form" id='reportSearchForm'>
             <i class="fas fa-search" aria-hidden="true"></i>
             <input class="form-control form-control-sm ml-3 w-75 search-box" type="text" placeholder="Search table"
                 autocomplete='off' aria-label="Search" onkeyup='searchTable("reportSearchInput")'
@@ -44,7 +47,7 @@
             <input class="form-control form-control-sm ml-3 w-75 search-box" type="text" placeholder="Search table"
                 id='summarySearchInput' autocomplete='off' aria-label="Search"
                 onkeyup='searchTable("summarySearchInput")'>
-        </form>
+        </form> -->
         <section class="cus-tip">
             <span class="cus-a info-icon statusTooltip">
                 <i class="large material-icons">info</i>
@@ -75,9 +78,10 @@
         <div class="tab-content">
             <div id="report" class="tab-pane fade show active">
                 <div class="accordion md-accordion" id="accordion" role="tablist" aria-multiselectable="true">
-                    <button class='expand' id='reportExpandButton' onclick='reportExpandHandler(jQuery(this))'>Expand
+                    
+                    <button class='expand' id='reportExpandButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.reportExpandHandler(jQuery(this)))" >Expand
                         All</button>
-                    <button class='expand right-align' id='editButton' onclick='globalEditHandler()'>Edit Global Data
+                    <button class='expand right-align' id='editButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.globalEditHandler())">Edit Global Data
                         Type</button>
                     <div id='reportDiv'>
                         <section class='reportSection template'>
@@ -352,9 +356,9 @@
             </div>
             <div id="ddl" class="tab-pane fade">
                 <div class="panel-group" id="ddl-accordion">
-                    <button class='expand' id='ddlExpandButton' onclick='ddlExpandHandler(jQuery(this))'>Expand
+                    <button class='expand' id='ddlExpandButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.ddlExpandHandler(jQuery(this)))">Expand
                         All</button>
-                    <button id="download-ddl" class="expand right-align" onclick='downloadDdl()'>Download DDL
+                    <button id="download-ddl" class="expand right-align" onclick="import('./app/view/schema-conversion/schema-conversion.js').then(fun =>  fun.downloadDdl())">Download DDL
                         Statements</button>
                     <div id='ddlDiv'>
                         <section class='ddlSection template'>
@@ -379,9 +383,9 @@
             </div>
             <div id="summary" class="tab-pane fade">
                 <div class="panel-group" id="summary-accordion">
-                    <button class='expand' id='summaryExpandButton' onclick='summaryExpandHandler(jQuery(this))'>Expand
+                    <button class='expand' id='summaryExpandButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.summaryExpandHandler(jQuery(this)))">Expand
                         All</button>
-                    <button id="download-report" class="expand right-align" onclick='downloadReport()'>Download Summary
+                    <button id="download-report" class="expand right-align" onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.downloadReport())">Download Summary
                         Report</button>
                     <div id='summaryDiv'>
                         <section class='summarySection template'>
@@ -439,7 +443,7 @@
                 </div>
             </div>
             <div class="modal-footer" style='margin-top: 20px;'>
-                <button id="data-type-button" data-dismiss="modal" onclick="setGlobalDataType()" class="connect-button"
+                <button id="data-type-button" data-dismiss="modal" onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.setGlobalDataType() )" class="connect-button"
                     type="button" style='margin-right: 24px !important;'>Next</button>
             </div>
         </div>
@@ -605,6 +609,8 @@
             </div>
         </div>
     </div>
+    <script type="module" src="assets/js/dynamic-table.js"></script>
 </div>
 
-<script src="assets/js/dynamic-table.js"></script>
+
+

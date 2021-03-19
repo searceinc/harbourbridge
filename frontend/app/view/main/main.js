@@ -346,7 +346,7 @@ const createTableAfterChanges = async (schemaConversionObj, tableNumber, tableNa
     $convTableContent.find('.column.right.srcColumn').attr('id', 'srcColumn' + k);
 
     $convTableContent.find('.sp-column.acc-table-td.spannerColName').addClass('spannerTabCell' + tableNumber + k);
-    pkFlag = false;
+   let pkFlag = false;
     for (var x = 0; x < pksSpLength; x++) {
       if (pksSp[tableNumber][x].Col === currentColumnSp) {
         pkFlag = true;
@@ -375,8 +375,8 @@ const createTableAfterChanges = async (schemaConversionObj, tableNumber, tableNa
       $convTableContent.find('.column.right.spannerColNameSpan').html(currentColumnSp);
     }
     primaryTabCell[tableNumber][k] = $convTableContent;
-    keyIconValue = 'keyIcon' + tableNumber + k + k;
-    keyColumnObj = { 'keyIconId': keyIconValue, 'columnName': currentColumnSp };
+    let keyIconValue = 'keyIcon' + tableNumber + k + k;
+    let keyColumnObj = { 'keyIconId': keyIconValue, 'columnName': currentColumnSp };
 
     $convTableContent.find('.acc-table-td.srcDataType').attr('id', 'srcDataType' + tableNumber + k);
     $convTableContent.find('.acc-table-td.srcDataType').html(srcTable.ColDefs[currentColumnSrc].Type.Name);

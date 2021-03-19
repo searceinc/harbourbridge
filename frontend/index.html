@@ -17,12 +17,13 @@
     href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&display=swap|Material+Icons"
     rel="stylesheet">
   <link rel="stylesheet" href="assets/lib/css/jquery.dataTables.min.css">
-
+  
 </head>
 
 <body>
+<h1>ok</h1>
+  <header class="main-header" id="header-component">
 
-  <header class="main-header">
     <nav class="navbar navbar-static-top">
       <img src="assets/images/Icons/google-spanner-logo.png" class="logo">
     </nav>
@@ -42,31 +43,30 @@
         <a name='headerMenu' href='#/instructions' id='instructions' class='inactive'>Instructions</a>
       </div>
     </nav>
+
   </header>
 
+  
   <section id="app">
   </section>
-
-  <script src="assets/lib/js/jquery.min.js"></script>
+  
+  <script  src="assets/lib/js/jquery.min.js"></script>
   <script src="assets/lib/js/popper.min.js"></script>
   <script type="text/javascript" src="assets/lib/js/jquery.dataTables.min.js"></script>
   <script src="assets/lib/js/vanillaSelectBox.js"></script>
   <script src='https://kit.fontawesome.com/a076d05399.js'></script>
   <script src="assets/lib/js/bootstrap-material-design.js"></script>
 
-  <script type="text/javascript" src="app/app.js"></script>
+  <script type="module" type="text/javascript" src="app/app.js"></script>
 
   <script src="assets/js/utility.js"></script>
-  <script src="assets/js/dynamic-table.js"></script>
   <script src="assets/js/form-validator.js"></script>
 
   <script src="app/view/main/main.js"></script>
-  <script src="app/view/schema-conversion/schema-conversion.js"></script>
-  <script src='app/view/instructions/instructions.js'></script>
+  <script  src='app/view/instructions/instructions.js'></script>
+  <script type="module" src="app/view/schema-conversion/schema-conversion.js"></script>
 
-
-
-
+  <!-- <script type="module" src="./app/components/Header.js"></script> -->
 
 </body>
 

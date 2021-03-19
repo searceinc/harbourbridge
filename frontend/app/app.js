@@ -1,3 +1,5 @@
+import {schemaReport} from '../app/view/schema-conversion/schema-conversion.js'
+
 // Home screen component
 const HomeComponent = {
   render: () => homeScreen()
@@ -50,6 +52,7 @@ const findComponentByPath = (path, routes) => {
 
 // function to render the html based on path
 const router = () => {
+  
   const path = parseLocation();
   const { component = ErrorComponent } = findComponentByPath(path, routes) || {};
   component.render();
@@ -57,3 +60,6 @@ const router = () => {
 
 window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
+
+
+export {router}

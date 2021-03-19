@@ -1,6 +1,11 @@
 // variables initialisation
 const RED = '#F44336';
 var schemaConversionObj, srcTableName = [], notNullConstraint = [], notPrimary = [], pkArray = [];
+var tableListArea = 'accordion';
+var notFoundTxt = document.createElement('h5');
+notFoundTxt.innerHTML = `No Match Found`;
+notFoundTxt.className = 'no-text';
+notFoundTxt.style.display = 'none';
 
 /**
  * Function to set style for selected menu
@@ -14,6 +19,7 @@ const setActiveSelectedMenu = (selectedMenuId) => {
 }
 
 const checkActiveSession = () => {
+  console.log('routing..');
   if (JSON.parse(sessionStorage.getItem('sessionStorage')) != null) {
     window.location.href = '#/schema-report';
   }
@@ -148,38 +154,60 @@ const toggleDbType = () => {
   }
 }
 
-/**
- * Function to change download button and search text box based on the tab selected in edit schema screen
- *
- * @param {number} id html element id for report, ddl or summary tab
- * @return {null}
- */
-const findTab = (id) => {
-  switch (id) {
-    case 'reportTab':
-      // setting search box
-      document.getElementById('reportSearchForm').style.display = 'block';
-      document.getElementById('ddlSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
+// /**
+//  * Function to change download button and search text box based on the tab selected in edit schema screen
+//  *
+//  * @param {number} id html element id for report, ddl or summary tab
+//  * @return {null}
+//  */
+// const findTab = (id) => {
+//   console.log(id);
+//   switch (id) {
+//     case 'reportTab':
+//       // setting search box
+//       document.getElementById('reportSearchForm').style.display = 'block';
+//       document.getElementById('ddlSearchForm').style.setProperty('display', 'none', 'important')
+//       document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
 
+//       tableListArea = 'accordion';
+//       break;
+//     case 'ddlTab':
+//       // setting search box
+//       document.getElementById('reportSearchForm').style.setProperty('display', 'none', 'important')
+//       document.getElementById('ddlSearchForm').style.display = 'block';
+//       document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
+
+//       tableListArea = 'ddl-accordion';
+//       break;
+//     case 'summaryTab':
+//       // setting search box
+//       document.getElementById('reportSearchForm').style.setProperty('display', 'none', 'important')
+//       document.getElementById('ddlSearchForm').style.setProperty('display', 'none', 'important')
+//       document.getElementById('summarySearchForm').style.display = 'block';
+
+//       tableListArea = 'summary-accordion';
+//       break;
+//   }
+// }
+
+const findTab = (id) =>{
+  
+  // document.getElementById('searchText').value = ''
+
+  switch(id)
+  {
+    case 'reportTab':
       tableListArea = 'accordion';
       break;
+      
     case 'ddlTab':
-      // setting search box
-      document.getElementById('reportSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('ddlSearchForm').style.display = 'block';
-      document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
-
-      tableListArea = 'ddl-accordion';
-      break;
+      tableListArea = 'ddl-accordion'
+      break
+    
     case 'summaryTab':
-      // setting search box
-      document.getElementById('reportSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('ddlSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('summarySearchForm').style.display = 'block';
-
       tableListArea = 'summary-accordion';
-      break;
+      break
+
   }
 }
 
@@ -231,3 +259,4 @@ const hideSpinner = () => {
     toggle_spinner.className = toggle_spinner.className.replace("show", "");
   }
 }
+
