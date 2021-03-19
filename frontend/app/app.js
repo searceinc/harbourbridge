@@ -52,7 +52,6 @@ const findComponentByPath = (path, routes) => {
 
 // function to render the html based on path
 const router = () => {
-  
   const path = parseLocation();
   const { component = ErrorComponent } = findComponentByPath(path, routes) || {};
   component.render();

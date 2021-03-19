@@ -1,3 +1,4 @@
+import {createDdlFromJson , createSourceAndSpannerTables , createSummaryFromJson , addConversionEvent} from './../../../assets/js/dynamic-table.js'
 import { router } from "./../../app.js";
 /**
  * Function to initialise the tasks of edit schema screen
@@ -521,7 +522,13 @@ const dataTypeUpdate = (id, globalDataTypeList) => {
  */
 const schemaReport = () => {
   jQuery("#app").load(
-    "app/view/schema-conversion/schema-conversion-screen.html"
+    "app/view/schema-conversion/schema-conversion-screen.html",
+    function(){
+      createSourceAndSpannerTables(JSON.parse(localStorage.getItem('conversionReportContent')));
+      createDdlFromJson(JSON.parse(localStorage.getItem('ddlStatementsContent')));
+      createSummaryFromJson(JSON.parse(localStorage.getItem('summaryReportContent')));
+      addConversionEvent()
+    }
   );
 };
 

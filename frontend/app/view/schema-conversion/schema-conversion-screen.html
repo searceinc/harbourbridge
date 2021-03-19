@@ -5,7 +5,7 @@
     </div>
     <div>
         <h4 class="report-header">Recommended Schema Conversion Report
-            <button id="download-schema" class="download-button" onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.downloadSession())">Download Session
+            <button id="download-schema" class="download-button" >Download Session
                 File</button>
         </h4>
     </div>
@@ -81,7 +81,7 @@
                     
                     <button class='expand' id='reportExpandButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.reportExpandHandler(jQuery(this)))" >Expand
                         All</button>
-                    <button class='expand right-align' id='editButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.globalEditHandler())">Edit Global Data
+                    <button class='expand right-align' id='editButton' >Edit Global Data
                         Type</button>
                     <div id='reportDiv'>
                         <section class='reportSection template'>
@@ -358,7 +358,7 @@
                 <div class="panel-group" id="ddl-accordion">
                     <button class='expand' id='ddlExpandButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.ddlExpandHandler(jQuery(this)))">Expand
                         All</button>
-                    <button id="download-ddl" class="expand right-align" onclick="import('./app/view/schema-conversion/schema-conversion.js').then(fun =>  fun.downloadDdl())">Download DDL
+                    <button id="download-ddl" class="expand right-align" >Download DDL
                         Statements</button>
                     <div id='ddlDiv'>
                         <section class='ddlSection template'>
@@ -385,7 +385,7 @@
                 <div class="panel-group" id="summary-accordion">
                     <button class='expand' id='summaryExpandButton' onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.summaryExpandHandler(jQuery(this)))">Expand
                         All</button>
-                    <button id="download-report" class="expand right-align" onclick="(import('./app/view/schema-conversion/schema-conversion.js')).then(funcs => funcs.downloadReport())">Download Summary
+                    <button id="download-report" class="expand right-align" >Download Summary
                         Report</button>
                     <div id='summaryDiv'>
                         <section class='summarySection template'>
@@ -609,8 +609,12 @@
             </div>
         </div>
     </div>
-    <script type="module" src="assets/js/dynamic-table.js"></script>
 </div>
+<script type="module" src="app/view/schema-conversion/schema-conversion.js"></script>
+<script type="module" src="assets/js/dynamic-table.js"></script>
 
 
 
+<!-- 
+can we do one thing we can make two module dynamic-table and schema-conversion and make one script extra that will run 
+each time and put all the event listener and that 3 function from dynamic-table there. -->
