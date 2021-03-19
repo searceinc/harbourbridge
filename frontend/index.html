@@ -22,8 +22,8 @@
 
 <body>
 
-  <header class="main-header">
-    <nav class="navbar navbar-static-top">
+  <header class="main-header" id = "header-component">
+    <!-- <nav class="navbar navbar-static-top">
       <img src="assets/images/Icons/google-spanner-logo.png" class="logo">
     </nav>
     <nav class="navbar navbar-static-top">
@@ -41,7 +41,7 @@
       <div class="header-topic">
         <a name='headerMenu' href='#/instructions' id='instructions' class='inactive'>Instructions</a>
       </div>
-    </nav>
+    </nav> -->
   </header>
 
   <section id="app">
@@ -57,12 +57,15 @@
   <script type="text/javascript" src="app/app.js"></script>
 
   <script src="assets/js/utility.js"></script>
-  <script src="assets/js/dynamic-table.js"></script>
+  <!-- <script src="assets/js/dynamic-table.js"></script> -->
   <script src="assets/js/form-validator.js"></script>
-
+  
   <script src="app/view/main/main.js"></script>
   <script src="app/view/schema-conversion/schema-conversion.js"></script>
   <script src='app/view/instructions/instructions.js'></script>
+  <script src="./app/components/tabs.js"></script>
+  <script src="./app/components/search.js"></script>
+  <script type="module" src='./app/components/header.js'></script>
 
 
 

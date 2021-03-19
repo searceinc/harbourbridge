@@ -10,8 +10,8 @@
         </h4>
     </div>
     <div class="report-tabs">
-        <ul class="nav nav-tabs md-tabs" role="tablist">
-            <li class="nav-item">
+        <ul class="nav nav-tabs md-tabs" role="tablist" id = "tabbar">
+            <!-- <li class="nav-item">
                 <a class="nav-link active" id="reportTab" data-toggle="tab" href="#report" role="tab"
                     aria-controls="report" onclick="findTab(this.id)" aria-selected="true">Conversion Report</a>
             </li>
@@ -22,17 +22,18 @@
             <li class="nav-item">
                 <a class="nav-link" id="summaryTab" data-toggle="tab" href="#summary" role="tab" aria-controls="summary"
                     onclick="findTab(this.id)" aria-selected="false">Summary Report</a>
-            </li>
+            </li> -->
         </ul>
     </div>
     <div class="status-icons">
-        <form class="form-inline d-flex justify-content-center md-form form-sm mt-0 search-form" id='reportSearchForm'>
+        <div id="searchcomponent"></div>
+        <!-- <form class="form-inline d-flex justify-content-center md-form form-sm mt-0 search-form" id='reportSearchForm'>
             <i class="fas fa-search" aria-hidden="true"></i>
             <input class="form-control form-control-sm ml-3 w-75 search-box" type="text" placeholder="Search table"
                 autocomplete='off' aria-label="Search" onkeyup='searchTable("reportSearchInput")'
-                id='reportSearchInput'>
-        </form>
-        <form class="form-inline d-flex justify-content-center md-form form-sm mt-0 search-form"
+                id='SearchInput'>
+        </form> -->
+        <!-- <form class="form-inline d-flex justify-content-center md-form form-sm mt-0 search-form"
             style='display: none !important;' id='ddlSearchForm'>
             <i class="fas fa-search" aria-hidden="true"></i>
             <input class="form-control form-control-sm ml-3 w-75 search-box" type="text" placeholder="Search table"
@@ -44,7 +45,7 @@
             <input class="form-control form-control-sm ml-3 w-75 search-box" type="text" placeholder="Search table"
                 id='summarySearchInput' autocomplete='off' aria-label="Search"
                 onkeyup='searchTable("summarySearchInput")'>
-        </form>
+        </form> -->
         <section class="cus-tip">
             <span class="cus-a info-icon statusTooltip">
                 <i class="large material-icons">info</i>

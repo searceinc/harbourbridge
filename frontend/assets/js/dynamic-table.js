@@ -1,5 +1,6 @@
 $(document).ready(function () {
-
+    TabBar("#tabbar");
+    Search("#searchcomponent", "searchTable")
     jQuery('#createIndexForm > div > input').keyup(function () {
         let empty = false;
         jQuery('#createIndexForm > div > input').each(function () {

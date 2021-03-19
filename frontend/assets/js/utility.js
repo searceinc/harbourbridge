@@ -2,6 +2,7 @@
 const RED = '#F44336';
 var schemaConversionObj, srcTableName = [], notNullConstraint = [], notPrimary = [], pkArray = [];
 
+
 /**
  * Function to set style for selected menu
  *
@@ -155,32 +156,23 @@ const toggleDbType = () => {
  * @return {null}
  */
 const findTab = (id) => {
-  switch (id) {
+  console.log(id);
+  switch(id)
+  {
     case 'reportTab':
-      // setting search box
-      document.getElementById('reportSearchForm').style.display = 'block';
-      document.getElementById('ddlSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
-
       tableListArea = 'accordion';
       break;
+      
     case 'ddlTab':
-      // setting search box
-      document.getElementById('reportSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('ddlSearchForm').style.display = 'block';
-      document.getElementById('summarySearchForm').style.setProperty('display', 'none', 'important')
-
-      tableListArea = 'ddl-accordion';
+      tableListArea = 'ddl-accordion'
       break;
+    
     case 'summaryTab':
-      // setting search box
-      document.getElementById('reportSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('ddlSearchForm').style.setProperty('display', 'none', 'important')
-      document.getElementById('summarySearchForm').style.display = 'block';
-
       tableListArea = 'summary-accordion';
       break;
+
   }
+  console.log(tableListArea,"of util")
 }
 
 /**

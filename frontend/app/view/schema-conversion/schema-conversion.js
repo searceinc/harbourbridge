@@ -123,7 +123,7 @@ const initSchemaScreenTasks = () => {
  * @param {string} tabId html id attriute for report, ddl or summary tabs
  * @return {null}
  */
-const searchTable = (tabId) => {
+const searchTable = () => {
   let searchInput, searchInputFilter, tableVal, list, listElem, elem;
   let schemaConversionObj = JSON.parse(localStorage.getItem('conversionReportContent'));
   let flag = false;
@@ -132,10 +132,11 @@ const searchTable = (tabId) => {
     elem.appendChild(notFoundTxt);
   }
   notFoundTxt.style.display = 'none';
-  searchInput = document.getElementById(tabId);
+  searchInput = document.getElementById("searchText");
   if (searchInput) {
     searchInputFilter = searchInput.value.toUpperCase();
   }
+  console.log(tableListArea)
   list = document.getElementById(tableListArea);
   if (list) {
     list.style.display = '';
@@ -144,7 +145,7 @@ const searchTable = (tabId) => {
   tableListLength = Object.keys(schemaConversionObj.SpSchema).length;
   for (var i = 0; i < tableListLength; i++) {
     tableVal = Object.keys(schemaConversionObj.SpSchema)[i];
-    if (tableVal.toUpperCase().indexOf(searchInputFilter) > -1) {
+    if (tableVal.toUpperCase().indexOf(searchInputFilter)> -1) {
       listElem[i + 1].style.display = '';
       flag = true;
     }
