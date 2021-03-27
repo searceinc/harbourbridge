@@ -3,6 +3,7 @@ import '../../components/Tab/Tab.component.js';
 import "../../components/Tab/Tabb.component.js";
 import "../../components/Label/Label.component.js";
 import "../../components/ImageIcon/ImageIcon.component.js";
+import "../../components/Modal/Modal.component.js";
 
 // Services
 import Store from "./../../services/Store.service.js";
@@ -29,8 +30,35 @@ const MAIN_PAGE_ICONS = [{
         imageAltText: "Import schema image",
         label: "Load Session File",
         action: "openSessionFileLoadModal",
-        modalDataTarget: "#importSchemaModal",
+        modalDataTarget: "#loadSchemaModal",
     },
+]
+
+const LOAD_DB_MODAL_FORM_ELEMENTS = [{
+        label: "Database Type",
+        labelClass: "modal-label",
+        labelForAttr: "loadDbType",
+        labelInputType: "select",
+        selectOpions: ["", "mysql", "postgres"],
+        selectOptionValues: ["", "MySql", "Postgres"],
+        labelInputTypeClass: "form-control load-db-input",
+        labelInputTypeId: "loadDbType",
+        labelInputTypeName: "loadDbType"
+    },
+    {
+        label: "Path of the Dump File",
+        labelClass: "modal-label",
+        labelForAttr: "dumpFilePath",
+        labelInputType: "text",
+        labelInputTypeClass: "form-control load-db-input",
+        labelInputTypeId: "dumpFilePath",
+        labelInputTypeName: "dumpFilePath",
+        autocomplete: "off",
+    },
+    {
+        labelInputType: "text",
+        labelInputClass: "template"
+    }
 ]
 
 class MainScreen extends HTMLElement {
@@ -69,9 +97,10 @@ class MainScreen extends HTMLElement {
                     </div>`;
                 }).join("")}
             </div>
-            <hb-modal show="${currentModal === 'modal1' ? 'yes' : 'no'}" id="modal1" content="the first modal content" isClosable=true title="titile 1"></hb-modal>
-            <hb-modal show="${currentModal === 'modal2' ? 'yes' : 'no'}" id="modal2" content="second modal content" isClosable=true title="title 2"></hb-modal>
-            <hb-tab open="${open}" relay=${funcc} ></hb-tab>
+            <hb-modal modalId="connectToDbModal" content="<hb-connect-to-db-form></hb-connect-to-db-form>" title="Connect to Database"></hb-modal>
+            <hb-modal modalId="loadDatabaseDumpModal" content="<hb-load-db-dump-form></hb-load-db-dump-form>" title="Load Database Dump"></hb-modal>
+            <hb-modal modalId="loadSchemaModal" content="" title="Load Session File"></hb-modal>
+            
             <hb-tabb something="${something}" open="${open}" clickAction="openModal1" ></hb-tabb>
             </div>
         `;
@@ -84,3 +113,5 @@ class MainScreen extends HTMLElement {
 }
 
 window.customElements.define('hb-main-screen', MainScreen);
+
+{/* <hb-tab open="${open}" relay=${funcc} ></hb-tab> */}
