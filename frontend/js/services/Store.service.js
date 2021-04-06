@@ -50,6 +50,10 @@ const Store = (function () {
         },
         getOpenTab: () => {
             return instance.currentTab;
+        },
+        updateSchemaScreen: (tableData) => {
+            localStorage.setItem('conversionReportContent', tableData);
+            instance = { ...instance, tableData, "saveSchemaId": Math.random()}
         }
     };
 })();

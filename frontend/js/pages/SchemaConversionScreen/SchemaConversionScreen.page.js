@@ -2,11 +2,13 @@ import "./../../components/Tab/Tab.component.js";
 import "./../../components/TableCarousel/TableCarousel.component.js";
 import "./../../components/StatusLegend/StatusLegend.component.js";
 import "./../../components/Search/Search.component.js";
-import "./../../components/Button/SiteButton.component.js"
+import "./../../components/Button/SiteButton.component.js";
+import "./../../components/Modal/Modal.component.js";
 import { initSchemaScreenTasks } from "./../../helpers/SchemaConversionHelper.js";
 
 // Services
 import Store from "./../../services/Store.service.js";
+import Actions from "./../../services/Action.service.js";
 import "../../services/Fetch.service.js";
 
 const TAB_CONFIG_DATA = [
@@ -39,6 +41,7 @@ class SchemaConversionScreen extends HTMLElement {
     if (JSON.stringify(Store.getinstance()) !== JSON.stringify(this.data)) {
       this.data = Store.getinstance();
       this.render();
+      Actions.ddlSummaryAndConversionApiCall();
     }
   };
 
@@ -171,36 +174,12 @@ class SchemaConversionScreen extends HTMLElement {
         </div>
     </div>
     
-    <div class="modal" id="foreignKeyDeleteWarning" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle"
-        aria-hidden="true" data-backdrop="static" data-keyboard="false" style="z-index: 999999;">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <!-- Modal content-->
-            <div class="modal-content">
-                <div class="modal-header content-center">
-                    <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Warning</h5>
-                    <i class="large material-icons close" data-dismiss="modal">cancel</i>
-                </div>
-                <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
-                    <div><i class="large material-icons connectionFailure" style="color: #E1AD01D4 !important;">warning</i>
-                    </div>
-                    <div id="failureContent">
-                        This will permanently delete the foreign key constraint and the corresponding uniqueness constraints
-                        on referenced columns. Do you want to continue?
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button data-dismiss="modal" class="connectButton" type="button"
-                        onclick="dropForeignKeyHandler()">Yes</button>
-                    <button data-dismiss="modal" class="connectButton" type="button">No</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <hb-modal modalId="foreignKeyDeleteWarning" content="" contentIcon="warning" connectIconClass="warning-icon" modalBodyClass="connection-modal-body" title="Warning"></hb-modal>
     
-    <div class="modal" id="secIndexDeleteWarning" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle"
+    <hb-modal modalId="secIndexDeleteWarning" content="" contentIcon="warning" connectIconClass="warning-icon" modalBodyClass="connection-modal-body" title="Warning"></hb-modal>
+    <!-- <div class="modal" id="secIndexDeleteWarning" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle"
         aria-hidden="true" data-backdrop="static" data-keyboard="false" style="z-index: 999999;">
         <div class="modal-dialog modal-dialog-centered" role="document">
-            <!-- Modal content-->
             <div class="modal-content">
                 <div class="modal-header content-center">
                     <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Warning</h5>
@@ -221,30 +200,11 @@ class SchemaConversionScreen extends HTMLElement {
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
     
-    <div class="modal" id="editTableWarningModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle"
-        aria-hidden="true" data-backdrop="static" data-keyboard="false" style="z-index: 999999;">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <!-- Modal content-->
-            <div class="modal-content">
-                <div class="modal-header content-center">
-                    <h5 class="modal-title modal-bg" id="exampleModalLongTitle">Error Message</h5>
-                    <i class="large material-icons close" data-dismiss="modal">cancel</i>
-                </div>
-                <div class="modal-body" style='margin-bottom: 20px; display: inherit;'>
-                    <div><i class="large material-icons connectionFailure" style="color: #FF0000 !important;">cancel</i>
-                    </div>
-                    <div id="errorContent">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button data-dismiss="modal" class="connectButton" type="button">Ok</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
+
+    <hb-modal modalId="editTableWarningModal" content="" contentIcon="cancel" connectIconClass="connect-icon-failure" modalBodyClass="connection-modal-body" title="Error Message"></hb-modal>
+   
     <div class="modal" id="editColumnNameErrorModal" role="dialog" tabindex="-1" aria-labelledby="exampleModalCenterTitle"
         aria-hidden="true" data-backdrop="static" data-keyboard="false" style="z-index: 999999;">
         <div class="modal-dialog modal-dialog-centered" role="document">

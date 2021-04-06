@@ -25,17 +25,10 @@ class HistoryTable extends HTMLElement {
         <tbody id='session-table-content'>
           ${sessionArray !== null ?
                     sessionArray.map((session, index) => {
-                      let http = new XMLHttpRequest();
                       let timestampArray, sessionName, sessionDate, sessionTime;
                       timestampArray = session.createdAt.split(' ');
                       sessionName = session.filePath.split('/');
                       sessionName = sessionName[sessionName.length - 1];
-                      http.open('HEAD', './' + sessionName, false);
-                      http.send();
-                      if (http.status !== 200) {
-                        sessionArray.splice(x, 1);
-                        sessionStorage.setItem('sessionStorage', JSON.stringify(sessionArray));
-                      }
                       sessionDate = [timestampArray[0], timestampArray[1], timestampArray[2], timestampArray[3]].join(' ');
                       sessionTime = [timestampArray[4], timestampArray[5]].join(' ');
                       return `

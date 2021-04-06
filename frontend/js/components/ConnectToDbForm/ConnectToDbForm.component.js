@@ -28,6 +28,7 @@ class ConnectToDbForm extends HTMLElement {
                     await Actions.showSchemaAssessment();
                     await Actions.ddlSummaryAndConversionApiCall();
                     window.location.href = '#/schema-report';
+                    Actions.getGlobalDataTypeList();
                     Actions.sessionRetrieval(localStorage.getItem('sourceDbName'));
                 });
             }

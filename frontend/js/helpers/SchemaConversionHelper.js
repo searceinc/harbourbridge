@@ -128,6 +128,24 @@ export const panelBorderClass = (color) => {
   return borderClass;
 }
 
+export const mdcCardBorder = (color) => {
+  var cardBorderClass = '';
+  switch (color) {
+    case 'ORANGE':
+      cardBorderClass = ' cardOrangeBorder';
+      break;
+    case 'GREEN':
+      cardBorderClass = ' cardGreenBorder';
+      break;
+    case 'BLUE':
+      cardBorderClass = ' cardBlueBorder';
+      break;
+    case 'YELLOW':
+      cardBorderClass = ' cardYellowBorder';
+  }
+  return cardBorderClass;
+}
+
 export const readTextFile = (file, callback) => {
   let rawFile = new XMLHttpRequest();
   rawFile.overrideMimeType("application/json");

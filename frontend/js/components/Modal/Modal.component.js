@@ -7,6 +7,8 @@ const LOAD_DB_DUMP_MODAL_BUTTONS = [{ value: "Confirm", id: "load-connect-button
 const LOAD_SESSION_MODAL_BUTTONS = [{ value: "Confirm", id: "import-button", disabledProp: "disabled" }];
 const CONNECTION_SUCCESS_MODAL = [{ value: "Convert", id: "convert-button", disabledProp: "" }];
 const CONNECTION_FAILURE_MODAL = [{ value: "Ok", id: "connection-failure-button", disabledProp: "" }];
+const EDIT_TABLE_WARNING_MODAL = [{ value: "Ok", id: "edit-table-warning", disabledProp: "" }];
+const FK_DROP_WARNING_MODAL = [{ value: "Yes", id: "fk-drop-confirm", disabledProp: "" }, { value: "No", id: "fk-drop-cancel", disabledProp: "" }];
 
 class Modal extends HTMLElement {
 
@@ -52,6 +54,12 @@ class Modal extends HTMLElement {
       case "connectModalFailure":
         modalButtons = CONNECTION_FAILURE_MODAL;
         break;
+      case "editTableWarningModal":
+        modalButtons = EDIT_TABLE_WARNING_MODAL;
+        break;
+      case "foreignKeyDeleteWarning":
+        modalButtons = FK_DROP_WARNING_MODAL;
+        break;
     }
     this.innerHTML = `
         <div class="modal" id="${modalId}" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
@@ -63,7 +71,7 @@ class Modal extends HTMLElement {
               </div>
               <div class="modal-body ${modalBodyClass}">
                 <div><i class="large material-icons ${connectIconClass}">${contentIcon}</i></div>
-                <div>${content.trim()}</div>
+                <div id="modal-content">${content.trim()}</div>
               </div>
               <div class="modal-footer">
                   ${modalButtons.map((button) => {

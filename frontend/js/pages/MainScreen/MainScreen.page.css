@@ -62,6 +62,14 @@ h5 {
     color: #DB4437 !important;
 }
 
+.warning-icon {
+    color: #E1AD01D4;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
 .history-content{
     padding : 0 40px;
     margin-top: 72px;
