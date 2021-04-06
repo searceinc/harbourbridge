@@ -32,6 +32,7 @@ class SchemaConversionScreen extends HTMLElement {
     this.stateObserver = setInterval(this.observeState, 200);
     this.render();
     // this.createSourceAndSpannerTables();
+    Actions.getGlobalDataTypeList()
   }
 
   disconnectedCallback() {
@@ -42,6 +43,10 @@ class SchemaConversionScreen extends HTMLElement {
     if (JSON.stringify(Store.getinstance()) !== JSON.stringify(this.data)) {
       this.data = Store.getinstance();
       this.render();
+      console.log(document.getElementById("testforthebest"));
+      document.getElementById("testforthebest").addEventListener('click',()=>{
+          Actions.test();
+      })
     }
   };
 
@@ -49,7 +54,7 @@ class SchemaConversionScreen extends HTMLElement {
     if (!this.data) {
       return;
     }
-     Actions.getGlobalDataTypeList()
+    
     let schemaConversionObj = JSON.parse(
       localStorage.getItem("conversionReportContent")
     );
@@ -58,6 +63,8 @@ class SchemaConversionScreen extends HTMLElement {
         <div id="snackbar" style="z-index: 10000 !important; position: fixed;"></div>
        
         <div>
+        
+        <button id="testforthebest">test</button>
             <h4 class="report-header">Recommended Schema Conversion Report
             <hb-site-button buttonid="download-schema" classname="download-button" buttonaction="downloadSession" text="Download Session File"></hb-site-button>
             </h4>

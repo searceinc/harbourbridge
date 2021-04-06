@@ -23,6 +23,12 @@ const Actions = (() => {
       console.log(" this was the trial in the actions ");
       return "1";
     },
+    test:()=>{
+      debugger
+      let component = document.getElementsByTagName("hb-data-table")[0];
+      console.log(component);
+      component.setAttribute("tableIndexs", "1");
+    },
     addAttrToStore: () => {
       Store.addAttrToStore();
     },
@@ -395,19 +401,17 @@ const Actions = (() => {
       } else {
         newIndexPos = 0;
       }
-      let res = await Fetch.getAppData("POST","/add/indexes?table=" + table.Name,[newIndex]);
-      if (res.ok) {
-          // clearModal();
-          // jQuery("#createIndexModal").modal("hide");
-          res = await res.text();
-          localStorage.setItem("conversionReportContent", res);
-          jsonObj = JSON.parse(localStorage.getItem("conversionReportContent") );
-          table = jsonObj.SpSchema[tableName];
-          console.log(table);
-      }
-      let component = document.getElementsByTagName("hb-data-table")[0];
-      console.log(component);
-      component.setAttribute("tableIndexs", "1");
+      // let res = await Fetch.getAppData("POST","/add/indexes?table=" + table.Name,[newIndex]);
+      // if (res.ok) {
+      //     // clearModal();
+      //     // jQuery("#createIndexModal").modal("hide");
+      //     res = await res.text();
+      //     localStorage.setItem("conversionReportContent", res);
+      //     jsonObj = JSON.parse(localStorage.getItem("conversionReportContent") );
+      //     table = jsonObj.SpSchema[tableName];
+      //     console.log(table);
+      // }
+      
       //     let indexKeys;
       //     jQuery("#" + tableNumber)
       //       .find(".index-acc-table.fk-table")

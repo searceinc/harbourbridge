@@ -1,5 +1,3 @@
-
-
 export const tooltipHandler = () => {
   jQuery('[data-toggle="tooltip"]').tooltip();
 }

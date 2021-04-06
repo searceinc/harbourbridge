@@ -11,6 +11,8 @@ class AddIndexForm extends HTMLElement {
         const {SrcSchema} = JSON.parse(localStorage.getItem('conversionReportContent'));
         this.render();
 
+        Forms.formButtonHandler("createIndexForm","createIndexButton")
+
         document.getElementById("indexName").addEventListener("focusout",()=>{
             Forms.validateInput(document.getElementById("indexName" ),'indexNameError');
         })

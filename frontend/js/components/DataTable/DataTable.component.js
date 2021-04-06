@@ -1,17 +1,8 @@
 import Actions from './../../services/Action.service.js';
 import "./../Modal/Modal.component.js"
-import "./../AddIndexForm/AddIndexForm.component.js"
+
 
 class DataTable extends HTMLElement {
-    static get observedAttributes() {
-        return ["tableIndexs"];
-    }
-    attributeChangedCallback(attrName, oldVal, newVal) {
-        debugger;
-      if (oldVal !== newVal) {
-        this.render();
-    }
-  }
 
     get tableName() {
         return this.getAttribute("tableName");
@@ -25,6 +16,17 @@ class DataTable extends HTMLElement {
         return this.getAttribute("tableIndexs")
     }
 
+    static get observedAttributes() {
+        return ['tableIndexs'];
+    }
+
+    attributeChangedCallback(attrName, oldVal, newVal) {
+        debugger;
+        console.log(oldVal ,newVal);
+      if (oldVal !== newVal) {
+        this.render();
+    }
+  }
     async connectedCallback() {
         let spTable = this.schemaConversionObj.SpSchema[this.tableName];
         if(spTable.Fks){
@@ -37,6 +39,7 @@ class DataTable extends HTMLElement {
         }); //catch error also
         } else {
         this.render();
+      
         }      
     }
 
@@ -174,7 +177,7 @@ class DataTable extends HTMLElement {
                               </div>
                           </div>
         `;
-      }
+    }
 
 
     render() {
@@ -194,8 +197,10 @@ class DataTable extends HTMLElement {
                 pkSeqId++;
             }
         }
+      
         this.innerHTML = `
         <h1>${tableIndexs}</h1>
+       
         <div class="acc-card-content" id="acc_card_content">
                     <table class="acc-table" id="src-sp-table${tableIndex}">
                         <thead>
