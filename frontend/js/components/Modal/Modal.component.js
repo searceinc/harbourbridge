@@ -8,8 +8,8 @@ const LOAD_SESSION_MODAL_BUTTONS = [{ value: "Confirm", id: "import-button", dis
 const CONNECTION_SUCCESS_MODAL = [{ value: "Convert", id: "convert-button", disabledProp: "" }];
 const CONNECTION_FAILURE_MODAL = [{ value: "Ok", id: "connection-failure-button", disabledProp: "" }];
 const EDIT_TABLE_WARNING_MODAL = [{ value: "Ok", id: "edit-table-warning", disabledProp: "" }];
+const CHANGES_SAVED_MODAL = [{ value: "Ok", id: "changes-saved-button", disabledProp: "" }];
 const FK_DROP_WARNING_MODAL = [{ value: "Yes", id: "fk-drop-confirm", disabledProp: "" }, { value: "No", id: "fk-drop-cancel", disabledProp: "" }];
-const SI_DROP_WARNING_MODAL = [{ value: "Yes", id: "si-drop-confirm", disabledProp: "" }, { value: "No", id: "si-drop-cancel", disabledProp: "" }];
 
 class Modal extends HTMLElement {
 
@@ -58,11 +58,11 @@ class Modal extends HTMLElement {
       case "editTableWarningModal":
         modalButtons = EDIT_TABLE_WARNING_MODAL;
         break;
-      case "foreignKeyDeleteWarning":
+      case "indexAndKeyDeleteWarning":
         modalButtons = FK_DROP_WARNING_MODAL;
         break;
-      case "secIndexDeleteWarning":
-        modalButtons = SI_DROP_WARNING_MODAL;
+      case "changesSavedModal":
+        modalButtons = CHANGES_SAVED_MODAL;
         break;
     }
     this.innerHTML = `

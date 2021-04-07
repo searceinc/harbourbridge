@@ -36,13 +36,11 @@ const Actions = (() => {
                     return false;
                 }
                 else {
-                    // showSpinner();
                     jQuery('#loadDatabaseDumpModal').modal('hide');
-                    localStorage.setItem('conversionReportContent', reportDataResp);
+                    Store.updateSchemaScreen(reportDataResp);
                 }
             }
             sourceTableFlag = localStorage.getItem('sourceDbName');
-            // sessionRetrieval(sourceTableFlag);
             return true;
         },
         onconnect: async (dbType, dbHost, dbPort, dbUser, dbName, dbPassword) => {
@@ -75,7 +73,7 @@ const Actions = (() => {
             let reportDataResp, reportData, sourceTableFlag;
             reportData = await Fetch.getAppData('GET', '/convert/infoschema');
             reportDataResp = await reportData.text();
-            localStorage.setItem('conversionReportContent', reportDataResp);
+            Store.updateSchemaScreen(reportDataResp);
             jQuery('#connectModalSuccess').modal("hide");
             sourceTableFlag = localStorage.getItem('sourceDbName');
         },
@@ -97,18 +95,6 @@ const Actions = (() => {
             }
             return true;
         },
-
-
-        // addNewSession: (session) => {
-        //     Store.addNewSession(session);
-        // },
-        // resumeSession: (index) => {
-        //     let val = Store.getSessionData(index);
-        //     console.log(val);
-        // },
-        // getAllSessions: () => {
-        // return Store.getAllSessions();},
-
         sessionRetrieval: async (dbType) => {
             let sessionStorageArr, sessionInfo, sessionResp;
             sessionResp = await Fetch.getAppData('GET', '/session');
@@ -264,7 +250,7 @@ const Actions = (() => {
         editAndSaveButtonHandler: async (event, tableNumber, tableName, notNullConstraint) => {
             let schemaConversionObj = JSON.parse(localStorage.getItem("conversionReportContent"));
             let tableId = '#src-sp-table' + tableNumber + ' tr';
-            let tableColumnNumber = 0, tableData;
+            let tableColumnNumber = 0, tableData, fkTableData, secIndexTableData;
             let renameFkMap = {}, fkLength, secIndexLength, renameIndexMap = {};
             if (event.target.innerHTML.trim() === "Edit Spanner Schema") {
                 let uncheckCount = [], $selectAll, $selectEachRow, checkAllTableNumber, checkClassTableNumber, spannerCellsList;
@@ -436,7 +422,8 @@ const Actions = (() => {
                             let columnNameExists = false;
                             let columnsLength = Object.keys(schemaConversionObj.ToSpanner[tableName].Cols).length;
                             for (let k = 0; k < columnsLength; k++) {
-                                if (k != tableColumnNumber && newColumnName == document.getElementById('columnNameText' + tableNumber + k + k).value && jQuery('#chckBox_' + k).is(":checked")) {
+                                console.log(document.getElementById('columnNameText' + tableNumber + k + k).value.trim());
+                                if (k != tableColumnNumber && newColumnName == document.getElementById('columnNameText' + tableNumber + k + k).value) {
                                     jQuery('#editColumnNameErrorContent').html('');
                                     jQuery('#editColumnNameErrorModal').modal();
                                     jQuery('#editColumnNameErrorContent').append("Column : '" + newColumnName + "'" + ' already exists in table : ' + "'" + tableName + "'" + '. Please try with a different column name.')
@@ -470,7 +457,11 @@ const Actions = (() => {
                 tableData = await Fetch.getAppData('POST', '/typemap/table?table=' + tableName, updatedColsData);
                 if (tableData.ok) {
                     tableData = await tableData.text();
-                    Store.updateSchemaScreen(tableData);
+                    jQuery('#changesSavedModal').modal();
+                    jQuery('#changesSavedModal').find('#modal-content').html("Changes are saved successfully !!");
+                    jQuery('#changesSavedModal').find('#changes-saved-button, i').on('click', function () {
+                        Store.updateSchemaScreen(tableData);
+                    });
                 }
                 else {
                     tableData = await tableData.text();
@@ -501,15 +492,19 @@ const Actions = (() => {
                             for (let x = 0; x < fkLength; x++) {
                                 if (schemaConversionObj.SpSchema[tableName].Fks[x].Name === renameFkMap[key]) {
                                     jQuery('#editTableWarningModal').modal();
-                                    jQuery('#errorContent').html('');
-                                    jQuery('#errorContent').append("Foreign Key: " + renameFkMap[key] + " already exists in table: " + srcTableName[tableNumber] + ". Please try with a different name.");
+                                    jQuery('#editTableWarningModal').find('#modal-content').html("Foreign Key: " + renameFkMap[key] + " already exists in table: " + tableName + ". Please try with a different name.");
+                                    jQuery('#editTableWarningModal').find('#edit-table-warning').on('click', function () {
+                                        Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
+                                    })
                                     duplicateFound = true;
                                 }
                             }
                             if (duplicateCheck.includes(renameFkMap[key])) {
                                 jQuery('#editTableWarningModal').modal();
-                                jQuery('#errorContent').html('');
-                                jQuery('#errorContent').append('Please use a different name for each foreign key');
+                                jQuery('#editTableWarningModal').find('#modal-content').html('Please use a different name for each foreign key');
+                                jQuery('#editTableWarningModal').find('#edit-table-warning').on('click', function () {
+                                    Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
+                                })
                                 duplicateFound = true;
                             }
                             else {
@@ -521,24 +516,16 @@ const Actions = (() => {
                                 // store previous state
                                 break;
                             case false:
-                                tableData = await Fetch.getAppData('POST', '/rename/fks?table=' + tableName, renameFkMap);
-                                tableData = await tableData.text();
-                                Store.updateSchemaScreen(tableData);
+                                fkTableData = await Fetch.getAppData('POST', '/rename/fks?table=' + tableName, renameFkMap);
+                                if (!fkTableData.ok) {
+                                    fkTableData = await fkTableData.text();
+                                    jQuery('#editTableWarningModal').modal();
+                                    jQuery('#editTableWarningModal').find('#modal-content').html(fkTableData);
+                                    jQuery('#editTableWarningModal').find('#edit-table-warning').on('click', function () {
+                                        Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
+                                    })
+                                }
                                 break;
-                        }
-                        if (schemaConversionObj.SpSchema[tableName].Fks != null && schemaConversionObj.SpSchema[tableName].Fks.length != 0) {
-                            fkLength = schemaConversionObj.SpSchema[tableName].Fks.length;
-                            for (let x = 0; x < fkLength; x++) {
-                                jQuery('#saveFk' + tableNumber + x).removeClass('template').html(schemaConversionObj.SpSchema[tableName].Fks[x].Name);
-                            }
-                        }
-                    }
-                    else {
-                        if (schemaConversionObj.SpSchema[tableName].Fks != null && schemaConversionObj.SpSchema[tableName].Fks.length != 0) {
-                            fkLength = schemaConversionObj.SpSchema[tableName].Fks.length;
-                            for (let x = 0; x < fkLength; x++) {
-                                jQuery('#saveFk' + tableNumber + x).removeClass('template').html(schemaConversionObj.SpSchema[tableName].Fks[x].Name);
-                            }
                         }
                     }
                 }
@@ -560,15 +547,19 @@ const Actions = (() => {
                             for (let x = 0; x < secIndexLength; x++) {
                                 if (schemaConversionObj.SpSchema[tableName].Indexes[x].Name === renameIndexMap[key]) {
                                     jQuery('#editTableWarningModal').modal();
-                                    jQuery('#errorContent').html('');
-                                    jQuery('#errorContent').append("Index: " + renameIndexMap[key] + " already exists in table: " + srcTableName[tableNumber] + ". Please try with a different name.");
+                                    jQuery('#editTableWarningModal').find('#modal-content').html("Index: " + renameIndexMap[key] + " already exists in table: " + tableName + ". Please try with a different name.");
+                                    jQuery('#editTableWarningModal').find('#edit-table-warning').on('click', function () {
+                                        Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
+                                    })
                                     duplicateFound = true;
                                 }
                             }
                             if (duplicateCheck.includes(renameIndexMap[key])) {
                                 jQuery('#editTableWarningModal').modal();
-                                jQuery('#errorContent').html('');
-                                jQuery('#errorContent').append('Please use a different name for each secondary index');
+                                jQuery('#editTableWarningModal').find('#modal-content').html('Please use a different name for each secondary index');
+                                jQuery('#editTableWarningModal').find('#edit-table-warning').on('click', function () {
+                                    Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
+                                })
                                 duplicateFound = true;
                             }
                             else {
@@ -580,24 +571,16 @@ const Actions = (() => {
                                 // store previous state
                                 break;
                             case false:
-                                tableData = await Fetch.getAppData('POST', '/rename/indexes?table=' + tableName, renameIndexMap);
-                                tableData = await tableData.text();
-                                Store.updateSchemaScreen(tableData);
+                                secIndexTableData = await Fetch.getAppData('POST', '/rename/indexes?table=' + tableName, renameIndexMap);
+                                if (!secIndexTableData.ok) {
+                                    secIndexTableData = await secIndexTableData.text();
+                                    jQuery('#editTableWarningModal').modal();
+                                    jQuery('#editTableWarningModal').find('#modal-content').html(secIndexTableData);
+                                    jQuery('#editTableWarningModal').find('#edit-table-warning').on('click', function () {
+                                        Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
+                                    })
+                                }
                                 break;
-                        }
-                        if (schemaConversionObj.SpSchema[tableName].Indexes != null && schemaConversionObj.SpSchema[tableName].Indexes.length != 0) {
-                            secIndexLength = schemaConversionObj.SpSchema[tableName].Indexes.length;
-                            for (let x = 0; x < secIndexLength; x++) {
-                                jQuery('#saveSecIndex' + tableNumber + x).removeClass('template').html(schemaConversionObj.SpSchema[tableName].Indexes[x].Name);
-                            }
-                        }
-                    }
-                    else {
-                        if (schemaConversionObj.SpSchema[tableName].Indexes != null && schemaConversionObj.SpSchema[tableName].Indexes.length != 0) {
-                            secIndexLength = schemaConversionObj.SpSchema[tableName].Indexes.length;
-                            for (let x = 0; x < secIndexLength; x++) {
-                                jQuery('#saveSecIndex' + tableNumber + x).removeClass('template').html(schemaConversionObj.SpSchema[tableName].Indexes[x].Name);
-                            }
                         }
                     }
                 }
