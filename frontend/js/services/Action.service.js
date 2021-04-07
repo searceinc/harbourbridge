@@ -347,7 +347,7 @@ const Actions = (() => {
         }
       }
     },
-    fetchIndexFormValues: async (tableName ,name, uniqueness) => {      
+    fetchIndexFormValues: async function (tableName ,name, uniqueness){      
       console.log(keysList.length);
       if (keysList.length === 0) {
         showSnackbar(
@@ -357,7 +357,7 @@ const Actions = (() => {
         return;
       }
       let newIndex = {};
-      let newIndexPos = 1;
+      let IndexPos = 1;
       let jsonObj = JSON.parse(localStorage.getItem("conversionReportContent"));
       let table = jsonObj.SpSchema[tableName];
       newIndex["Name"] = name;
@@ -369,7 +369,7 @@ const Actions = (() => {
       }
       newIndex["Keys"] = keysList;
       if (table.Indexes != null && table.Indexes.length > 0) {
-        newIndexPos = table.Indexes.length;
+        IndexPos = table.Indexes.length;
         for (let x = 0; x < table.Indexes.length; x++) {
           if (
             JSON.stringify(table.Indexes[x].Keys) === JSON.stringify(keysList)
@@ -390,11 +390,10 @@ const Actions = (() => {
           }
         }
       } else {
-        newIndexPos = 0;
+        IndexPos = 0;
       }
       let res = await Fetch.getAppData("POST","/add/indexes?table=" + table.Name,[newIndex]);
       if (res.ok) {
-          resetIndexModal();
           jQuery("#createIndexModal").modal("hide");
           res = await res.text();
           localStorage.setItem("conversionReportContent", res);
@@ -427,6 +426,7 @@ const Actions = (() => {
                  
             `;
         }).join("") 
+        this.closeSecIndexModal();
       }
 
       //     let indexKeys;
@@ -517,6 +517,7 @@ const Actions = (() => {
       resetIndexModal();
     },
     closeSecIndexModal: () => {
+      console.log("i m working")
       resetIndexModal();
       let generalModal = document.getElementsByTagName("hb-modal")[1];
       let content = `empty`;
