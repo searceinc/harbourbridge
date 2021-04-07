@@ -1,6 +1,7 @@
 import "../../components/ConnectToDbForm/ConnectToDbForm.component.js";
 import "../../components/LoadDbDumpForm/LoadDbDumpForm.component.js";
 import "../../components/LoadSessionFileForm/LoadSessionFileForm.component.js";
+import "./../AddIndexForm/AddIndexForm.component.js";
 
 const CONNECT_TO_DB_MODAL_BUTTONS = [{ value: "Connect", id: "connect-button", disabledProp: "disabled" }];
 const LOAD_DB_DUMP_MODAL_BUTTONS = [{ value: "Confirm", id: "load-connect-button", disabledProp: "disabled" }];
