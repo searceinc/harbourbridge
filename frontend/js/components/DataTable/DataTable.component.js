@@ -12,39 +12,29 @@ class DataTable extends HTMLElement {
         return this.getAttribute("tableIndex");
     }
 
-    get tableIndexs() {
-        return this.getAttribute("tableIndexs")
+    get xyz() {
+        return JSON.parse(this.getAttribute("xyz"))
     }
 
     static get observedAttributes() {
-        return ['tableIndexs'];
+        return ['xyz'];
     }
 
     attributeChangedCallback(attrName, oldVal, newVal) {
-        debugger;
-        console.log(oldVal ,newVal);
-      if (oldVal !== newVal) {
+       
+    if (oldVal !== newVal && newVal !== "[]") {
+          console.log('pre render....');
         this.render();
     }
   }
-    async connectedCallback() {
+
+  connectedCallback() {
         let spTable = this.schemaConversionObj.SpSchema[this.tableName];
-        if(spTable.Fks){
-        Actions.checkInterleaveConversion(this.tableName).then((response)=>{
-            this.InterleaveApiCallResp=response.tableInterleaveStatus;
-            this.render();
-        })
-        .catch((err)=>{
-            console.log(err);
-        }); //catch error also
-        } else {
         this.render();
-      
-        }      
-    }
+        }
 
     fkComponent(fkId,fkArray) {
-        
+        console.log(this.tableName);
         return `
         <div class="fkCard " style="border-radius: 0px !important">
                         <div class="foreignKeyHeader" role="tab">
@@ -55,7 +45,7 @@ class DataTable extends HTMLElement {
                         <div class="collapse fkCollapse" id="fk-${fkId}">
                             <div class="mdc-card mdc-card-content summaryBorder" style="border: 0px">
                                 <div class="mdc-card fk-content">
-                                    <fieldset class=${this.InterleaveApiCallResp.Possible?"":"template"}>
+                                    <fieldset >
                                         <div class="radio-class">
                                             <input type="radio" class="radio addRadio" value="add" checked="checked"
                                                 disabled />
@@ -181,15 +171,23 @@ class DataTable extends HTMLElement {
 
 
     render() {
-        let { tableName, tableIndex, tableIndexs } = this;
+        let { tableName, tableIndex, xyz } = this;
+        if(xyz.length === 0)
+        {
+            this.innerHTML = "<h1>Loading .. </h1>"
+        }
+        else{
         let countSrc = [], countSp = [];
         countSrc[tableIndex] = [];
         countSp[tableIndex] = [];
-        let spTable = this.schemaConversionObj.SpSchema[tableName];
-        let srcTable = this.schemaConversionObj.SrcSchema[tableName];
+        // let spTable = this.schemaConversionObj.SpSchema[tableName];
+        // let srcTable = this.schemaConversionObj.SrcSchema[tableName];
+        let spTable = xyz.SpSchema[tableName];
+        console.log(spTable);
+        let srcTable = xyz.SrcSchema[tableName];
         let tableColumnsArray = Object.keys(this.schemaConversionObj.ToSpanner[spTable.Name].Cols);
         let pksSp = [...spTable.Pks];
-        let pksSpLength = pksSp.length;
+        let pksSpLength = pksSp.length;``
         let pkSeqId = 1;
         for (var x = 0; x < pksSpLength; x++) {
             if (pksSp[x].seqId == undefined) {
@@ -197,10 +195,14 @@ class DataTable extends HTMLElement {
                 pkSeqId++;
             }
         }
-      
+        // ${
+        //     xyz.map((one)=>{
+        //         return `<h1>${one}</h1>`
+        //     })
+        // }
         this.innerHTML = `
-        <h1>${tableIndexs}</h1>
-       
+        
+      
         <div class="acc-card-content" id="acc_card_content">
                     <table class="acc-table" id="src-sp-table${tableIndex}">
                         <thead>
@@ -372,11 +374,22 @@ class DataTable extends HTMLElement {
             });
         })
     }
+    }
 
     constructor () {
         super();
         this.schemaConversionObj = JSON.parse(localStorage.getItem("conversionReportContent"));
-
+        // this.InterleaveApiCallResp.Possible=true;
+        // if(spTable.Fks){
+           
+        // Actions.checkInterleaveConversion(this.tableName).then((response)=>{
+        //     console.log(response);
+        //     this.InterleaveApiCallResp=response.tableInterleaveStatus;
+        // })
+        // .catch((err)=>{
+        //     console.log(err);
+        // }); 
+        // class=${this.InterleaveApiCallResp.Possible?"":"template"}
     }
 }
 

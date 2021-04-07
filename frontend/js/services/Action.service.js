@@ -24,10 +24,10 @@ const Actions = (() => {
       return "1";
     },
     test:()=>{
-      debugger
+     
       let component = document.getElementsByTagName("hb-data-table")[0];
       console.log(component);
-      component.setAttribute("tableIndexs", "1");
+      component.setAttribute("xyz", "samir");
     },
     addAttrToStore: () => {
       Store.addAttrToStore();
@@ -353,7 +353,8 @@ const Actions = (() => {
         }
       }
     },
-    fetchIndexFormValues: async (tableName ,name, uniqueness) => {      
+    fetchIndexFormValues: async (tableName ,name, uniqueness) => { 
+       
       console.log(keysList.length);
       if (keysList.length === 0) {
         showSnackbar(
@@ -367,6 +368,13 @@ const Actions = (() => {
       let newIndexPos = 1;
       let jsonObj = JSON.parse(localStorage.getItem("conversionReportContent"));
       let table = jsonObj.SpSchema[tableName];
+      let tableIndex; Object.keys(jsonObj.SpSchema).forEach((element,i) => {
+          if(element === tableName)
+          {
+                tableIndex = i;
+          }
+          
+      });
       newIndex["Name"] = name;
       newIndex["Table"] = table.Name;
       if (uniqueness) {
@@ -401,6 +409,10 @@ const Actions = (() => {
       } else {
         newIndexPos = 0;
       }
+      let component = document.getElementsByTagName("hb-data-table")[tableIndex];
+      console.log(component);
+      component.setAttribute("xyz", "samir");
+      document.getElementById('secindex-'+tableIndex).classList.add('show')
       // let res = await Fetch.getAppData("POST","/add/indexes?table=" + table.Name,[newIndex]);
       // if (res.ok) {
       //     // clearModal();

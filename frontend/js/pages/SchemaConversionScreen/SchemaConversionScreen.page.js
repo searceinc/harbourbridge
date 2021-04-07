@@ -43,10 +43,6 @@ class SchemaConversionScreen extends HTMLElement {
     if (JSON.stringify(Store.getinstance()) !== JSON.stringify(this.data)) {
       this.data = Store.getinstance();
       this.render();
-      console.log(document.getElementById("testforthebest"));
-      document.getElementById("testforthebest").addEventListener('click',()=>{
-          Actions.test();
-      })
     }
   };
 
@@ -64,7 +60,7 @@ class SchemaConversionScreen extends HTMLElement {
        
         <div>
         
-        <button id="testforthebest">test</button>
+       
             <h4 class="report-header">Recommended Schema Conversion Report
             <hb-site-button buttonid="download-schema" classname="download-button" buttonaction="downloadSession" text="Download Session File"></hb-site-button>
             </h4>
@@ -247,6 +243,16 @@ class SchemaConversionScreen extends HTMLElement {
     title="Select keys for new index"></hb-modal>
 `;
     initSchemaScreenTasks();
+    
+    let dfg = JSON.parse(localStorage.getItem("conversionReportContent"));
+    let component = document.getElementsByTagName("hb-data-table");
+      console.log(component);
+     
+      for(let i=0;i<component.length;i++)
+      {
+        component[i].setAttribute("xyz", JSON.stringify(dfg));
+      }
+     
     // this.createSourceAndSpannerTables();
   }
 
