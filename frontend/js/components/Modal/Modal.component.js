@@ -9,6 +9,7 @@ const CONNECTION_SUCCESS_MODAL = [{ value: "Convert", id: "convert-button", disa
 const CONNECTION_FAILURE_MODAL = [{ value: "Ok", id: "connection-failure-button", disabledProp: "" }];
 const EDIT_TABLE_WARNING_MODAL = [{ value: "Ok", id: "edit-table-warning", disabledProp: "" }];
 const FK_DROP_WARNING_MODAL = [{ value: "Yes", id: "fk-drop-confirm", disabledProp: "" }, { value: "No", id: "fk-drop-cancel", disabledProp: "" }];
+const SI_DROP_WARNING_MODAL = [{ value: "Yes", id: "si-drop-confirm", disabledProp: "" }, { value: "No", id: "si-drop-cancel", disabledProp: "" }];
 
 class Modal extends HTMLElement {
 
@@ -59,6 +60,9 @@ class Modal extends HTMLElement {
         break;
       case "foreignKeyDeleteWarning":
         modalButtons = FK_DROP_WARNING_MODAL;
+        break;
+      case "secIndexDeleteWarning":
+        modalButtons = SI_DROP_WARNING_MODAL;
         break;
     }
     this.innerHTML = `

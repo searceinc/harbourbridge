@@ -56,7 +56,7 @@ class DataTable extends HTMLElement {
                                 </thead>
                                 <tbody class="fkTableBody" id="fkTableBody${tableIndex}">
                                     ${fkArray.map((fk, index) => {
-                                    return `
+            return `
                                     <tr class="fkTableTr ">
                                         <td class="acc-table-td fkTableName">
                                             <div class="renameFk template" id="renameFk${tableIndex}${index}">
@@ -78,7 +78,7 @@ class DataTable extends HTMLElement {
                                         </td>
                                     </tr>
                                     `;
-                                    }).join("")}
+        }).join("")}
                                 </tbody>
                             </table>
                         </div>
@@ -116,7 +116,7 @@ class DataTable extends HTMLElement {
                                 <tbody class="indexTableBody" id="indexTableBody${tableIndex}">
 
                                     ${ secIndexArray.map((secIndex, index) => {
-                                    return `
+            return `
                                     <tr class="indexTableTr ">
                                         <td class="acc-table-td indexesName">
                                             <div class="renameSecIndex template" id="renameSecIndex${tableIndex}${index}">
@@ -137,8 +137,8 @@ class DataTable extends HTMLElement {
                                         </td>
                                     </tr>
                                     `;
-                                    }).join("")
-                                }
+        }).join("")
+            }
                             </tbody>
                         </table>
                     </div>
@@ -193,16 +193,16 @@ class DataTable extends HTMLElement {
                                     </thead>
                                     <tbody class="acc-table-body">
                                     ${tableColumnsArray.map((tableColumn, index) => {
-                                    let pkFlag = false, seqId;
-                                    countSrc[tableIndex][index] = 0;
-                                    countSp[tableIndex][index] = 0;
-                                    for (var x = 0; x < pksSpLength; x++) {
-                                        if (pksSp[x].Col === tableColumn) {
-                                            pkFlag = true; seqId = pksSp[x].seqId;
-                                            break
-                                        }
-                                    } 
-                                    let currentColumnSrc = schemaConversionObj.ToSource[spTable.Name].Cols[tableColumn]; return `
+            let pkFlag = false, seqId;
+            countSrc[tableIndex][index] = 0;
+            countSp[tableIndex][index] = 0;
+            for (var x = 0; x < pksSpLength; x++) {
+                if (pksSp[x].Col === tableColumn) {
+                    pkFlag = true; seqId = pksSp[x].seqId;
+                    break
+                }
+            }
+            let currentColumnSrc = schemaConversionObj.ToSource[spTable.Name].Cols[tableColumn]; return `
                                     <tr class="reportTableContent">
                                     <td class="acc-table-td src-tab-cell">
                                         <span class="bmd-form-group is-filled eachRowChckBox template">
@@ -217,9 +217,9 @@ class DataTable extends HTMLElement {
                                             </div>
                                         </span>
                                         <span class="column left">
-                                    ${(currentColumnSrc != srcTable.PrimaryKeys[0].Column || srcTable.PrimaryKeys === null)?
-                                        `<img class="srcPk hidden ml-3" src="./Icons/Icons/ic_vpn_key_24px.svg" />` :
-                                        `<img class="srcPk ml-3" src="./Icons/Icons/ic_vpn_key_24px.svg" />`}
+                                    ${(currentColumnSrc != srcTable.PrimaryKeys[0].Column || srcTable.PrimaryKeys === null) ?
+                    `<img class="srcPk hidden ml-3" src="./Icons/Icons/ic_vpn_key_24px.svg" />` :
+                    `<img class="srcPk ml-3" src="./Icons/Icons/ic_vpn_key_24px.svg" />`}
 
                                         </span>
                                         <span class="column right srcColumn"
@@ -229,9 +229,9 @@ class DataTable extends HTMLElement {
                                         <div class="editColumnName template" id="editColumnName${tableIndex}${index}">
                                             <span class="column left keyMargin keyClick">
                                                 ${pkFlag ?
-                                                `<sub>${seqId}</sub>
+                    `<sub>${seqId}</sub>
                                                         <img src="./Icons/Icons/ic_vpn_key_24px.svg" class="primaryKey" />` :
-                                                `<sub></sub>
+                    `<sub></sub>
                                                         <img src="./Icons/Icons/ic_vpn_key_24px.svg" class="primaryKey hidden" />`}
                                                     </span>
                                                     <span class="column right form-group">
@@ -243,9 +243,9 @@ class DataTable extends HTMLElement {
                                         <div class="saveColumnName" id="saveColumnName${tableIndex}${index}">
                                                 <span class="column left spannerPkSpan pointer">
                                                     ${pkFlag ?
-                                            `<sub>${seqId}</sub>
+                    `<sub>${seqId}</sub>
                                                     <img src="./Icons/Icons/ic_vpn_key_24px.svg" class="primaryKey" />` :
-                                            `<sub></sub>
+                    `<sub></sub>
                                                     <img src="./Icons/Icons/ic_vpn_key_24px.svg" class="primaryKey hidden" />`}
 
                                                 </span>
@@ -271,12 +271,12 @@ class DataTable extends HTMLElement {
                                             <select multiple size="1" class="form-control spanner-input tableSelect srcConstraint"
                                                 id="srcConstraint${tableIndex}${index}" style="display: none;">
                                                 ${srcTable.ColDefs[currentColumnSrc].NotNull ?
-                                            (countSrc[tableIndex][index] = countSrc[tableIndex][index] + 1,
-                                                `<option disabled class="srcNotNullConstraint active">
+                    (countSrc[tableIndex][index] = countSrc[tableIndex][index] + 1,
+                        `<option disabled class="srcNotNullConstraint active">
                                                     Not Null
                                                 </option>`)
-                                            :
-                                            `<option disabled class="srcNotNullConstraint">
+                    :
+                    `<option disabled class="srcNotNullConstraint">
                                                     Not Null
                                                 </option>`}
 
@@ -287,21 +287,21 @@ class DataTable extends HTMLElement {
                                                 <select multiple size="1" class="form-control spanner-input tableSelect spannerConstraint"
                                                     id="spConstraint${tableIndex}${index}">
                                                     ${spTable.ColDefs[tableColumn].NotNull ?
-                                            (countSp[tableIndex][index] = countSp[tableIndex][index] + 1,
-                                                notNullConstraint[String(tableIndex) + String(index)] = 'Not Null',
-                                                `<option disabled class="active">
+                    (countSp[tableIndex][index] = countSp[tableIndex][index] + 1,
+                        notNullConstraint[parseInt(String(tableIndex) + String(index))] = 'Not Null',
+                        `<option disabled class="active">
                                                         Not Null
                                                     </option>`)
-                                            :
-                                            (notNullConstraint[String(tableIndex) + String(index)] = '',
-                                                `<option disabled>
+                    :
+                    (notNullConstraint[parseInt(String(tableIndex) + String(index))] = '',
+                        `<option disabled>
                                                         Not Null
                                                     </option>`)}
                                                 </select>
                                             </div>
                                         </td>
                                         </tr>`;
-                                    }).join("")}
+        }).join("")}
                                     </tbody>
                                 </table>
                             ${spTable.Fks ? this.fkComponent(tableIndex, tableName, spTable.Fks) : `<div></div>`}
@@ -342,9 +342,19 @@ class DataTable extends HTMLElement {
                     jQuery('#foreignKeyDeleteWarning').find('#modal-content').html(`This will permanently delete the foreign key constraint and the corresponding uniqueness constraints
                     on referenced columns. Do you want to continue?`);
                     document.getElementById('fk-drop-confirm').addEventListener('click', () => {
-                        console.log(document.getElementById('fk-drop-confirm'));
                         Actions.dropForeignKeyHandler(tableName, tableIndex, index);
-                        jQuery('#foreignKeyDeleteWarning').modal('hide');
+                    })
+                })
+            });
+        }
+        if (spTable.Indexes !== null) {
+            spTable.Indexes.map((secIndex, index) => {
+                document.getElementById(tableName + index + 'secIndex').addEventListener('click', () => {
+                    jQuery('#secIndexDeleteWarning').modal();
+                    jQuery('#secIndexDeleteWarning').find('#modal-content').html(`This will permanently delete the secondary index and the corresponding uniqueness constraints on
+                    indexed columns (if applicable). Do you want to continue?`);
+                    document.getElementById('si-drop-confirm').addEventListener('click', () => {
+                        Actions.dropSecondaryIndexHandler(tableName, tableIndex, index);
                     })
                 })
             });

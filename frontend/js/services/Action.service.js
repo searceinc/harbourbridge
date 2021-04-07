@@ -451,10 +451,10 @@ const Actions = (() => {
                         updatedColsData.UpdateCols[originalColumnName]['PK'] = '';
                         updatedColsData.UpdateCols[originalColumnName]['ToType'] = document.getElementById('dataType' + tableNumber + tableColumnNumber + tableColumnNumber).value;
 
-                        if (notNullConstraint[String(tableNumber) + String(tableColumnNumber)] === 'Not Null') {
+                        if (notNullConstraint[parseInt(String(tableNumber) + String(tableColumnNumber))] === 'Not Null') {
                             updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'ADDED';
                         }
-                        else if (notNullConstraint[String(tableNumber) + String(tableColumnNumber)] === '') {
+                        else if (notNullConstraint[parseInt(String(tableNumber) + String(tableColumnNumber))] === '') {
                             updatedColsData.UpdateCols[originalColumnName]['NotNull'] = 'REMOVED';
                         }
 
@@ -468,13 +468,14 @@ const Actions = (() => {
                     jQuery(this).find('.src-tab-cell .bmd-form-group').remove();
                 });
                 tableData = await Fetch.getAppData('POST', '/typemap/table?table=' + tableName, updatedColsData);
-                tableData = await tableData.text();
                 if (tableData.ok) {
+                    tableData = await tableData.text();
                     Store.updateSchemaScreen(tableData);
                 }
                 else {
+                    tableData = await tableData.text();
                     jQuery('#editTableWarningModal').modal();
-                    jQuery('#modal-content').html(tableData);
+                    jQuery('#editTableWarningModal').find('#modal-content').html(tableData);
                     jQuery('#editTableWarningModal').find('i').click(function () {
                         Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
                     })
@@ -642,6 +643,49 @@ const Actions = (() => {
                 }
                 else {
                     jQuery('#' + tableNumber).find('.fkCard').addClass('template');
+                }
+            }
+        },
+        dropSecondaryIndexHandler: async (tableName, tableNumber, pos) => {
+            let response;
+            response = await Fetch.getAppData('GET', '/drop/secondaryindex?table=' + tableName + '&pos=' + pos);
+            if (response.ok) {
+                let responseCopy = response.clone();
+                let jsonObj = await responseCopy.json();
+                let textRresponse = await response.text();
+                localStorage.setItem('conversionReportContent', textRresponse);
+                let table = document.getElementById('indexTableBody' + tableNumber);
+                let rowCount = table.rows.length;
+                if (jsonObj.SpSchema[tableName].Indexes != null && jsonObj.SpSchema[tableName].Indexes.length != 0) {
+                    let keyFound;
+                    let z;
+                    for (let x = 0; x < rowCount; x++) {
+                        keyFound = false;
+                        for (let y = 0; y < jsonObj.SpSchema[tableName].Indexes.length; y++) {
+                            let oldSecIndex = jQuery('#saveSecIndex' + tableNumber + x).removeClass('template').html();
+                            if (jsonObj.SpSchema[tableName].Indexes[y].Name === oldSecIndex) {
+                                jQuery('#saveSecIndex' + tableNumber + x).addClass('template');
+                                document.getElementById(tableName + x + 'secIndex').id = tableName + y + 'secIndex';
+                                document.getElementById('saveSecIndex' + tableNumber + x).id = 'saveSecIndex' + tableNumber + y;
+                                document.getElementById('renameSecIndex' + tableNumber + x).id = 'renameSecIndex' + tableNumber + y;
+                                document.getElementById('newSecIndexVal' + tableNumber + x).id = 'newSecIndexVal' + tableNumber + y;
+                                keyFound = true;
+                                break;
+                            }
+                        }
+                        if (keyFound == false) {
+                            z = x;
+                        }
+                    }
+                    table.deleteRow(z);
+                }
+                else {
+                    for (let x = 0; x < rowCount; x++) {
+                        table.deleteRow(x);
+                    }
+                    jQuery('#' + tableNumber).find('.index-acc-table.fkTable').css('visibility', 'hidden');
+                    jQuery('#' + tableNumber).find('.index-acc-table.fkTable').addClass('importantRule0');
+                    jQuery('#' + tableNumber).find('.index-acc-table.fkTable').removeClass('importantRule100');
                 }
             }
         }
