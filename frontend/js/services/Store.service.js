@@ -6,10 +6,27 @@ const DEFAULT_INSTANCE = {
 };
 
 const Store = (function () {
-  var instance = {};
-  let modalId = "connectToDbModal";
-
-  function init() {}
+    let schemaConversionObj = JSON.parse(
+      localStorage.getItem("conversionReportContent")
+    );
+    let tableNameArrayLength = Object.keys(schemaConversionObj.SpSchema).length;
+  
+    let reportArr = [];
+    let ddlArr = [];
+    let summaryArr = [];
+    for(let i=0; i<tableNameArrayLength; i++){
+      reportArr.push(false)
+      ddlArr.push(false)
+      summaryArr.push(false)
+    }
+    var instance = {
+        collapseStatus:{
+            report: reportArr,
+            ddl: ddlArr,
+            summary :summaryArr
+    }};
+    let modalId = "connectToDbModal"
+   
 
   return {
     getinstance: function () {
@@ -43,6 +60,12 @@ const Store = (function () {
       localStorage.setItem("conversionReportContent", tableData);
       await Actions.ddlSummaryAndConversionApiCall();
       instance = { ...instance, tableData, saveSchemaId: Math.random() };
+    },
+    openCollapse:(tableId,tableIndex) => {
+        instance.collapseStatus[`${tableId}`][tableIndex]=true;
+    },
+    closeCollapse:(tableId,tableIndex) => {
+      instance.collapseStatus[`${tableId}`][tableIndex]=false;
     },
   };
 })();

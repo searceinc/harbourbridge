@@ -4,6 +4,8 @@ import {
   panelBorderClass,
   mdcCardBorder,
 } from "./../../helpers/SchemaConversionHelper.js";
+import Actions from "../../services/Action.service.js";
+import Store from "../../services/Store.service.js";
 
 class TableCarousel extends HTMLElement {
   
@@ -29,13 +31,22 @@ class TableCarousel extends HTMLElement {
 
   connectedCallback() {
     this.render();
-  }
 
+    //open collapse and close collapse
+    document.getElementById(`id-${this.tableTitle}-${this.tableId}`).addEventListener("click",()=>{
+        if(Store.getinstance().collapseStatus[`${this.tableId}`][this.tableIndex]==false){
+          Actions.openCollapse(this.tableId,this.tableIndex);
+        }else{
+          Actions.closeCollapse(this.tableId,this.tableIndex);
+        }
+    })
+  }
   render() {
     let {tableTitle, tableId, tableIndex } = this;
     let color = JSON.parse(localStorage.getItem("tableBorderColor"));
     let panelColor = panelBorderClass(color[tableTitle]);
     let cardColor = mdcCardBorder(color[tableTitle]);
+    let currentCollapseStatus = Store.getinstance().collapseStatus[`${tableId}`][tableIndex];
 
     this.innerHTML = `
     <section class="${tableId}Section" id="${tableIndex}">
@@ -43,7 +54,7 @@ class TableCarousel extends HTMLElement {
 
         <div role="tab" class="card-header ${tableId}-card-header ${panelColor} rem-border-bottom">
           <h5 class="mb-0">
-            <a data-toggle="collapse" href="#${tableId}-${tableTitle}">
+            <a data-toggle="collapse" id="id-${tableTitle}-${tableId}" >
               Table: <span>${tableTitle}</span>
               <i class="fas fa-angle-down rotate-icon"></i>
             </a>
@@ -68,7 +79,9 @@ class TableCarousel extends HTMLElement {
           </h5>
         </div>
     
-        <div class="collapse ${tableId}Collapse" id="${tableId}-${tableTitle}">
+        <div class="collapse ${tableId}Collapse ${
+                currentCollapseStatus ? "show" : ""
+            }" id="${tableId}-${tableTitle}">
           <div class="mdc-card mdc-card-content table-card-border ${cardColor}">
             ${ tableId == "report" ? `
             <hb-data-table tableName="${tableTitle}" tableIndex="${tableIndex}"></hb-data-table>` 

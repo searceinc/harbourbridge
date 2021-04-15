@@ -39,8 +39,9 @@ class SchemaConversionScreen extends HTMLElement {
   }
 
   observeState = () => {
-    if (JSON.stringify(Store.getinstance()) !== JSON.stringify(this.data)) {
-      this.data = Store.getinstance();
+    let updatedData=Store.getinstance();
+    if (JSON.stringify(updatedData) !== JSON.stringify(this.data)) {
+      this.data = JSON.parse(JSON.stringify(updatedData));
       this.render();
       Actions.ddlSummaryAndConversionApiCall();
     }

@@ -18,6 +18,12 @@ const resetIndexModal = () => {
 
 const Actions = (() => {
   return {
+    openCollapse: (tableId,tableIndex) =>{
+      Store.openCollapse(tableId,tableIndex);
+    },
+    closeCollapse: (tableId,tableIndex) =>{
+      Store.closeCollapse(tableId,tableIndex);
+    },
     trial: () => {
       return "1";
     },
