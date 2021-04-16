@@ -31,8 +31,6 @@ class TableCarousel extends HTMLElement {
 
   connectedCallback() {
     this.render();
-
-    //open collapse and close collapse
     document.getElementById(`id-${this.tableTitle}-${this.tableId}`).addEventListener("click",()=>{
         if(Store.getinstance().collapseStatus[`${this.tableId}`][this.tableIndex]==false){
           Actions.openCollapse(this.tableId,this.tableIndex);
@@ -47,6 +45,7 @@ class TableCarousel extends HTMLElement {
     let panelColor = panelBorderClass(color[tableTitle]);
     let cardColor = mdcCardBorder(color[tableTitle]);
     let currentCollapseStatus = Store.getinstance().collapseStatus[`${tableId}`][tableIndex];
+    let editButtonVisibleClass = currentCollapseStatus ? "show-content" : "hide-content";
 
     this.innerHTML = `
     <section class="${tableId}Section" id="${tableIndex}">
@@ -56,25 +55,24 @@ class TableCarousel extends HTMLElement {
           <h5 class="mb-0">
             <a data-toggle="collapse" id="id-${tableTitle}-${tableId}" >
               Table: <span>${tableTitle}</span>
-              <i class="fas fa-angle-down rotate-icon"></i>
+              <i class="fas fa-angle-${currentCollapseStatus ? "up" : "down" } rotate-icon"></i>
             </a>
             ${ tableId == "report" ? `
-                <span class="spanner-text right-align hide-content">Spanner</span>
-                <span class="spanner-icon right-align hide-content">
+                <span class="spanner-text right-align ${editButtonVisibleClass}">Spanner</span>
+                <span class="spanner-icon right-align ${editButtonVisibleClass}">
                   <i class="large material-icons iconSize">circle</i>
                 </span>
-                <span class="source-text right-align hide-content">Source</span>
-                <span class="source-icon right-align hide-content">
+                <span class="source-text right-align ${editButtonVisibleClass}">Source</span>
+                <span class="source-icon right-align ${editButtonVisibleClass}">
                   <i class="large material-icons iconSize">circle</i>
                 </span>
-                <button class="right-align edit-button hide-content" id="editSpanner${tableIndex}">
+                <button class="right-align edit-button ${editButtonVisibleClass}" id="editSpanner${tableIndex}">
                   Edit Spanner Schema
                 </button>
-                <span id="editInstruction${tableIndex}" class="right-align editInstruction hide-content blink">
+                <span id="editInstruction${tableIndex}" class="right-align editInstruction ${editButtonVisibleClass} blink">
                   Schema locked for editing. Unlock to change =>
                 </span> `
-                :
-                ` <div></div> `
+                :` <div></div> `
              }
           </h5>
         </div>
