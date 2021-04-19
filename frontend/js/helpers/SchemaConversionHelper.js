@@ -2,13 +2,7 @@ export const tooltipHandler = () => {
   jQuery('[data-toggle="tooltip"]').tooltip();
 };
 
-/**
- * Function to set style for selected menu
- * @param {string} selectedMenuId id of selected menu
- * @return {null}
- */
-
-const setActiveSelectedMenu = (selectedMenuId) => {
+export const setActiveSelectedMenu = (selectedMenuId) => {
   jQuery("[name='headerMenu']:not('#" + selectedMenuId + "')").addClass(
     "inactive"
   );
@@ -19,6 +13,7 @@ export const initSchemaScreenTasks = () => {
   var reportAccCount = 0;
   var summaryAccCount = 0;
   var ddlAccCount = 0;
+
   jQuery(document).ready(() => {
     setActiveSelectedMenu("schemaScreen");
     $(".modal-backdrop").hide();
@@ -210,26 +205,7 @@ export const showSnackbar = (message, bgClass) => {
   }, 3000);
 };
 
-export const tabbingHelper = (id, others) => {
-  document.getElementById(id + "SearchForm").style.display = "inline-block";
-  document.getElementById(id + "Tab").classList.add("active", "show");
-  document.getElementById(id).classList.add("active", "show");
-
-  others.map((element) => {
-    document
-      .getElementById(element + "SearchForm")
-      .style.setProperty("display", "none", "important");
-    document.getElementById(element + "Tab").classList.remove("active", "show");
-    document.getElementById(element).classList.remove("active", "show");
-  });
-};
-
-export const recreateNode = (el, withChildren) => {
-  if (withChildren) {
-    el.parentNode.replaceChild(el.cloneNode(true), el);
-  } else {
-    var newEl = el.cloneNode(false);
-    while (el.hasChildNodes()) newEl.appendChild(el.firstChild);
-    el.parentNode.replaceChild(newEl, el);
-  }
+export const recreateNode = (el) => {
+  let newEl = el.cloneNode(false);
+  el.parentNode.replaceChild(newEl, el);
 };

@@ -106,6 +106,10 @@ select.form-control:not([size]):not([multiple]) {
     margin-right: 0px !important;
 }
 
+.modal-button:focus {
+    border: 1px solid #00008B;
+}
+
 input[type="submit"]:disabled {
     background-color: #4285F4;
     border: 1px solid #4285F4;

@@ -2,9 +2,12 @@ import "./pages/MainScreen/MainScreen.page.js";
 import "./pages/SchemaConversionScreen/SchemaConversionScreen.page.js";
 import "./pages/Instructions/Instructions.page.js";
 import "./pages/DefaultLayout/DefaultLayout.page.js";
+import {setActiveSelectedMenu} from './helpers/SchemaConversionHelper.js'
 // Home screen component
 const HomeComponent = {
+
   render: () => {
+   
     document.getElementById(
       "app"
     ).innerHTML = `<hb-default-layout><hb-main-screen></hb-main-screen></hb-default-layout>`;

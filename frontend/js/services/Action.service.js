@@ -1,6 +1,6 @@
 import Store from "./Store.service.js";
 import Fetch from "./Fetch.service.js";
-import { readTextFile, showSnackbar, tabbingHelper, recreateNode } from "./../helpers/SchemaConversionHelper.js";
+import { readTextFile, showSnackbar} from "./../helpers/SchemaConversionHelper.js";
 
 var keysList = [];
 var orderId = 0;
@@ -34,8 +34,10 @@ const Actions = (() => {
       Store.toggleStore();
     },
     onLoadDatabase: async (dbType, dumpFilePath) => {
+      Store.resetStore();
       let reportData, sourceTableFlag, reportDataResp, reportDataCopy, jsonReportDataResp, requestCode;
       reportData = await Fetch.getAppData("POST", "/convert/dump", { Driver: dbType, Path: dumpFilePath });
+      console.log(reportData);
       reportDataCopy = reportData.clone();
       requestCode = reportData.status;
       reportDataResp = await reportData.text();
@@ -50,20 +52,23 @@ const Actions = (() => {
           return false;
         } else {
           jQuery("#loadDatabaseDumpModal").modal("hide");
-          localStorage.setItem("conversionReportContent", reportDataResp);
+          Store.updatePrimaryKeys(jsonReportDataResp);
+          Store.updateTableData("reportTabContent", jsonReportDataResp);
         }
       }
-      sourceTableFlag = localStorage.getItem("sourceDbName");
+      Store.setarraySize(Object.keys(jsonReportDataResp.SpSchema).length);
+      sourceTableFlag = Store.getSourceDbName()
       return true;
     },
     onconnect: async (dbType, dbHost, dbPort, dbUser, dbName, dbPassword) => {
+      Store.resetStore();
       let sourceTableFlag = "", response;
       let payload = { Driver: dbType, Database: dbName, Password: dbPassword, User: dbUser, Port: dbPort, Host: dbHost };
       response = await Fetch.getAppData("POST", "/connect", payload);
       if (response.ok) {
         if (dbType === "mysql") sourceTableFlag = "MySQL";
         else if (dbType === "postgres") sourceTableFlag = "Postgres";
-        localStorage.setItem("sourceDbName", sourceTableFlag);
+        Store.setSourceDbName(sourceTableFlag)
         jQuery("#connectToDbModal").modal("hide");
         jQuery("#connectModalSuccess").modal();
       }
@@ -76,14 +81,18 @@ const Actions = (() => {
     showSchemaAssessment: async () => {
       let reportDataResp, reportData, sourceTableFlag;
       reportData = await Fetch.getAppData("GET", "/convert/infoschema");
-      reportDataResp = await reportData.text();
-      localStorage.setItem("conversionReportContent", reportDataResp);
+      reportDataResp = await reportData.json();
+      // localStorage.setItem("conversionReportContent", reportDataResp);
+      Store.updatePrimaryKeys(reportDataResp);
+      Store.updateTableData("reportTabContent", reportDataResp);
+      Store.setarraySize(Object.keys(ReportDataResp.SpSchema).length);
       jQuery("#connectModalSuccess").modal("hide");
-      sourceTableFlag = localStorage.getItem("sourceDbName");
+      // sourceTableFlag = localStorage.getItem("sourceDbName");
     },
     onLoadSessionFile: async (filePath) => {
+      Store.resetStore();
       let driver = '', response, payload;
-      let srcDb = localStorage.getItem('sourceDbName');
+      let srcDb = Store.getSourceDbName()
       if (srcDb === 'MySQL') {
         driver = 'mysqldump';
       }
@@ -95,7 +104,7 @@ const Actions = (() => {
       if (response.ok) {
         let responseCopy, textResponse, jsonResponse;
         responseCopy = response.clone();
-        textResponse = await response.text();
+        // textResponse = await response.text();
         jsonResponse = await responseCopy.json();
         if (Object.keys(jsonResponse.SpSchema).length == 0) {
           showSnackbar('Please select valid session file', ' redBg');
@@ -103,7 +112,10 @@ const Actions = (() => {
           return false;
         }
         else {
-          localStorage.setItem('conversionReportContent', textResponse);
+          // localStorage.setItem('conversionReportContent', textResponse);
+          Store.updatePrimaryKeys(jsonResponse);
+          Store.updateTableData("reportTabContent", jsonResponse);
+          Store.setarraySize(Object.keys(jsonResponse.SpSchema).length);
           jQuery('#loadSchemaModal').modal('hide');
           return true;
         }
@@ -113,6 +125,7 @@ const Actions = (() => {
         jQuery('#importButton').attr('disabled', 'disabled');
         return false;
       }
+
     },
     ddlSummaryAndConversionApiCall: async () => {
       let conversionRate, conversionRateJson, ddlData, ddlDataJson, summaryData, summaryDataJson;
@@ -123,9 +136,13 @@ const Actions = (() => {
         ddlDataJson = await ddlData.json();
         summaryDataJson = await summaryData.json();
         conversionRateJson = await conversionRate.json();
-        localStorage.setItem("ddlStatementsContent", JSON.stringify(ddlDataJson));
-        localStorage.setItem("summaryReportContent", JSON.stringify(summaryDataJson));
-        localStorage.setItem("tableBorderColor", JSON.stringify(conversionRateJson));
+        // localStorage.setItem("ddlStatementsContent", JSON.stringify(ddlDataJson));
+        // localStorage.setItem("summaryReportContent", JSON.stringify(summaryDataJson));
+        // localStorage.setItem("tableBorderColor", JSON.stringify(conversionRateJson));
+        Store.updateTableData("ddlTabContent", ddlDataJson);
+        Store.updateTableData("summaryTabContent", summaryDataJson);
+        Store.updateTableBorderData(conversionRateJson);
+        // Store.setarraySize(Object.keys(ddlDataJson).length);
       }
       else {
         return false;
@@ -143,8 +160,10 @@ const Actions = (() => {
       sessionStorage.setItem("sessionStorage", JSON.stringify(sessionStorageArr));
     },
     resumeSessionHandler: async (index, sessionArray) => {
+      Store.resetStore();
       let driver, path, dbName, sourceDb, pathArray, fileName, filePath;
-      localStorage.setItem("sourceDb", sessionArray[index].sourceDbType);
+      // localStorage.setItem("sourceDb", sessionArray[index].sourceDbType);
+      Store.setSourceDbName(sessionArray[index].sourceDbType)
       driver = sessionArray[index].driver;
       path = sessionArray[index].filePath;
       dbName = sessionArray[index].dbName;
@@ -157,68 +176,48 @@ const Actions = (() => {
           showSnackbar(err, " redBg");
         }
         else {
-          let payload = {Driver: driver, DBName: dbName, FilePath: path};
-          localStorage.setItem("conversionReportContent", text);
+          let payload = { Driver: driver, DBName: dbName, FilePath: path };
+          // localStorage.setItem("conversionReportContent", text);
+          let res = JSON.parse(text);
+          Store.updatePrimaryKeys(res);
+          Store.updateTableData("reportTabContent", res);
+          Store.setarraySize(Object.keys(res.SpSchema).length);
           await Fetch.getAppData("POST", "/session/resume", payload);
         }
       });
     },
-    switchToTab: (id) => {
-      let others = ["report", "ddl", "summary"];
-      others = others.filter((element) => element != id);
-      tabbingHelper(id, others);
-    },
     SearchTable: (value, tabId) => {
-      let tableVal, list, listElem;
-      let ShowResultNotFound = true;
-      let schemaConversionObj = JSON.parse(localStorage.getItem("conversionReportContent"));
-      if (tabId === "report") {
-        list = document.getElementById(`accordion`);
-      } else {
-        list = document.getElementById(`${tabId}-accordion`);
-      }
-      listElem = list.getElementsByTagName("section");
-      let tableListLength = Object.keys(schemaConversionObj.SpSchema).length;
-      for (var i = 0; i < tableListLength; i++) {
-        tableVal = Object.keys(schemaConversionObj.SpSchema)[i];
-        if (tableVal.indexOf(value) > -1) {
-          listElem[i].style.display = "";
-          ShowResultNotFound = false;
-        }
-        else {
-          listElem[i].style.display = "none";
-        }
-      }
-      if (ShowResultNotFound) {
-        list.style.display = "none";
-        document.getElementById(`${tabId}notFound`).style.display = "block";
-      }
-      else {
-        list.style.display = "";
-        document.getElementById(`${tabId}notFound`).style.display = "none";
-      }
+      Store.setSearchInputValue(tabId , value)
+
+      // if (ShowResultNotFound) {
+      //   list.style.display = "none";
+      //   document.getElementById(`${tabId}notFound`).style.display = "block";
+      // }
+      // else {
+      //   list.style.display = "";
+      //   document.getElementById(`${tabId}notFound`).style.display = "none";
+      // }
     },
     expandAll: (text, buttonId) => {
-      let collapseSection = buttonId.substring(0, buttonId.indexOf("ExpandButton"));
       if (text === "Expand All") {
         document.getElementById(buttonId).innerHTML = "Collapse All";
-        jQuery(`.${collapseSection}Collapse`).collapse("show");
+        Store.expandAll(true);
       }
       else {
         document.getElementById(buttonId).innerHTML = "Expand All";
-        jQuery(`.${collapseSection}Collapse`).collapse("hide");
+        Store.expandAll(false);
       }
     },
     downloadSession: async () => {
       jQuery("<a />", {
         download: "session.json",
-        href: "data:application/json;charset=utf-8," + encodeURIComponent(localStorage.getItem("conversionReportContent"), null, 4),
+        href: "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(Store.getinstance().tableData.reportTabContent), null, 4),
       })
-      .appendTo("body")
-      .click(function () {
-        jQuery(this).remove();
-      })[0]
-      .click();
+        .appendTo("body")
+        .click(function () {
+          jQuery(this).remove();
+        })[0]
+        .click();
     },
     downloadDdl: async () => {
       let ddlreport = await Fetch.getAppData("GET", "/schema");
@@ -235,11 +234,11 @@ const Actions = (() => {
               download: schemaFileName,
               href: "data:application/json;charset=utf-8," + encodeURIComponent(text),
             })
-            .appendTo("body")
-            .click(function () {
-              jQuery(this).remove();
-            })[0]
-            .click();
+              .appendTo("body")
+              .click(function () {
+                jQuery(this).remove();
+              })[0]
+              .click();
           });
         }
         showSnackbar('try again ', 'red')
@@ -259,11 +258,11 @@ const Actions = (() => {
             download: reportFileName,
             href: "data:application/json;charset=utf-8," + encodeURIComponent(text),
           })
-          .appendTo("body")
-          .click(function () {
-            jQuery(this).remove();
-          })[0]
-          .click();
+            .appendTo("body")
+            .click(function () {
+              jQuery(this).remove();
+            })[0]
+            .click();
         });
       }
     },
@@ -273,10 +272,12 @@ const Actions = (() => {
     checkInterleaveConversion: async (tableName) => {
       let interleaveApiCall;
       interleaveApiCall = await Fetch.getAppData("GET", "/setparent?table=" + tableName);
-      return interleaveApiCall.json();
+      let interleaveApiCallResp = await interleaveApiCall.json();
+      let value = interleaveApiCallResp.tableInterleaveStatus.Possible;
+      Store.setInterleave(tableName,value);
     },
     setGlobalDataType: async () => {
-      let globalDataTypeList = JSON.parse(localStorage.getItem("globalDataTypeList"));
+      let globalDataTypeList = Store.getGlobalDataTypeList();
       let dataTypeListLength = Object.keys(globalDataTypeList).length;
       let dataTypeJson = {};
       for (var i = 0; i <= dataTypeListLength; i++) {
@@ -299,14 +300,19 @@ const Actions = (() => {
       }
       let res = await Fetch.getAppData("POST", "/typemap/global", dataTypeJson);
       if (res) {
-        res = await res.text();
-        localStorage.setItem("conversionReportContent", res);
+        res = await res.json();
+        console.log(res);
+        // localStorage.setItem("conversionReportContent", res);
+        Store.updatePrimaryKeys(res);
+        // console.log(res);
+        Store.updateTableData("reportTabContent", res);
+
       }
     },
     getGlobalDataTypeList: async () => {
       let res = await Fetch.getAppData("GET", "/typemap");
       await res.json().then(function (result) {
-        localStorage.setItem("globalDataTypeList", JSON.stringify(result));
+        Store.setGlobalDataTypeList(result)
       });
     },
     dataTypeUpdate: (id, globalDataTypeList) => {
@@ -324,14 +330,14 @@ const Actions = (() => {
         }
       }
     },
-    fetchIndexFormValues: async function (tableIndex, tableName, name, uniqueness) {
+    fetchIndexFormValues: async (tableIndex, tableName, name, uniqueness) => {
       if (keysList.length === 0) {
         showSnackbar("Please select atleast one key to create a new index", " redBg");
         return;
       }
       let newIndex = {};
       let newIndexPos = 1;
-      let jsonObj = JSON.parse(localStorage.getItem("conversionReportContent"));
+      let jsonObj = Store.getinstance().tableData.reportTabContent;
       let table = jsonObj.SpSchema[tableName];
       newIndex["Name"] = name;
       newIndex["Table"] = table.Name;
@@ -361,68 +367,16 @@ const Actions = (() => {
       let res = await Fetch.getAppData("POST", "/add/indexes?table=" + tableName, [newIndex]);
       if (res.ok) {
         jQuery("#createIndexModal").modal("hide");
-        res = await res.text();
-        localStorage.setItem("conversionReportContent", res);
-        jsonObj = JSON.parse(localStorage.getItem("conversionReportContent"));
-        let secIndexArray = jsonObj.SpSchema[tableName].Indexes;
-        let tablemap = document.querySelector("#indexKey" + tableIndex).querySelector(".index-acc-table.fkTable");
-        let flag = document.querySelector("#editSpanner" + tableIndex).innerHTML === "Save Changes";
-        tablemap.innerHTML = ` ${secIndexArray && secIndexArray.length > 0 ? 
-        `<thead>
-          <tr>
-              <th>Name</th>
-              <th>Table</th>
-              <th>Unique</th>
-              <th>Keys</th>
-              <th>Action</th>
-          </tr>
-        </thead>`: 
-        `<div></div>`} 
-        ${secIndexArray.map((secIndex, index) => {
-          return `
-            <tr class="indexTableTr ">
-                <td class="acc-table-td indexesName">
-                    <div class="renameSecIndex ${flag ? '' : 'template'}" id="renameSecIndex${tableIndex}${index}">
-                        <input type="text" id="newSecIndexVal${tableIndex}${index}" value="${secIndex.Name}"
-                            class="form-control spanner-input" autocomplete="off" />
-                    </div>
-                    <div class="saveSecIndex ${flag ? 'template' : ''}" id="saveSecIndex${tableIndex}${index}">${secIndex.Name}</div>
-                </td>
-                <td class="acc-table-td indexesTable">${secIndex.Table}</td>
-                <td class="acc-table-td indexesUnique">${secIndex.Unique}</td>
-                <td class="acc-table-td indexesKeys">${secIndex.Keys.map((key) => key.Col).join(',')}</td>
-                <td class="acc-table-td indexesAction">
-                    <button class="dropButton" id="${tableName}${index}secIndex" ${flag ? "" : "disabled"}>
-                        <span><i class="large material-icons removeIcon"
-                                style="vertical-align: middle">delete</i></span>
-                        <span style="vertical-align: middle">Drop</span>
-                    </button>
-                </td>
-            </tr>
-          `;
-        }).join("")}`;
-  
-        if (secIndexArray !== null && secIndexArray.length > 0) {
-          secIndexArray.map((secIndex, index) => {
-            document.getElementById(tableName + index + 'secIndex').addEventListener('click', () => {
-              jQuery('#indexAndKeyDeleteWarning').modal();
-              jQuery('#indexAndKeyDeleteWarning').find('#modal-content').html(`This will permanently delete the secondary index and the corresponding uniqueness constraints on
-                indexed columns (if applicable). Do you want to continue?`);
-              recreateNode(document.getElementById('fk-drop-confirm'))
-              document.getElementById('fk-drop-confirm').addEventListener('click', () => {
-                Actions.dropSecondaryIndexHandler(tableName, tableIndex, index);
-              })
-            })
-          });
-        }
-        this.closeSecIndexModal();
+        res = await res.json();
+        Store.updatePrimaryKeys(res);
+        Store.updateTableData("reportTabContent", res);
       }
     },
     createNewSecIndex: (id) => {
       let iIndex = id.indexOf("indexButton");
       let tableIndex = id.substring(0, iIndex)
       let tableName = id.substring(iIndex + 12)
-      let jsonObj = JSON.parse(localStorage.getItem('conversionReportContent'));
+      let jsonObj = Store.getinstance().tableData.reportTabContent;
       if (document.getElementById("editSpanner" + tableIndex).innerHTML.trim() == "Save Changes") {
         let pendingChanges = false;
         let dataTable = jQuery(`#src-sp-table${tableIndex} tr`)
@@ -491,7 +445,7 @@ const Actions = (() => {
       }
     },
     editAndSaveButtonHandler: async (event, tableNumber, tableName, notNullConstraint) => {
-      let schemaConversionObj = JSON.parse(localStorage.getItem("conversionReportContent"));
+      let schemaConversionObj =Store.getinstance().tableData.reportTabContent
       let tableId = '#src-sp-table' + tableNumber + ' tr';
       let tableColumnNumber = 0, tableData, fkTableData, secIndexTableData;
       let renameFkMap = {}, fkLength, secIndexLength, renameIndexMap = {};
@@ -533,7 +487,8 @@ const Actions = (() => {
               jQuery('#editDataType' + tableNumber + tableColumnNumber).removeClass('template');
               jQuery('#saveDataType' + tableNumber + tableColumnNumber).addClass('template');
               let dataTypeArray = null;
-              let globalDataTypes = JSON.parse(localStorage.getItem('globalDataTypeList'));
+              // let globalDataTypes = JSON.parse(localStorage.getItem('globalDataTypeList'));
+              let globalDataTypes = Store.getGlobalDataTypeList()
               let globalDataTypesLength = Object.keys(globalDataTypes).length;
               let srcCellValue = document.getElementById('srcDataType' + tableNumber + tableColumnNumber).innerHTML;
               let spannerCellValue = document.getElementById('saveDataType' + tableNumber + tableColumnNumber).innerHTML;
@@ -697,8 +652,10 @@ const Actions = (() => {
             tableData = await Fetch.getAppData('POST', '/typemap/table?table=' + tableName, updatedColsData);
             if (tableData.ok) {
               changesSuccess = true;
-              tableData = await tableData.text();
-              localStorage.setItem('conversionReportContent', tableData);
+              tableData = await tableData.json();
+              // localStorage.setItem('conversionReportContent', tableData);
+              // Store.updateTableData("reportTabContent",tableData);
+
             }
             else {
               changesSuccess = false;
@@ -752,8 +709,11 @@ const Actions = (() => {
                 }
                 else {
                   changesSuccess = true;
-                  fkTableData = await fkTableData.text();
-                  localStorage.setItem('conversionReportContent', fkTableData);
+                  fkTableData = await fkTableData.json();
+                  tableData = fkTableData;
+                  // localStorage.setItem('conversionReportContent', fkTableData);
+                  // Store.updateTableData("reportTabContent",fkTableData);
+
                 }
                 break;
             }
@@ -804,15 +764,20 @@ const Actions = (() => {
                 }
                 else {
                   changesSuccess = true;
-                  secIndexTableData = await secIndexTableData.text();
-                  localStorage.setItem('conversionReportContent', secIndexTableData);
+                  secIndexTableData = await secIndexTableData.json();
+                  tableData = secIndexTableData;
+                  // localStorage.setItem('conversionReportContent', secIndexTableData);
+                  // Store.updateTableData("reportTabContent",secIndexTableData);   
                 }
                 break;
             }
           }
         }
         if (changesSuccess) {
-          let updatedData = JSON.parse(localStorage.getItem('conversionReportContent'));
+          Store.setTableChanges("saveMode");
+          Store.updatePrimaryKeys(tableData);
+          Store.updateTableData("reportTabContent", tableData);
+          let updatedData = Store.getinstance().tableData.reportTabContent
           event.target.innerHTML = "Edit Spanner Schema";
           document.getElementById("editInstruction" + tableNumber).style.visibility = "visible";
           jQuery(tableId).each(function () {
@@ -830,7 +795,7 @@ const Actions = (() => {
               jQuery('#renameSecIndex' + tableNumber + x).addClass('template');
             }
           }
-          Store.updateSchemaScreen(localStorage.getItem('conversionReportContent'));
+          // Store.updateSchemaScreen(Store.getinstance().tableData.reportTabContent);
         }
       }
     },
@@ -841,7 +806,10 @@ const Actions = (() => {
         let responseCopy = response.clone();
         let jsonResponse = await responseCopy.json();
         let textRresponse = await response.text();
-        localStorage.setItem('conversionReportContent', textRresponse);
+        // localStorage.setItem('conversionReportContent', textRresponse);
+        Store.updatePrimaryKeys(jsonResponse);
+        Store.updateTableData("reportTabContent", jsonResponse);
+
         if (jsonResponse.SpSchema[tableName].Fks != null && jsonResponse.SpSchema[tableName].Fks.length != 0) {
           let table = document.getElementById('fkTableBody' + tableNumber);
           let rowCount = table.rows.length;
@@ -878,63 +846,40 @@ const Actions = (() => {
       if (response.ok) {
         let responseCopy = response.clone();
         let jsonObj = await responseCopy.json();
-        let textRresponse = await response.text();
-        localStorage.setItem('conversionReportContent', textRresponse);
-        let secIndexArray = jsonObj.SpSchema[tableName].Indexes;
-        let tablemap = document.querySelector("#indexKey" + tableNumber).querySelector(".index-acc-table.fkTable");
-        let flag = document.querySelector("#editSpanner" + tableNumber).innerHTML === "Save Changes";
-
-        tablemap.innerHTML = ` ${secIndexArray && secIndexArray.length > 0 ? 
-        `<thead>
-          <tr>
-              <th>Name</th>
-              <th>Table</th>
-              <th>Unique</th>
-              <th>Keys</th>
-              <th>Action</th>
-          </tr>
-        </thead>`
-        :
-        `<div></div>`} 
-        ${secIndexArray.map((secIndex, index) => {
-          return `
-            <tr class="indexTableTr ">
-                <td class="acc-table-td indexesName">
-                    <div class="renameSecIndex ${flag ? '' : 'template'}" id="renameSecIndex${tableNumber}${index}">
-                        <input type="text" id="newSecIndexVal${tableNumber}${index}" value="${secIndex.Name}"
-                            class="form-control spanner-input" autocomplete="off" />
-                    </div>
-                    <div class="saveSecIndex ${flag ? 'template' : ''}" id="saveSecIndex${tableNumber}${index}">${secIndex.Name}</div>
-                    
-                </td>
-                <td class="acc-table-td indexesTable">${secIndex.Table}</td>
-                <td class="acc-table-td indexesUnique">${secIndex.Unique}</td>
-                <td class="acc-table-td indexesKeys">${secIndex.Keys.map((key) => key.Col).join(',')}</td>
-                <td class="acc-table-td indexesAction">
-                    <button class="dropButton" id="${tableName}${index}secIndex" ${flag ? "" : "disabled"}>
-                        <span><i class="large material-icons removeIcon"
-                                style="vertical-align: middle">delete</i></span>
-                        <span style="vertical-align: middle">Drop</span>
-                    </button>
-                </td>
-            </tr>
-          `;
-        }).join("")}`;
-        if (secIndexArray !== null && secIndexArray.length > 0) {
-          secIndexArray.map((secIndex, index) => {
-            document.getElementById(tableName + index + 'secIndex').addEventListener('click', () => {
-              jQuery('#indexAndKeyDeleteWarning').modal();
-              jQuery('#indexAndKeyDeleteWarning').find('#modal-content').html(`This will permanently delete the secondary index and the corresponding uniqueness constraints on
-                indexed columns (if applicable). Do you want to continue?`);
-              recreateNode(document.getElementById('fk-drop-confirm'))
-              document.getElementById('fk-drop-confirm').addEventListener('click', () => {
-                Actions.dropSecondaryIndexHandler(tableName, tableNumber, index);
-              })
-            })
-          });
-        }
+        // let textRresponse = await response.tt();
+        // localStorage.setItem('conversionReportContent', textRresponse);
+        Store.updatePrimaryKeys(jsonObj);
+        Store.updateTableData("reportTabContent", jsonObj);
       }
     },
+    showSpinner: () => {
+      let toggle_spinner = document.getElementById("toggle-spinner");
+      toggle_spinner.style.display = "block";
+    },
+    hideSpinner: () => {
+      let toggle_spinner = document.getElementById("toggle-spinner");
+      toggle_spinner.style.display = "none";
+      toggle_spinner.className = toggle_spinner.className.replace("show", "");
+    },
+    swithCurrentTab: (tab) => {
+      Store.swithCurrentTab(tab)
+    },
+    openCarousel: (tableId, tableIndex) => {
+      Store.openCarousel(tableId, tableIndex)
+    },
+    closeCarousel: (tableId, tableIndex) => {
+      Store.closeCarousel(tableId, tableIndex)
+    },
+    getTableData: (tabName) => {
+      Store.getTableData(tabName);
+    },
+    setSourceDbName: (name) => {
+      Store.setSourceDbName(name)
+    },
+    setGlobalDbType: (value) => {
+      Store.setGlobalDbType(value);
+    },
+    
   };
 })();
 

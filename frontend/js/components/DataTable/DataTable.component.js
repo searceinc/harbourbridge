@@ -1,6 +1,7 @@
 import "./../Modal/Modal.component.js";
 import { recreateNode } from './../../helpers/SchemaConversionHelper.js';
 import Actions from './../../services/Action.service.js';
+import Store from './../../services/Store.service.js';
 
 class DataTable extends HTMLElement {
 
@@ -12,14 +13,22 @@ class DataTable extends HTMLElement {
         return this.getAttribute("tableIndex");
     }
 
-    static get observedAttributes() {
-        return ["open"];
+    get data() {
+        return this._dta
+    }
+
+    set data(value){
+        this._dta = value;
+        this.render()
     }
 
     connectedCallback() {
-          this.render();  
+        if(Store.getinstance().checkInterleave[this.tableName] === undefined)
+        {
+            Actions.checkInterleaveConversion(this.tableName);
+        }
+        this.checkInterLeave = Store.getinstance().checkInterleave[this.tableName]; 
      }   
-  
 
     fkComponent(tableIndex, tableName, fkArray) {
         return `
@@ -32,7 +41,7 @@ class DataTable extends HTMLElement {
                 <div class="collapse fkCollapse" id="foreignKey${tableIndex}">
                     <div class="mdc-card mdc-card-content summaryBorder">
                         <div class="mdc-card fk-content">
-                            <fieldset class="template" id="radioBtnArea${tableIndex}">
+                            <fieldset class=${this.checkInterLeave == true ? "" : "template"} id="radioBtnArea${tableIndex}">
                                 <div class="radio-class">
                                     <input type="radio" class="radio addRadio" value="add" checked="checked" disabled
                                         id="add${tableIndex}" name="fks${tableIndex}" />
@@ -148,23 +157,19 @@ class DataTable extends HTMLElement {
         `;
     }
 
-    connectedCallback() {
-        this.render();
-    }
-
     render() {
-        let { tableName, tableIndex } = this;
+        let { tableName, tableIndex, data } = this;
         let countSrc = [], countSp = [], notNullConstraint = [];
-        let schemaConversionObj = JSON.parse(localStorage.getItem("conversionReportContent"));
-        let spTable = schemaConversionObj.SpSchema[tableName];
-        let srcTable = schemaConversionObj.SrcSchema[tableName];
-        let tableColumnsArray = schemaConversionObj.SpSchema[tableName].ColNames;
+        let spTable = data.SpSchema;
+        let srcTable = data.SrcSchema;
+        let tableColumnsArray = data.SpSchema.ColNames;
         let pksSp = [...spTable.Pks];
         let pksSpLength = pksSp.length;
         let pkSeqId = 1;
         countSrc[tableIndex] = [];
         countSp[tableIndex] = [];
         for (var x = 0; x < pksSpLength; x++) { if (pksSp[x].seqId == undefined) { pksSp[x].seqId = pkSeqId; pkSeqId++; } }
+        let sourceDbName = Store.getSourceDbName()
         this.innerHTML = ` <div class="acc-card-content" id="acc_card_content">
                                 <table class="acc-table" id="src-sp-table${tableIndex}">
                                     <thead>
@@ -185,12 +190,12 @@ class DataTable extends HTMLElement {
                                                         </label>
                                                     </div>
                                                 </span>
-                                                ${localStorage.getItem('sourceDbName')}
+                                                ${sourceDbName}
                                             </th>
                                             <th class="acc-table-th-spn">Spanner</th>
-                                            <th class="acc-table-th-src">${localStorage.getItem('sourceDbName')}</th>
+                                            <th class="acc-table-th-src">${sourceDbName}</th>
                                             <th class="acc-table-th-spn">Spanner</th>
-                                            <th class="acc-table-th-src">${localStorage.getItem('sourceDbName')}</th>
+                                            <th class="acc-table-th-src">${sourceDbName}</th>
                                             <th class="acc-table-th-spn">Spanner</th>
                                         </tr>
                                     </thead>
@@ -204,7 +209,8 @@ class DataTable extends HTMLElement {
                                                 pkFlag = true; seqId = pksSp[x].seqId;
                                                 break
                                             }
-                                        } let currentColumnSrc = schemaConversionObj.ToSource[spTable.Name].Cols[tableColumn]; return `
+                                        } 
+                                        let currentColumnSrc = data.ToSource.Cols[tableColumn]; return `
                                             <tr class="reportTableContent">
                                             <td class="acc-table-td src-tab-cell">
                                                 <span class="bmd-form-group is-filled eachRowChckBox template">
@@ -259,7 +265,7 @@ class DataTable extends HTMLElement {
                                             <td class="sp-column acc-table-td spannerDataType spannerTabCell${tableIndex}${index}"
                                                 id="dataType${tableIndex}${index}">
                                                 <div class="saveDataType" id="saveDataType${tableIndex}${index}">
-                                                    ${spTable.ColDefs[tableColumn].T.Name}</div>
+                                                    ${spTable .ColDefs[tableColumn].T.Name}</div>
                                                 <div class="editDataType template" id="editDataType${tableIndex}${index}">
                                                     <div class="form-group">
                                                         <select class="form-control spanner-input tableSelect"
@@ -288,7 +294,7 @@ class DataTable extends HTMLElement {
                                                 <div class="saveConstraint" id="saveConstraint${tableIndex}${index}">
                                                     <select multiple size="1" class="form-control spanner-input tableSelect spannerConstraint"
                                                         id="spConstraint${tableIndex}${index}">
-                                                        ${spTable.ColDefs[tableColumn].NotNull ?
+                                                        ${spTable .ColDefs[tableColumn].NotNull ?
                                                 (countSp[tableIndex][index] = countSp[tableIndex][index] + 1,
                                                     notNullConstraint[parseInt(String(tableIndex) + String(index))] = 'Not Null',
                                                     `<option disabled class="active">
@@ -306,8 +312,8 @@ class DataTable extends HTMLElement {
                                     }).join("")}
                                     </tbody>
                                 </table>
-                                ${spTable.Fks?.length > 0 ? this.fkComponent(tableIndex, tableName, spTable.Fks) : `<div></div>`}
-                                ${this.secIndexComponent(tableIndex, tableName, spTable.Indexes)}
+                                ${spTable .Fks?.length > 0 ? this.fkComponent(tableIndex, tableName, spTable .Fks) : `<div></div>`}
+                                ${this.secIndexComponent(tableIndex, tableName, spTable .Indexes)}
                                 <div class="summaryCard">
                                     <div class="summaryCardHeader" role="tab">
                                         <h5 class="mb-0">
@@ -316,7 +322,11 @@ class DataTable extends HTMLElement {
                                     </div>
                                     <div class="collapse innerSummaryCollapse" id="viewSummary${tableIndex}">
                                         <div class="mdc-card mdc-card-content summaryBorder">
-                                            <hb-list-table tabName="summary" tableName="${tableName}"></hb-list-table>
+<<<<<<< HEAD
+                                            <hb-list-table tabName="summary" dta="${data.summary}" tableName="${tableName}"></hb-list-table>
+=======
+                                            <hb-list-table tabName="summary" tableName="${tableName}" dta="${data.summary}"></hb-list-table>
+>>>>>>> ea16e5459cf3acdcdb24a77c54073039a5fa018c
                                         </div>
                                     </div>
                                 </div>
@@ -337,8 +347,8 @@ class DataTable extends HTMLElement {
         document.getElementById("editSpanner" + tableIndex).addEventListener("click", (event) => {
             Actions.editAndSaveButtonHandler(event, tableIndex, tableName, notNullConstraint);
         });
-        if (spTable.Fks !== null && spTable.Fks.length > 0) {
-            spTable.Fks.map((fk, index) => {
+        if (spTable .Fks !== null && spTable .Fks.length > 0) {
+            spTable .Fks.map((fk, index) => {
                 document.getElementById(tableName + index + 'foreignKey').addEventListener('click', () => {
                     jQuery('#indexAndKeyDeleteWarning').modal();
                     jQuery('#indexAndKeyDeleteWarning').find('#modal-content').html(`This will permanently delete the foreign key constraint and the corresponding uniqueness constraints on referenced columns. Do you want to continue?`);
@@ -349,8 +359,8 @@ class DataTable extends HTMLElement {
                 })
             });
         }
-        if (spTable.Indexes !== null && spTable.Indexes.length > 0) {
-            spTable.Indexes.map((secIndex, index) => {
+        if (spTable .Indexes !== null && spTable .Indexes.length > 0) {
+            spTable .Indexes.map((secIndex, index) => {
                 document.getElementById(tableName + index + 'secIndex').addEventListener('click', () => {
                     jQuery('#indexAndKeyDeleteWarning').modal();
                     jQuery('#indexAndKeyDeleteWarning').find('#modal-content').html(`This will permanently delete the secondary index and the corresponding uniqueness constraints on indexed columns (if applicable). Do you want to continue?`);

@@ -1,3 +1,5 @@
+import Actions from "./Action.service.js";
+
 const RED = "#F44336";
 /**
  * All the form validations are mentioned in this module
@@ -25,25 +27,25 @@ const Forms = (() => {
           jQuery(".db-input").val("");
           document.getElementById("sql-fields").style.display = "block";
           sourceTableFlag = "MySQL";
-          localStorage.setItem("sourceDbName", sourceTableFlag);
+          Actions.setSourceDbName(sourceTableFlag)
       } 
       else if (val.value === "postgres") {
           jQuery(".form-error").html("");
           jQuery(".db-input").val("");
           document.getElementById("sql-fields").style.display = "block";
           sourceTableFlag = "Postgres";
-          localStorage.setItem("sourceDbName", sourceTableFlag);
+          Actions.setSourceDbName(sourceTableFlag)
       } 
       else if (val.value === "dynamodb") {
           document.getElementById("sql-fields").style.display = "none";
           sourceTableFlag = "dynamoDB";
-          localStorage.setItem("sourceDbName", sourceTableFlag);
+          Actions.setSourceDbName(sourceTableFlag)
       }
     },
     formButtonHandler: (formId, formButtonId) => {
       let formElements = document.getElementById(formId);
       formElements.querySelectorAll("input").forEach((elem) => {
-        elem.addEventListener("keyup", () => {
+        elem.addEventListener("input", () => {
           let empty = false;
           formElements.querySelectorAll('input:not([type="checkbox"])')
             .forEach((elem) => {

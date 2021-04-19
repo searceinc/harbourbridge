@@ -6,31 +6,55 @@ const DEFAULT_INSTANCE = {
 };
 
 const Store = (function () {
-    let schemaConversionObj = JSON.parse(
-      localStorage.getItem("conversionReportContent")
-    );
-    let tableNameArrayLength = Object.keys(schemaConversionObj.SpSchema).length;
-  
-    let reportArr = [];
-    let ddlArr = [];
-    let summaryArr = [];
-    for(let i=0; i<tableNameArrayLength; i++){
-      reportArr.push(false)
-      ddlArr.push(false)
-      summaryArr.push(false)
-    }
-    var instance = {
-        collapseStatus:{
-            report: reportArr,
-            ddl: ddlArr,
-            summary :summaryArr
-    }};
-    let modalId = "connectToDbModal"
-   
+  var tableChanges = "editMode";
+  var instance = {
+    checkInterleave: {},
+    currentTab: "reportTab",
+    sourceDbName: '',
+    globalDbType: '',
+    openStatus: {
+      ddl: new Array(1).fill(false),
+      report: new Array(1).fill(false),
+      summary: new Array(1).fill(false),
+    },
+    searchInputValue :{
+      ddlTab:'',
+      reportTab:'',
+      summaryTab:''
+    },
+    tableData:{
+      reportTabContent: {},
+      ddlTabContent: {},
+      summaryTabContent: {}
+    },
+    tableBorderData: {},
+    globalDataTypeList: {},
+  };
+  let modalId = "connectToDbModal";
+  let checkInterLeaveArray = {};
+
+  function init() { }
 
   return {
     getinstance: function () {
       return instance;
+    },
+
+    getTableChanges: () => {
+      return tableChanges;
+    },
+
+    setTableChanges: (val) => {
+      tableChanges = val;
+    },
+
+    setarraySize: (val) => {
+      console.log(val);
+      instance.openStatus = {
+      ddl: new Array(val).fill(false),
+      report: new Array(val).fill(false),
+      summary: new Array(val).fill(false),
+      }
     },
 
     // Other store manipulator functions here
@@ -57,16 +81,104 @@ const Store = (function () {
       instance = { ...instance, open: openVal };
     },
     updateSchemaScreen: async (tableData) => {
-      localStorage.setItem("conversionReportContent", tableData);
+      Store.updateTableData("reportTabContent", tableData);
       await Actions.ddlSummaryAndConversionApiCall();
       instance = { ...instance, tableData, saveSchemaId: Math.random() };
     },
-    openCollapse:(tableId,tableIndex) => {
-        instance.collapseStatus[`${tableId}`][tableIndex]=true;
+    setInterleave: (tableName, value) => {
+      checkInterLeaveArray[tableName] = value;
+      if (Object.keys(checkInterLeaveArray).length == 16) {
+        instance = { ...instance, checkInterleave: checkInterLeaveArray };
+      }
     },
-    closeCollapse:(tableId,tableIndex) => {
-      instance.collapseStatus[`${tableId}`][tableIndex]=false;
+    swithCurrentTab: (tab) => {
+      instance = { ...instance, currentTab: tab }
     },
+    openCarousel: (tableId, tableIndex) => {
+      instance.openStatus[tableId][tableIndex] = true;
+    },
+    closeCarousel: (tableId, tableIndex) => {
+      instance.openStatus[tableId][tableIndex] = false;
+    },
+    getTableData: (tabName) => {
+      return JSON.parse(instance.tableData[tabName + "Content"]);
+    },
+    updatePrimaryKeys: (tableData) => {
+      let numOfSpannerTables = Object.keys(tableData.SpSchema).length;
+      for (let x = 0; x < numOfSpannerTables; x++) {
+        let spannerTable = tableData.SpSchema[Object.keys(tableData.SpSchema)[x]];
+        // let pksSp = [...spannerTable.Pks];
+        // let pksSpLength = pksSp.length;
+        let pkSeqId = 1;
+        for (let y = 0; y < spannerTable.Pks.length; y++) {
+          if (spannerTable.Pks[y].seqId == undefined) {
+            spannerTable.Pks[y].seqId = pkSeqId;
+            pkSeqId++;
+          }
+        }
+      }
+    },
+    updateTableData: (key, data) => {
+      instance.tableData[key] = data;
+    },
+    updateTableBorderData: (data) => {
+      instance.tableBorderData = data;
+    },
+    expandAll: (value) => {
+      let key = instance.currentTab.substr(0, instance.currentTab.length - 3);
+      instance.openStatus[key].fill(value);
+    },
+    setSourceDbName: (name) => {
+      instance.sourceDbName = name;
+    },
+    getSourceDbName: () => {
+      return instance.sourceDbName
+    },
+    setGlobalDbType: (value) => {
+      instance.globalDbType = value;
+    },
+    getGlobalDbType: () => {
+      return instance.globalDbType;
+    },
+    setGlobalDataTypeList: (value) => {
+      instance.globalDataTypeList = value
+    },
+    getGlobalDataTypeList:()=>{
+        return instance.globalDataTypeList;
+    },
+    setSearchInputValue :(key,value)=>{
+      instance.searchInputValue[key]=value;
+    },
+    getSearchInputValue:(key)=>{
+      return instance.searchInputValue[key];
+    },
+    resetStore: () => {
+      instance = {
+        checkInterleave: {},
+        currentTab: "reportTab",
+        sourceDbName: '',
+        globalDbType: '',
+        openStatus: {
+          ddl: new Array(1).fill(false),
+          report: new Array(1).fill(false),
+          summary: new Array(1).fill(false),
+        },
+        searchInputValue :{
+          ddlTab:'',
+          reportTab:'',
+          summaryTab:''
+        },
+        tableData:{
+          reportTabContent: {},
+          ddlTabContent: {},
+          summaryTabContent: {}
+        },
+        tableBorderData: {},
+        globalDataTypeList: {},
+      };
+
+    }
+
   };
 })();
 
