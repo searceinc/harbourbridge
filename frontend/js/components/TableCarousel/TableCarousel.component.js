@@ -46,6 +46,7 @@ class TableCarousel extends HTMLElement {
     let cardColor = mdcCardBorder(color[tableTitle]);
     let currentCollapseStatus = Store.getinstance().collapseStatus[`${tableId}`][tableIndex];
     let editButtonVisibleClass = currentCollapseStatus ? "show-content" : "hide-content";
+    let showOrHideCollapse=  currentCollapseStatus ? "show" : "";
 
     this.innerHTML = `
     <section class="${tableId}Section" id="${tableIndex}">
@@ -77,9 +78,7 @@ class TableCarousel extends HTMLElement {
           </h5>
         </div>
     
-        <div class="collapse ${tableId}Collapse ${
-                currentCollapseStatus ? "show" : ""
-            }" id="${tableId}-${tableTitle}">
+        <div class="collapse ${tableId}Collapse ${showOrHideCollapse}" id="${tableId}-${tableTitle}">
           <div class="mdc-card mdc-card-content table-card-border ${cardColor}">
             ${ tableId == "report" ? `
             <hb-data-table tableName="${tableTitle}" tableIndex="${tableIndex}"></hb-data-table>` 
