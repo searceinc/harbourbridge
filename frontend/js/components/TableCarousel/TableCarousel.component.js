@@ -6,8 +6,7 @@ import {
   panelBorderClass,
   mdcCardBorder,
 } from "./../../helpers/SchemaConversionHelper.js";
-import Actions from "../../services/Action.service.js";
-import Store from "../../services/Store.service.js";
+
 
 class TableCarousel extends HTMLElement {
 
