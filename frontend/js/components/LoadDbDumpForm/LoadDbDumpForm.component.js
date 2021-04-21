@@ -1,6 +1,5 @@
 import Forms from "../../services/Forms.service.js";
 import Actions from "../../services/Action.service.js";
-import Store from "../../services/Store.service.js";
 
 class LoadDbDumpForm extends HTMLElement {
 
@@ -20,6 +19,7 @@ class LoadDbDumpForm extends HTMLElement {
     }
 
     storeDumpFileValues = async (dbType, filePath) => {
+        Actions.resetStore();
         let sourceTableFlag = '', loadDbDumpApiRes, ddlSummaryApiRes,globalDbType='';
         if (dbType === 'mysql') {
             globalDbType = dbType + 'dump';
@@ -34,9 +34,11 @@ class LoadDbDumpForm extends HTMLElement {
         }
         loadDbDumpApiRes = await Actions.onLoadDatabase(globalDbType, filePath);
         ddlSummaryApiRes = await Actions.ddlSummaryAndConversionApiCall();
+        await Actions.getGlobalDataTypeList();
+
         if (loadDbDumpApiRes && ddlSummaryApiRes) {
             window.location.href = '#/schema-report';
-            Actions.sessionRetrieval(Store.getSourceDbName());
+            Actions.sessionRetrieval(Actions.getSourceDbName());
         }
     }
 
@@ -52,7 +54,7 @@ class LoadDbDumpForm extends HTMLElement {
             </div>
             <form id="load-db-form">
                 <div>
-                    <label class="modal-label" for="dump-file-path">Path of the Dump File</label>
+                    <label for="dump-file-path">Path of the Dump File</label>
                     <input class="form-control load-db-input" type="text" name="dump-file-path" id="dump-file-path"
                         autocomplete="off" />
                     <span class='form-error' id='file-path-error'></span>
