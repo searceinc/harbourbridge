@@ -274,11 +274,16 @@ const Actions = (() => {
         Store.updateTableData("reportTabContent", res); }
     },
 
-    getGlobalDataTypeList: async () => {
+    setGlobalDataTypeList: async () => {
       let res = await Fetch.getAppData("GET", "/typemap");
-      await res.json().then(function (result) {
+      if(res.ok){
+        let result = await res.json();
+        console.log(result);
         Store.setGlobalDataTypeList(result)
-      });
+      }
+      else{
+        showSnackbar('Not able to fetch global datatype list !')
+      }
     },
 
     dataTypeUpdate: (id, globalDataTypeList) => {
@@ -664,6 +669,7 @@ const Actions = (() => {
               jQuery('#editTableWarningModal').find('#modal-content').html(tableData);
             }
         }
+        event.target.innerHTML =  "Edit Spanner Schema";
       }
     },
 
@@ -878,8 +884,12 @@ const Actions = (() => {
       return Store.getGlobalDataTypeList();
     },
 
-    carouselStatus: (tabId,tableIndex) => {
-      return Store.getinstance().openStatus[tabId][tableIndex];
+    carouselStatus: (tabId) => {
+      return Store.getinstance().openStatus[tabId];
+    },
+
+    getCurrentClickedCarousel: () => {
+      return Store.getCurrentClickedCarousel();
     }
 
   };
