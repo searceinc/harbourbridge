@@ -11,7 +11,7 @@ class HistoryTable extends HTMLElement {
   render() {
     let sessionArray = JSON.parse(sessionStorage.getItem("sessionStorage"));
     this.innerHTML = `
-        <hb-label type="text" text="${HISTORY_TABLE_HEADING}"></hb-label>
+        <hb-label type="sessionHeading" text="${HISTORY_TABLE_HEADING}"></hb-label>
         <table class="table session-table">
               <thead>
                 <tr>
@@ -23,7 +23,7 @@ class HistoryTable extends HTMLElement {
               </thead>
               <tbody id='session-table-content'>
                 ${
-                  sessionArray !== null
+                  sessionArray!==null && sessionArray.length > 0
                     ? sessionArray
                         .map((session, index) => {
                           let timestampArray, sessionName, sessionDate, sessionTime;
