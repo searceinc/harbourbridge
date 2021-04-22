@@ -24,6 +24,31 @@ a:hover {
     box-shadow: none !important;
 }
 
+.history-table {
+    padding: 0 40px;
+    margin-top: 72px;
+}
+
+.main-content {
+    padding: 0 40px;
+    margin-top: 72px;
+    background-color: #FDFDFD;
+}
+
+.connect-db-icon {
+    border-radius: 20px !important;
+    padding: 26px 36px 25px 36px;
+    box-shadow: 0 3px 6px #00000029 !important;
+    margin-bottom: 10px;
+}
+
+.card-section {
+    margin-top: 32px;
+    margin-bottom: 0px;
+    width: 845px;
+    height: 230px;
+}
+
 /* nav.navbar.navbar-static-top {
     padding: 0px !important;
 }
@@ -50,91 +75,30 @@ header.main-header {
     background: #FFFFFF 0% 0% no-repeat padding-box;
     box-shadow: 0px 3px 1px #00000014;
     opacity: 1;
-}
+} 
 
 header.main-header a:hover {
     text-decoration: none;
 }
 
-.header-topic .active {
+/* .header-topic .active {
     color: #4285F4;
-}
+} */
 
-.welcome-heading {
-    font-size: 32px;
-    font-weight: 600;
-}
-
-.session-heading {
-    padding-bottom: 20px;
-    font-size: 26px;
-    color: #5E5752;
-    font-weight: 600;
-}
-
-.connect-heading {
-    font-size: 26px;
-    font-weight: 500;
-    color: #5E5752;
-    margin-top: 20px;
-}
-
-.header-topic {
+/* .header-topic {
     font-size: 20px;
     font-weight: 600;
     margin-right: 30px;
     padding-top: 15px;
     padding-bottom: 15px;
-}
+} */
 
-.connect-opt-cls {
-    color: #808080;
-    font-size: 24px;
-    font-weight: 600;
-    text-align: center;
-    padding-top: 16px;
-}
-
-.db-img {
-    cursor: pointer;
-}
 /* 
 nav.navbar.navbar-static-top {
     float: left;
     padding: 14px;
     box-shadow: none;
 } */
-
-.bg-grey {
-    background-color: #DCDCDC;
-    width: auto;
-    height: 100%;
-}
-
-.history-table {
-    padding: 0 40px;
-    margin-top: 72px;
-}
-
-.main-content {
-    padding: 0 40px;
-    margin-top: 72px;
-    background-color: #FDFDFD;
-}
-
-.connect-db-icon {
-    border-radius: 20px !important;
-    padding: 26px 36px 25px 36px;
-    box-shadow: 0 3px 6px #00000029 !important;
-    margin-bottom: 10px;
-}
-
-.card-section {
-    margin-top: 32px;
-    margin-bottom: 0px;
-    width: 845px;
-    height: 230px;
-}
 
 /* .card-header a {
     padding-left: 20px;
@@ -239,15 +203,6 @@ nav.navbar.navbar-static-top {
     margin-right: 40px;
     margin-left: 40px;
 }
-
-
-
-
-
-
-
-
-
 
 .dataTypeTable-td {
     padding: 10px;
@@ -859,12 +814,12 @@ button {
     padding-bottom: inherit;
 }
 
-.cus-tip {
+/* .cus-tip {
     padding: 5%;
     position: relative;
     display: contents;
    
-}
+} */
 
 .legend-hover {
     display: none;
@@ -879,11 +834,11 @@ button {
     margin-top: 5px;
 }
 
-.cus-a:hover+div {
+/* .cus-a:hover+div {
     display: block;
-}
+} */
 
-.legend-status {
+/* .legend-status {
     text-align: center;
     margin: 0px 10px;
     display: inline-block;
@@ -911,7 +866,7 @@ button {
 
 .legend-status .avg {
     background: YELLOW;
-}
+} */
 
 /* .template {
     display: none;
@@ -940,3 +895,38 @@ button {
     background-color: #FFC107;
     margin-right: 8px;
 } */
+
+.welcome-heading {
+    font-size: 32px;
+    font-weight: 600;
+}
+.session-heading {
+    padding-bottom: 20px;
+    font-size: 26px;
+    color: #5E5752;
+    font-weight: 600;
+}
+.connect-heading {
+    font-size: 26px;
+    font-weight: 500;
+    color: #5E5752;
+    margin-top: 20px;
+}
+
+.connect-opt-cls {
+    color: #808080;
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    padding-top: 16px;
+}
+
+.db-img {
+    cursor: pointer;
+}
+
+.bg-grey {
+    background-color: #DCDCDC;
+    width: auto;
+    height: 100%;
+}

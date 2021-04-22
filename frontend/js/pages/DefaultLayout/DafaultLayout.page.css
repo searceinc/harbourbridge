@@ -1,0 +1,15 @@
+header.main-header {
+    color: #000000;
+    position: fixed;
+    top: 0;
+    height: 60px;
+    width: 100%;
+    z-index: 999999;
+    background: #FFFFFF 0% 0% no-repeat padding-box;
+    box-shadow: 0px 3px 1px #00000014;
+    opacity: 1;
+}
+
+header.main-header a:hover {
+    text-decoration: none;
+}
