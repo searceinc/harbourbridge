@@ -1,4 +1,5 @@
 const puppeteer = require("puppeteer");
+const downloadsFolder = require("downloads-folder");
 
 let config = {
   launchOptions: {
@@ -614,7 +615,7 @@ const homePage = {
   loadSessionFile: 'div[data-target="#loadSchemaModal"]',
   importDbType: "select#import-db-type",
   sessionFilePath: "input#session-file-path",
-  pathOfSessionFile: "/Users/anubhavchakraborty/Downloads/session.json", // PATH IS DIFFERENT FOR DIFFERENT SYSTEMS
+  pathOfSessionFile: downloadsFolder() + "/session.json",
   loadSessionButton: "input#load-session-button",
   resumeSession: "a#session0",
   editGlobalDataType: "button#editButton",
