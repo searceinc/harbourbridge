@@ -11,85 +11,91 @@ puppeteer.launch(config.launchOptions).then(async (browser) => {
   const page = await browser.newPage();
   await page.goto("http://localhost:8080/");
 
-  await runNavigation(page);
+  await navigateToSchemaPage(page);
 
   /*
-  Pick any column name which is not dependent on any 
+  1. Pick any column name which is not dependent on any 
   foreign key or index and change its name and data type
   */
-  await runTest1(page);
-
-  //Change the name of secondary index
-  await runTest2(page);
+  await editIndependentTable(page);
 
   /*
-  Pick any column which is part of foreign key or index 
+  2. Change the name of secondary index
+  */
+  await editSecondaryIndex(page);
+
+  /*
+  3. Pick any column which is part of foreign key or index 
   and try changing its name, data type and constraint. 
   Resolve the dependencies and show the changes
   */
-  await runTest3(page);
-
-  //Delete secondary index and foreign key
-  await runTest4(page);
+  await editDependentTable(page);
 
   /*
-  Create a new secondary index and try to edit column 
+  4. Delete secondary index and foreign key
+  */
+  await deleteRelationalKeys(page);
+
+  /*
+  5. Create a new secondary index and try to edit column 
   which is acting as key in this sec index. It should 
   give error, then delete the index and try to edit 
   column again , now it should work
   */
-  await runTest5(page);
+  await createSecondaryKey(page);
 
   /*
-  Try to create a sec index, when there are pending 
+  6. Try to create a sec index, when there are pending 
   changes in the table and show the error message
   */
-  await runTest6(page);
+  await createSecondaryKeyWhileEdit(page);
 
   /*
-  Change column name, rename foreign key, rename 
+  7. Change column name, rename foreign key, rename 
   index all at once and then try to save the changes
   */
-  await runTest7(page);
+  await editMultipleFields(page);
 
   /*
-  Try giving duplicate names in foreign key, index and change 
+  8. Try giving duplicate names in foreign key, index and change 
   column name as well and then resolve all the errors one by one
   */
-  await runTest8(page);
+  await duplicateForeignKey(page);
 
   /*
-  Download session file and try using 
+  9. Download session file and try using 
   load session modal from home screen
   */
-  await runTest9(page);
+  await downloadSessionFile(page);
 
   /*
-  Use global edit data type and convert everything into 
+  10. Use global edit data type and convert everything into 
   string to show the changes in every table
   */
-  await runTest10(page);
+  await editGlobalDataType(page);
 
   /*
-  For every change (like data type or column change ) show the 
+  11. For every change (like data type or column change ) show the 
   respective changes in view summary, ddl statements and summary tab as well
   */
-  await runTest11(page);
+  await viewChangesInSummary(page);
 
   /*
-  Cover all basic functionalities like search 
+  12. Cover all basic functionalities like search 
   table, downloading ddl, summary reports etc
   */
-  await runTest12(page);
+  await checkBasicFunctionality(page);
 
-  //Click on resume sessions on home screen to show the functionality
-  await runTest13(page);
+  /*
+  13. Click on resume sessions on home screen
+  */
+  await resumeSession(page);
 
   // Close Browser
   await browser.close();
 });
 
-const runNavigation = async (page) => {
+const navigateToSchemaPage = async (page) => {
   await page.waitForTimeout(200);
 
   await page.waitForSelector(homePage.loadDatabase);
@@ -113,7 +119,7 @@ const runNavigation = async (page) => {
   await page.waitForTimeout(200);
 };
 
-const runTest1 = async (page) => {
+const editIndependentTable = async (page) => {
   await page.waitForSelector(homePage.categoryTable);
   await page.click(homePage.categoryTable);
 
@@ -137,7 +143,7 @@ const runTest1 = async (page) => {
   await passed(1);
 };
 
-const runTest2 = async (page) => {
+const editSecondaryIndex = async (page) => {
   await page.waitForSelector(homePage.paymentTable);
   await page.click(homePage.paymentTable);
 
@@ -162,7 +168,7 @@ const runTest2 = async (page) => {
   await passed(2);
 };
 
-const runTest3 = async (page) => {
+const editDependentTable = async (page) => {
   await page.waitForSelector(homePage.paymentEditSchemaButton);
   await page.click(homePage.paymentEditSchemaButton);
 
@@ -204,7 +210,7 @@ const runTest3 = async (page) => {
   await page.waitForTimeout(200);
 };
 
-const runTest4 = async (page) => {
+const deleteRelationalKeys = async (page) => {
   await page.waitForSelector(homePage.customerTable);
   await page.click(homePage.customerTable);
 
@@ -243,7 +249,7 @@ const runTest4 = async (page) => {
   await page.waitForTimeout(200);
 };
 
-const runTest5 = async (page) => {
+const createSecondaryKey = async (page) => {
   await page.waitForSelector(homePage.actorsTable);
   await page.click(homePage.actorsTable);
 
@@ -308,7 +314,7 @@ const runTest5 = async (page) => {
   await page.waitForTimeout(200);
 };
 
-const runTest6 = async (page) => {
+const createSecondaryKeyWhileEdit = async (page) => {
   await page.waitForSelector(homePage.actorsEditSchemaButton);
   await page.click(homePage.actorsEditSchemaButton);
 
@@ -339,7 +345,7 @@ const runTest6 = async (page) => {
   await page.waitForTimeout(200);
 };
 
-const runTest7 = async (page) => {
+const editMultipleFields = async (page) => {
   await page.waitForSelector(homePage.paymentEditSchemaButton);
   await page.click(homePage.paymentEditSchemaButton);
 
@@ -367,7 +373,7 @@ const runTest7 = async (page) => {
   await page.waitForTimeout(500);
 };
 
-const runTest8 = async (page) => {
+const duplicateForeignKey = async (page) => {
   await page.waitForSelector(homePage.paymentEditSchemaButton);
   await page.click(homePage.paymentEditSchemaButton);
 
@@ -416,7 +422,7 @@ const runTest8 = async (page) => {
   await page.waitForTimeout(200);
 };
 
-const runTest9 = async (page) => {
+const downloadSessionFile = async (page) => {
   await page.waitForSelector(homePage.downloadSessionFile);
   await page.click(homePage.downloadSessionFile);
 
@@ -450,7 +456,7 @@ const runTest9 = async (page) => {
   await passed(9);
 };
 
-const runTest10 = async (page) => {
+const editGlobalDataType = async (page) => {
   await page.waitForSelector(homePage.editGlobalDataType);
   await page.click(homePage.editGlobalDataType);
 
@@ -483,7 +489,7 @@ const runTest10 = async (page) => {
   await passed(10);
 };
 
-const runTest11 = async (page) => {
+const viewChangesInSummary = async (page) => {
   await page.waitForSelector(homePage.ddlStatementTab);
   await page.click(homePage.ddlStatementTab);
 
@@ -513,7 +519,7 @@ const runTest11 = async (page) => {
   await passed(11);
 };
 
-const runTest12 = async (page) => {
+const checkBasicFunctionality = async (page) => {
   await page.waitForSelector(homePage.searchInput);
   await page.type(homePage.searchInput, "store");
 
@@ -540,7 +546,7 @@ const runTest12 = async (page) => {
   await passed(12);
 };
 
-const runTest13 = async (page) => {
+const resumeSession = async (page) => {
   await page.click(homePage.homeScreen);
 
   await page.waitForTimeout(200);

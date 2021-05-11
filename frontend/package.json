@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --watchAll --verbose",
-    "puppeteer": "node puppeteerTest.js"
+    "puppeteer": "node puppeteer.js"
   },
   "author": "",
   "license": "ISC",
