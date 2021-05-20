@@ -1,0 +1,3 @@
+frontend/*.session.json
+/node_modules
+node_modules
